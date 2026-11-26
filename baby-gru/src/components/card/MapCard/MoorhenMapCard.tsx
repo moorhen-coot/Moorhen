@@ -1,11 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setActiveMap } from "../../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
-import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
-import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 import { addMap } from "../../../store/mapsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertPxToRem, convertRemToPx } from "../../../utils/utils";
@@ -60,7 +59,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         if (Date.now() - lastCall < 500) {
             fastMapContourLevel(newContourLevel);
         } else {
-            dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
+            dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { contourLevel: newContourLevel } }));
         }
         setLastCall(Date.now());
     };
@@ -83,7 +82,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     };
 
     const handleVisibility = () => {
-        dispatch(mapIsVisible ? hideMap(props.map) : showMap(props.map));
+        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { visible: !mapIsVisible } }));
         dispatch(setRequestDrawScene()); //this is annoying idk why the map manager doesn't redraw here
     };
 

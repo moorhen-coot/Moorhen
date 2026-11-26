@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useEffect, useRef } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
-import { setContourLevel } from '../store/mapContourSettingsSlice';
+import { setPrimaryMapRepresentation } from '../store/mapRepresentationsSlice';
 import { useMoorhenInstance } from '../InstanceManager/useMoorhenInstance';
 import { moorhen } from '../types/moorhen';
 import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
@@ -76,7 +76,7 @@ export const useFastContourMode = ({
 
         // GPU contours are drawn at the full radius anyway
         if ((mapRadius <= radiusThreshold || gpuMapContourSetting.enabled) && !isInFastModeRef.current) {
-            dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
+            dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes: { contourLevel: newContourLevel } }));
             return;
         }
 
@@ -85,7 +85,7 @@ export const useFastContourMode = ({
             moorhenInstance?.mapDisplay?.setFastRadius(map.uniqueId, radius);
             setIsInFastMode(true);
         }
-        dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
+        dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes: { contourLevel: newContourLevel } }));
 
         if (fastModeTimeoutRef.current) {
             clearTimeout(fastModeTimeoutRef.current);

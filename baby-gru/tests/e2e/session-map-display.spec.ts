@@ -145,11 +145,10 @@ const setAlphaPerStyle = (page: Page, uniqueId: string) =>
     page.evaluate(
         async ({ uniqueId, styleAlphas }) => {
             const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
-            const { setMapStyle, setMapAlpha } = await import("/src/store/index.ts");
-            const map = instance.store.getState().maps.find((item: any) => item.uniqueId === uniqueId);
+            const { setPrimaryMapRepresentation, setPrimaryMapRepresentationAlpha } = await import("/src/store/mapRepresentationsSlice.ts");
             for (const [style, alpha] of Object.entries(styleAlphas)) {
-                instance.dispatch(setMapStyle({ molNo: map.molNo, style }));
-                instance.dispatch(setMapAlpha({ molNo: map.molNo, alpha }));
+                instance.dispatch(setPrimaryMapRepresentation({ mapUid: uniqueId, changes: { style } }));
+                instance.dispatch(setPrimaryMapRepresentationAlpha({ mapUid: uniqueId, alpha }));
             }
         },
         { uniqueId, styleAlphas: STYLE_ALPHAS }
@@ -160,11 +159,11 @@ const getAlphaPerStyle = (page: Page, uniqueId: string): Promise<Record<string, 
     page.evaluate(
         async ({ uniqueId, styles }) => {
             const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
-            const { setMapStyle } = await import("/src/store/index.ts");
+            const { setPrimaryMapRepresentation } = await import("/src/store/mapRepresentationsSlice.ts");
             const map = instance.store.getState().maps.find((item: any) => item.uniqueId === uniqueId);
             const alphas: Record<string, number> = {};
             for (const style of styles) {
-                instance.dispatch(setMapStyle({ molNo: map.molNo, style }));
+                instance.dispatch(setPrimaryMapRepresentation({ mapUid: uniqueId, changes: { style } }));
                 alphas[style] = map.getMapContourParams().mapAlpha;
             }
             return alphas;
@@ -180,11 +179,11 @@ const setRadiusPerDrawMode = (page: Page, uniqueId: string) =>
     page.evaluate(
         async ({ uniqueId, modeRadii }) => {
             const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
-            const { setMapRadius } = await import("/src/store/index.ts");
+            const { setPrimaryMapRepresentationRadius } = await import("/src/store/mapRepresentationsSlice.ts");
             const map = instance.store.getState().maps.find((item: any) => item.uniqueId === uniqueId);
             for (const [mode, radius] of Object.entries(modeRadii)) {
                 map.toggleOriginLock(mode === "full");
-                instance.dispatch(setMapRadius({ molNo: map.molNo, radius }));
+                instance.dispatch(setPrimaryMapRepresentationRadius({ mapUid: uniqueId, radius }));
             }
         },
         { uniqueId, modeRadii: MODE_RADII }

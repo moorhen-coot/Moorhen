@@ -1,8 +1,8 @@
 import { Chart, registerables } from "chart.js";
 import { useDispatch, useSelector } from "react-redux";
 import { use, useEffect, useRef } from "react";
-import { setAutoClip, setAutoFog, setClipEnd, setClipStart, setMapStyle } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { setAutoClip, setAutoFog, setClipEnd, setClipStart } from "@/store";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { dispatchPersistentStates, usePersistent, usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
@@ -24,7 +24,6 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
     const histogramCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const commandCentre = useCommandCentre();
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     //const [minMaxValue, setMinMaxValue] = useState<number> ([-1, 1])
@@ -73,14 +72,14 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             return;
         }
 
-        referenceMap.setOtherMapForColouring(null);
-        referenceMap.drawMapContour();
+        // The map's display record changes, which redraws it
+        dispatch(setPrimaryMapRepresentation({ mapUid: referenceMap.uniqueId, changes: { colourByMap: null } }));
     };
 
     const handleApply = () => {
         dispatchPersistentStates(dispatch, menu, [
             { key: "minValue", value: minValue },
-            { key: "maxValue", value: minValue },
+            { key: "maxValue", value: maxValue },
             { key: "map1", value: mapSelectRef_1.current.value },
             { key: "map2", value: mapSelectRef_2.current.value },
         ]);
@@ -96,19 +95,24 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             return;
         }
 
-        referenceMap.setOtherMapForColouring(colouringMap.molNo, minValue, maxValue);
-        referenceMap.drawMapContour();
+        // The other map, its range and the gradient are the map's own (its display record, map-display.md): maps
+        // coloured with different gradients each keep theirs. Changing the record redraws the map.
+        dispatch(
+            setPrimaryMapRepresentation({
+                mapUid: referenceMap.uniqueId,
+                changes: {
+                    colourByMap: {
+                        mapUid: colouringMap.uniqueId,
+                        min: minValue,
+                        max: maxValue,
+                        gradient: JSON.parse(JSON.stringify(colourTableRef.current)),
+                    },
+                },
+            })
+        );
     };
 
-    const handleApplyColourTable = async () => {
-        await commandCentre.current.cootCommand(
-            {
-                command: "shim_set_colour_map_for_map_coloured_by_other_map",
-                commandArgs: colourTableRef.current,
-                returnType: "status",
-            },
-            false
-        );
+    const handleApplyColourTable = () => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
             return;
         }
@@ -123,12 +127,10 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             dispatch(setClipEnd(1000));
             dispatch(setAutoFog(false));
             dispatch(setAutoClip(false));
-            dispatch(
-                setMapStyle({
-                    molNo: Number(mapSelectRef_1.current.value),
-                    style: "solid",
-                })
-            );
+            const colouredMap = maps.find(map => map.molNo === Number(mapSelectRef_1.current.value));
+            if (colouredMap) {
+                dispatch(setPrimaryMapRepresentation({ mapUid: colouredMap.uniqueId, changes: { style: "solid" } }));
+            }
             openLocResFolderRef.current = false;
         }
     }, [minValue, maxValue]);

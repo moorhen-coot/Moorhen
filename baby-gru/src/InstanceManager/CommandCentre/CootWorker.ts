@@ -6,6 +6,29 @@ import { gemmi } from "../../types/gemmi";
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
 
+
+/**
+ * Set Coot's colour map for maps coloured by another map, from a gradient as the gradient picker gives it (stops
+ * 0-1, colours 0-255).
+ */
+const setColourMapForMapColouredByOtherMap = (colourTable: [number, [number, number, number]][]) => {
+    const theVector = new cootModule.vector_pair_double_vector_double()
+    const colours: emscriptem.vector<number>[] = []
+    colourTable.forEach(([stop, [r, g, b]]) => {
+        const colour = new cootModule.VectorDouble()
+        colour.push_back(r / 255)
+        colour.push_back(g / 255)
+        colour.push_back(b / 255)
+        colours.push(colour)
+        theVector.push_back({ first: stop, second: colour } as libcootApi.DoublePairDoubleJS)
+    })
+    const result = molecules_container.set_colour_map_for_map_coloured_by_other_map(theVector)
+    // Copied by Coot
+    colours.forEach(colour => colour.delete())
+    theVector.delete()
+    return result
+}
+
 const guid = () => {
     var d = Date.now();
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -1959,19 +1982,16 @@ const doCootCommand = (messageData: {
         let cootResult
         switch (command) {
             case 'shim_set_colour_map_for_map_coloured_by_other_map':
-                const theVector = new cootModule.vector_pair_double_vector_double()
-                console.log(commandArgs)
-                commandArgs.forEach((cp) => {
-                    const thePair: libcootApi.DoublePairDoubleJS = {first:0,second:null}
-                    thePair.first = cp[0]
-                    thePair.second = new cootModule.VectorDouble()
-                    thePair.second.push_back(cp[1][0]/256)
-                    thePair.second.push_back(cp[1][1]/256)
-                    thePair.second.push_back(cp[1][2]/256)
-                    theVector.push_back(thePair)
-                })
-                cootResult = molecules_container.set_colour_map_for_map_coloured_by_other_map(theVector)
+                cootResult = setColourMapForMapColouredByOtherMap(commandArgs as [number, [number, number, number]][])
                 break
+            case 'shim_get_map_contours_mesh_coloured_by_other_map': {
+                // The colour map is one setting for all maps in Coot: set and used in one command, so that maps
+                // coloured with different gradients cannot use each other's (map-display.md)
+                const [colourTable, ...contourArgs] = commandArgs as [[number, [number, number, number]][], ...unknown[]]
+                setColourMapForMapColouredByOtherMap(colourTable)
+                cootResult = molecules_container.get_map_contours_mesh_using_other_map_for_colours(...(contourArgs as Parameters<typeof molecules_container.get_map_contours_mesh_using_other_map_for_colours>))
+                break
+            }
             case 'shim_generate_assembly':
                 cootResult = generate_assembly(...commandArgs as [string, string, string])
                 break

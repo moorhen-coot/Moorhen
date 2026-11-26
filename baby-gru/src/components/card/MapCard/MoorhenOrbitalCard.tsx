@@ -18,11 +18,11 @@
  */
 
 import { useDispatch } from "react-redux";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
-import { hideMap, setContourLevel, showMap } from "../../../store/mapContourSettingsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenButton, MoorhenNumberInput, MoorhenPopoverButton, MoorhenSlider } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
@@ -66,13 +66,13 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
         if (Date.now() - lastCall < 500) {
             fastMapContourLevel(newContourLevel);
         } else {
-            dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
+            dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { contourLevel: newContourLevel } }));
         }
         setLastCall(Date.now());
     };
 
     const handleVisibility = () => {
-        dispatch(mapIsVisible ? hideMap(props.map) : showMap(props.map));
+        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { visible: !mapIsVisible } }));
         dispatch(setRequestDrawScene());
     };
 

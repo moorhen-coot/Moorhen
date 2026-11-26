@@ -1,6 +1,6 @@
 import type { MoorhenInstance } from "@/InstanceManager";
 import type { LoadFilesResult } from "@/InstanceManager/MoorhenInstance";
-import { addMapList, enqueueSnackbar, setActiveMap, setMapColours, setNegativeMapColours, setPositiveMapColours } from "@/store";
+import { addMapList, enqueueSnackbar, setActiveMap } from "@/store";
 import { MoorhenMap } from "./MoorhenMap";
 import { readMTZHeader } from "./mapHeaders";
 
@@ -122,11 +122,14 @@ export const loadMtzMaps = async (
             if (selectedColumns.calcStructFact) {
                 await map.associateToReflectionData(selectedColumns, data);
             }
-            // initialise() has set the default colour, so the requested colours go after it
+            // The requested colours (0-1, as documented above) go into the map's first display record (map-display.md).
+            // They used to go into a 0-255 colour list as they were, and were drawn almost black.
             const { style } = request;
-            if (style?.colour) instance.dispatch(setMapColours({ molNo: map.molNo, rgb: style.colour }));
-            if (style?.positiveColour) instance.dispatch(setPositiveMapColours({ molNo: map.molNo, rgb: style.positiveColour }));
-            if (style?.negativeColour) instance.dispatch(setNegativeMapColours({ molNo: map.molNo, rgb: style.negativeColour }));
+            map.initialDisplay = {
+                ...(style?.colour && { colour: { ...style.colour } }),
+                ...(style?.positiveColour && { positiveColour: { ...style.positiveColour } }),
+                ...(style?.negativeColour && { negativeColour: { ...style.negativeColour } }),
+            };
             map.showOnLoad = request.visible ?? true;
             maps.push(map);
         }

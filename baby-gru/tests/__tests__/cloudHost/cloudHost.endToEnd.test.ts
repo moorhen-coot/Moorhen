@@ -8,6 +8,7 @@
  * it as a click would; the real menu entry is covered by WEB-07/08.
  */
 import type { MoorhenInstance } from "@/InstanceManager";
+import { selectPrimaryMapRepresentation } from "../../../src/store/mapRepresentationsSlice";
 import type { StoredPreferences } from "@/InstanceManager/MoorhenInstance";
 import { setDoSSAO } from "@/store";
 import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
@@ -70,7 +71,9 @@ async function onExit(host: FakeHost, instance: MoorhenInstance) {
 }
 
 const mapByName = (instance: MoorhenInstance, name: string) => instance.getMapList().find(map => map.name === name);
-const mapColour = (list: { molNo: number; rgb: unknown }[], molNo: number) => list.find(item => item.molNo === molNo)?.rgb;
+/** A colour of a map's display record (map-display.md) */
+const mapColour = (state: Parameters<typeof selectPrimaryMapRepresentation>[0], field: "colour" | "positiveColour" | "negativeColour", mapUid: string) =>
+    selectPrimaryMapRepresentation(state, mapUid)?.[field];
 
 let cloud: CloudInstance;
 let host: FakeHost;
@@ -250,13 +253,13 @@ describe("E2E: a CCP4 Cloud job from start to exit", () => {
         expect(instance.getMapList().map(map => map.name).sort()).toEqual(["anom-diff-map", "anom-map", "diff-map", "map"]);
         expect(fetchCount(jobUrl("5a3h_sigmaa.mtz"))).toBe(1);
 
-        const settings = store.getState().mapContourSettings;
+        const state = store.getState();
         const anomMap = mapByName(instance, "anom-map");
         const anomDiffMap = mapByName(instance, "anom-diff-map");
         expect(anomDiffMap.isDifference).toBe(true);
-        expect(mapColour(settings.mapColours, anomMap.molNo)).toEqual(anomColour);
-        expect(mapColour(settings.positiveMapColours, anomDiffMap.molNo)).toEqual(positiveColour);
-        expect(mapColour(settings.negativeMapColours, anomDiffMap.molNo)).toEqual(negativeColour);
+        expect(mapColour(state, "colour", anomMap.uniqueId)).toEqual(anomColour);
+        expect(mapColour(state, "positiveColour", anomDiffMap.uniqueId)).toEqual(positiveColour);
+        expect(mapColour(state, "negativeColour", anomDiffMap.uniqueId)).toEqual(negativeColour);
         expect(store.getState().generalStates.activeMap?.molNo).toBe(mapByName(instance, "map").molNo);
     });
 

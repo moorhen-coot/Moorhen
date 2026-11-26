@@ -13,6 +13,9 @@ import mapRepresentationsReducer, {
     setMapRepresentation,
     setMapRepresentationAlpha,
     setMapRepresentationRadius,
+    setPrimaryMapRepresentation,
+    setPrimaryMapRepresentationAlpha,
+    setPrimaryMapRepresentationRadius,
 } from "../../src/store/mapRepresentationsSlice";
 import {
     type MapRepresentationData,
@@ -20,6 +23,8 @@ import {
     createDefaultMapRepresentationData,
     currentAlpha,
     currentRadius,
+    displayToCopy,
+    withChanges,
 } from "../../src/utils/Representation/mapRepresentationData";
 import type { MoorhenMap } from "../../src/utils/MoorhenMap";
 
@@ -98,6 +103,31 @@ describe("mapRepresentations slice", () => {
         expect(currentRadius(selectMapRepresentation(store.getState(), "em"))).toBe(150);
     });
 
+    test("a map's display is changed through its primary (first) representation, by map uid", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("first", "map-a")));
+        store.dispatch(addMapRepresentation(record("second", "map-a")));
+        store.dispatch(setPrimaryMapRepresentation({ mapUid: "map-a", changes: { contourLevel: 0.7, style: "solid" } }));
+        store.dispatch(setPrimaryMapRepresentationAlpha({ mapUid: "map-a", alpha: 0.4 }));
+        store.dispatch(setPrimaryMapRepresentation({ mapUid: "unknown", changes: { visible: false } }));
+
+        const first = selectMapRepresentation(store.getState(), "first");
+        expect(first.contourLevel).toBe(0.7);
+        // The opacity of the style in use only
+        expect(first.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 0.4, slice: 1 });
+        expect(selectMapRepresentation(store.getState(), "second")).toEqual(record("second", "map-a"));
+    });
+
+    test("the keyboard changes the radius of the draw mode in use, never below 1 Å", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("em", "map-em", { originLock: { centre: [0, 0, 0] } })));
+        store.dispatch(setPrimaryMapRepresentationRadius({ mapUid: "map-em", by: 2 }));
+        expect(selectMapRepresentation(store.getState(), "em").radius).toEqual({ local: 15, full: 122 });
+        store.dispatch(setPrimaryMapRepresentationRadius({ mapUid: "map-em", radius: 3 }));
+        store.dispatch(setPrimaryMapRepresentationRadius({ mapUid: "map-em", by: -10 }));
+        expect(selectMapRepresentation(store.getState(), "em").radius.full).toBe(1);
+    });
+
     test("closing a map removes its representations only", () => {
         const store = makeStore();
         store.dispatch(addMapRepresentation(record("mesh", "map-a")));
@@ -116,7 +146,7 @@ describe("mapRepresentations slice", () => {
                 record("diff", "map-d", {
                     positiveColour: { r: 0.4, g: 0.8, b: 0.7 },
                     negativeColour: { r: 0.6, g: 0.1, b: 0.5 },
-                    colourByMap: { mapUid: "map-a", min: -0.9, max: 0.9 },
+                    colourByMap: { mapUid: "map-a", min: -0.9, max: 0.9, gradient: [[0, [52, 77, 144]], [1, [231, 85, 44]]] },
                     originLock: { centre: [1, 2, 3] },
                 })
             )
@@ -184,5 +214,26 @@ describe("createDefaultMapRepresentationData", () => {
         const map = createDefaultMapRepresentationData(fakeMap({ isCube: true, isDifference: true, suggestedContourLevel: 0.05, suggestedRadius: 8 }), preferences);
         expect(map.contourLevel).toBe(0.05);
         expect(map.radius.local).toBe(8);
+    });
+});
+
+describe("a new map's display (initialDisplay, withChanges) and a map made from another (displayToCopy)", () => {
+    test("the radius of the draw mode and the opacity of the style the map ends up in", () => {
+        const em = withChanges(record("r", "map-4", { originLock: { centre: [0, 0, 0] } }), {
+            style: "solid",
+            currentRadius: 90,
+            currentAlpha: 0.5,
+            colour: { r: 1, g: 0, b: 0 },
+        });
+        expect(em.radius).toEqual({ local: 15, full: 90 });
+        expect(em.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 0.5, slice: 1 });
+        expect(em.colour).toEqual({ r: 1, g: 0, b: 0 });
+    });
+
+    test("a map made from another takes its level, radii, style and opacities, not its colours", () => {
+        const source = record("s", "map-a", { contourLevel: 0.6, style: "lit-lines", colour: { r: 1, g: 0, b: 0 }, radius: { local: 20, full: 80 } });
+        const made = withChanges(record("m", "map-b"), displayToCopy(source));
+        expect(made).toEqual({ ...record("m", "map-b"), contourLevel: 0.6, style: "lit-lines", radius: { local: 20, full: 80 } });
+        expect(displayToCopy(undefined)).toEqual({});
     });
 });

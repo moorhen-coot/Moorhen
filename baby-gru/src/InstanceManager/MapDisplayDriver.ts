@@ -1,18 +1,11 @@
-import { addMapRepresentation, removeMapRepresentationsOfMap, selectPrimaryMapRepresentation, setMapRepresentation } from "../store/mapRepresentationsSlice";
+import { addMapRepresentation, removeMapRepresentationsOfMap, selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
 import type { RootState } from "../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../utils/MoorhenMap";
 import { MapRepresentation } from "../utils/Representation/MapRepresentation";
 import type { MapRepresentationData } from "../utils/Representation/mapRepresentationData";
 import { guid } from "../utils/utils";
 import { onGpuMapContoursChanged } from "../WebGPUComponents/mapContour/setting";
-import {
-    ensureLockedDrawOrigin,
-    followViewWithLockedCell,
-    initialiseLegacyMapSettings,
-    legacyFastRadius,
-    legacyListChanges,
-    legacyRepresentationData,
-} from "./legacyMapDisplay";
+import { ensureLockedDrawOrigin, followViewWithLockedCell, initialMapRepresentationData } from "./mapDisplayRecords";
 import type { MoorhenInstance } from "./MoorhenInstance";
 
 /**
@@ -20,9 +13,8 @@ import type { MoorhenInstance } from "./MoorhenInstance";
  * (replaces MoorhenMapManager). One per instance, started by `startInstance`, stopped by `cleanup`.
  *
  * On every store change it:
- * - gives each new map its records, and removes the records of closed maps;
- * - (transition) turns changes of the old `mapContourSettings` lists into changes of each map's primary record
- *   (legacyMapDisplay.ts);
+ * - gives each new map its first record (defaults and the map's `initialDisplay`), and removes the records of closed
+ *   maps;
  * - creates / disposes a `MapRepresentation` per record, and tells it when its record changed;
  * - re-contours representations that follow the view when the view moves (or on mouse up, with
  *   `reContourMapOnlyOnMouseUp`), and all of them when the line width changes;
@@ -39,7 +31,6 @@ export class MapDisplayDriver {
     private knownMapUids = new Set<string>();
 
     private lastMaps: RootState["maps"] | null = null;
-    private lastContourSettings: RootState["mapContourSettings"] | null = null;
     private lastRecords: Record<string, MapRepresentationData> = {};
     private lastOrigin: number[] | null = null;
     private lastLineWidth: number | null = null;
@@ -85,7 +76,6 @@ export class MapDisplayDriver {
         this.fastRadii.clear();
         this.knownMapUids = new Set();
         this.lastMaps = null;
-        this.lastContourSettings = null;
         this.lastSliceSettings = null;
         this.lastRecords = {};
         this.lastFastRadii.clear();
@@ -165,14 +155,6 @@ export class MapDisplayDriver {
             state.maps.forEach(map => followViewWithLockedCell(map, origin));
             state = store.getState();
         }
-        if (state.mapContourSettings !== this.lastContourSettings) {
-            const previous = this.lastContourSettings;
-            this.lastContourSettings = state.mapContourSettings;
-            if (previous) {
-                this.applyLegacyListChanges(previous, state);
-                state = store.getState();
-            }
-        }
 
         this.syncRepresentations(state.mapRepresentations.representations);
         this.syncFastRadii(state);
@@ -200,16 +182,15 @@ export class MapDisplayDriver {
         }
     }
 
-    /** New maps get their default display and a record; closed maps lose their records */
+    /** New maps get their first record; closed maps lose their records */
     private syncMaps(maps: RootState["maps"]): void {
         const dispatch = this.instance.dispatch;
         const uids = new Set(maps.map(map => map.uniqueId));
         maps.filter(map => !this.knownMapUids.has(map.uniqueId)).forEach(map => {
-            initialiseLegacyMapSettings(map, this.instance.store.getState().mapContourSettings, dispatch);
             // Before the record exists the map fields are the map's own; the record takes them from here on
             ensureLockedDrawOrigin(map, this.instance.store.getState().sceneSettings.origin);
             if (!selectPrimaryMapRepresentation(this.instance.store.getState(), map.uniqueId)) {
-                dispatch(addMapRepresentation(legacyRepresentationData(map, this.instance.store.getState(), guid(), undefined)));
+                dispatch(addMapRepresentation(initialMapRepresentationData(map, this.instance.store.getState(), guid())));
             }
         });
         [...this.knownMapUids]
@@ -220,20 +201,6 @@ export class MapDisplayDriver {
                 dispatch(removeMapRepresentationsOfMap(uid));
             });
         this.knownMapUids = uids;
-    }
-
-    /** Transition: a change of an old list entry changes that field of the map's primary record */
-    private applyLegacyListChanges(previous: RootState["mapContourSettings"], state: RootState): void {
-        state.maps.forEach(map => {
-            const current = selectPrimaryMapRepresentation(state, map.uniqueId);
-            if (!current) {
-                return;
-            }
-            const changes = legacyListChanges(map, previous, state.mapContourSettings, current);
-            if (changes) {
-                this.instance.dispatch(setMapRepresentation({ id: current.id, changes }));
-            }
-        });
     }
 
     /** One `MapRepresentation` per record: create, update or dispose */
@@ -265,10 +232,10 @@ export class MapDisplayDriver {
         this.lastRecords = records;
     }
 
-    /** The fast-contour radius during interaction: `setFastRadius`, or (public API) the old `mapFastRadii` list */
+    /** The fast-contour radius during interaction (`setFastRadius`) */
     private syncFastRadii(state: RootState): void {
         state.maps.forEach(map => {
-            const radius = this.fastRadii.get(map.uniqueId) ?? legacyFastRadius(map, state.mapContourSettings);
+            const radius = this.fastRadii.get(map.uniqueId) ?? null;
             if (radius !== (this.lastFastRadii.get(map.uniqueId) ?? null)) {
                 this.lastFastRadii.set(map.uniqueId, radius);
                 this.getRepresentations(map.uniqueId).forEach(representation => representation.setFastRadius(radius));

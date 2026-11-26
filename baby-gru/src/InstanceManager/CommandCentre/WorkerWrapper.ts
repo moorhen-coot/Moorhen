@@ -466,6 +466,38 @@ export class WorkerWrapper {
         );
     }
     /**
+     * Contour a map in a sphere, coloured by the values of another map along a gradient. Sets Coot's colour map (one
+     * for all maps) and contours in one worker command, so that two maps coloured with different gradients cannot
+     * use each other's.
+     *
+     * @param gradient - The colours from `otherMapMin` to `otherMapMax`, as the gradient picker gives them (stops
+     * 0-1, colours 0-255).
+     * @param options - `squashKey`: only the latest contour with this key is drawn (see {@link WorkerCommandOptions}).
+     */
+    async get_map_contours_mesh_coloured_by_other_map(
+        gradient: [number, [number, number, number]][],
+        imol: number,
+        imolForColours: number,
+        centre: [number, number, number],
+        radius: number,
+        contourLevel: number,
+        otherMapMin: number,
+        otherMapMax: number,
+        meshType: MapContourMeshType,
+        invertColourRamp: boolean = false,
+        options?: WorkerCommandOptions
+    ): Promise<MapContourMesh> {
+        return this.run<MapContourMesh>(
+            {
+                command: "shim_get_map_contours_mesh_coloured_by_other_map",
+                commandArgs: [gradient, imol, imolForColours, ...centre, radius, contourLevel, otherMapMin, otherMapMax, invertColourRamp],
+                returnType: meshType,
+            },
+            false,
+            options
+        );
+    }
+    /**
      * Sets the maximum number of vertices allowed for simple mesh rendering in Coot.
      * This parameter controls the complexity of meshes that can be displayed, affecting
      * both rendering performance and visual quality.

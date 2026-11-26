@@ -36,7 +36,7 @@ type ContourKey = {
     radius: number;
     style: MapStyle;
     centre: Vec3;
-    colourByMap: { molNo: number; min: number; max: number } | null;
+    colourByMap: { molNo: number; min: number; max: number; gradient: [number, [number, number, number]][] } | null;
 };
 
 const sameContour = (a: ContourKey | null, b: ContourKey): boolean =>
@@ -47,7 +47,8 @@ const sameContour = (a: ContourKey | null, b: ContourKey): boolean =>
     a.centre.every((coord, i) => coord === b.centre[i]) &&
     a.colourByMap?.molNo === b.colourByMap?.molNo &&
     a.colourByMap?.min === b.colourByMap?.min &&
-    a.colourByMap?.max === b.colourByMap?.max;
+    a.colourByMap?.max === b.colourByMap?.max &&
+    JSON.stringify(a.colourByMap?.gradient) === JSON.stringify(b.colourByMap?.gradient);
 
 /** What only needs recolouring existing buffers */
 type AppearanceKey = { alpha: number; colour: MapColour; positiveColour: MapColour; negativeColour: MapColour };
@@ -70,7 +71,7 @@ export class MapRepresentation {
     private buffers: ContourBuffer[] = [];
     private lastContour: ContourKey | null = null;
     private lastAppearance: AppearanceKey | null = null;
-    /** Smaller radius while the user drags a control (today `mapFastRadii`), not a setting */
+    /** Smaller radius while the user drags a control (MapDisplayDriver.setFastRadius), not a setting */
     private fastRadius: number | null = null;
     /** Whether the map's 2D slice was drawn for this representation ("slice" style) */
     private showingSlice = false;
@@ -204,7 +205,8 @@ export class MapRepresentation {
         if (data.colourByMap) {
             const otherMap = this.instance.getMapList().find(map => map.uniqueId === data.colourByMap.mapUid);
             if (otherMap) {
-                colourByMap = { molNo: otherMap.molNo, min: data.colourByMap.min, max: data.colourByMap.max };
+                const { min, max, gradient } = data.colourByMap;
+                colourByMap = { molNo: otherMap.molNo, min, max, gradient };
             }
         }
         return {
@@ -248,7 +250,8 @@ export class MapRepresentation {
         const meshType = MESH_TYPES[key.style as Exclude<MapStyle, "slice">];
         const options = { squashKey: this.squashKey };
         const mesh = key.colourByMap
-            ? await worker.get_map_contours_mesh_using_other_map_for_colours(
+            ? await worker.get_map_contours_mesh_coloured_by_other_map(
+                  key.colourByMap.gradient,
                   this.map.molNo,
                   key.colourByMap.molNo,
                   key.centre,

@@ -1,9 +1,14 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useMemo } from "react";
-import { setMapAlpha, setMapRadius, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle } from "../../../store/mapContourSettingsSlice";
+import { setMapSliceContourSpacing, setMapSliceNodalLines } from "../../../store/mapContourSettingsSlice";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
-import { selectPrimaryMapRepresentation } from "../../../store/mapRepresentationsSlice";
-import { currentAlpha, currentRadius } from "../../../utils/Representation/mapRepresentationData";
+import {
+    selectPrimaryMapRepresentation,
+    setPrimaryMapRepresentation,
+    setPrimaryMapRepresentationAlpha,
+    setPrimaryMapRepresentationRadius,
+} from "../../../store/mapRepresentationsSlice";
+import { currentAlpha } from "../../../utils/Representation/mapRepresentationData";
 import { setMovingMapSlice } from "../../../store/generalStatesSlice";
 import { setQuat } from "../../../store/glRefSlice";
 import { setOrigin } from "../../../store/sceneSettingsSlice";
@@ -51,10 +56,6 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const setOriginLocked = (locked: boolean) => {
         if (locked === props.map.isOriginLocked) return;
         props.map.toggleOriginLock(locked);
-        // The old radius list still has readers (this card's slider, sessions): give it the radius of the mode now
-        // in use. It writes that same mode's radius back, so nothing changes in the record.
-        const record = selectPrimaryMapRepresentation(store.getState(), props.map.uniqueId);
-        if (record) dispatch(setMapRadius({ molNo: props.map.molNo, radius: currentRadius(record) }));
     };
 
     const maxRadius = useMemo(() => {
@@ -101,11 +102,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const chooseStyle = (style: MapStyle) => {
         // Handles belong to the slice: none once the map is drawn another way.
         if (style !== "slice" && isMovingSlice) dispatch(setMovingMapSlice(null));
-        dispatch(setMapStyle({ molNo: props.map.molNo, style }));
-        // The old alpha list still has readers (sessions): give it the opacity of the style now in use. It writes
-        // that same style's opacity back, so nothing changes in the record.
-        const record = selectPrimaryMapRepresentation(store.getState(), props.map.uniqueId);
-        if (record) dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: currentAlpha(record) }));
+        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { style } }));
     };
 
     const opacitySlider = (
@@ -119,7 +116,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             showLabels={false}
             value={opacity}
             // Sets the opacity of the style in use
-            setValue={value => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: value }))}
+            setValue={value => dispatch(setPrimaryMapRepresentationAlpha({ mapUid: props.map.uniqueId, alpha: value }))}
             decimalPlaces={2}
         />
     );
@@ -189,14 +186,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         sliderTitle="Radius:"
                         isDisabled={!props.mapIsVisible}
                         value={props.mapRadius}
-                        setValue={newVal => {
-                            dispatch(
-                                setMapRadius({
-                                    molNo: props.map.molNo,
-                                    radius: newVal,
-                                })
-                            );
-                        }}
+                        // The radius of the draw mode in use (each keeps its own)
+                        setValue={newVal => dispatch(setPrimaryMapRepresentationRadius({ mapUid: props.map.uniqueId, radius: newVal }))}
                         usePreciseInput={true}
                         piWidth={"3rem"}
                     />}

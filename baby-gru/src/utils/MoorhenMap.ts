@@ -3,9 +3,22 @@ import { gpuMapContourSetting, notifyMapDataChanged } from "../WebGPUComponents/
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { hideMap, setDisplayBuffers, setMapSlice, setOrigin, setZoom } from "../store";
+import { setDisplayBuffers, setMapSlice, setOrigin, setZoom } from "../store";
 import { selectPrimaryMapRepresentation, setMapRepresentation } from "../store/mapRepresentationsSlice";
-import { type MapRepresentationData, type Vec3, currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
+import {
+    type MapInitialDisplay,
+    type MapRepresentationData,
+    type Vec3,
+    createDefaultMapRepresentationData,
+    currentAlpha,
+    currentRadius,
+    defaultColourByMapGradient,
+    withChanges,
+} from "./Representation/mapRepresentationData";
+import type { GradientColourTable } from "../components/inputs/MoorhenGradientPicker/gradientPresets";
+
+/** The map whose values colour another map's contour, from `min` to `max` along `gradient` */
+export type ColouringMap = { molNo: number; min: number; max: number; gradient?: GradientColourTable };
 import type { MapStyle } from "../store/mapContourSettingsSlice";
 import type { MapUnitCellGrid } from "../WebGPUComponents/mapContour/mapContourBox";
 import { makeMapGridSampler, type MapGridSampler } from "./mapSlice/mapGridSampler";
@@ -19,10 +32,6 @@ import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
 
-const _DEFAULT_CONTOUR_LEVEL = 0.8;
-const _DEFAULT_RADIUS = 13;
-const _DEFAULT_STYLE = "lines";
-const _DEFAULT_ALPHA = 1.0;
 const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071 };
 const _DEFAULT_POSITIVE_MAP_COLOUR = { r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645 };
 const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645 };
@@ -81,10 +90,15 @@ export class MoorhenMap {
     molNo: number;
     store: Store;
     commandCentre: CommandCentre | null;
+    /**
+     * The display this map gets when it reaches the store (its first record, map-display.md), over the defaults: set
+     * it before adding the map. After that, change the map's record (`setPrimaryMapRepresentation`).
+     */
+    initialDisplay: MapInitialDisplay | null = null;
     /** Before the map has a display record (map-display.md): the origin lock, draw origin and colouring map */
     private ownOriginLocked = false;
     private ownDrawOrigin: [number, number, number] | null = null;
-    private ownOtherMapForColouring: { molNo: number; min: number; max: number } | null = null;
+    private ownOtherMapForColouring: ColouringMap | null = null;
     mapCentre: [number, number, number];
     suggestedContourLevel: number;
     suggestedRadius: number;
@@ -706,7 +720,7 @@ export class MoorhenMap {
     }
 
     /** The map whose values colour this one's contour, or null */
-    get otherMapForColouring(): { molNo: number; min: number; max: number } | null {
+    get otherMapForColouring(): ColouringMap | null {
         const record = this.primaryRepresentation;
         if (!record) {
             return this.ownOtherMapForColouring;
@@ -715,10 +729,11 @@ export class MoorhenMap {
             return null;
         }
         const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.uniqueId === record.colourByMap.mapUid);
-        return otherMap ? { molNo: otherMap.molNo, min: record.colourByMap.min, max: record.colourByMap.max } : null;
+        const { min, max, gradient } = record.colourByMap;
+        return otherMap ? { molNo: otherMap.molNo, min, max, gradient } : null;
     }
 
-    set otherMapForColouring(other: { molNo: number; min: number; max: number } | null) {
+    set otherMapForColouring(other: ColouringMap | null) {
         this.ownOtherMapForColouring = other ? { ...other } : null;
         const record = this.primaryRepresentation;
         if (!record) {
@@ -727,7 +742,9 @@ export class MoorhenMap {
         let colourByMap: MapRepresentationData["colourByMap"] = null;
         if (other) {
             const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.molNo === other.molNo);
-            colourByMap = otherMap ? { mapUid: otherMap.uniqueId, min: other.min, max: other.max } : null;
+            // Without a gradient of its own, the one it has, else the default
+            const gradient = other.gradient ?? record.colourByMap?.gradient ?? defaultColourByMapGradient();
+            colourByMap = otherMap ? { mapUid: otherMap.uniqueId, min: other.min, max: other.max, gradient } : null;
         }
         if (JSON.stringify(colourByMap) !== JSON.stringify(record.colourByMap)) {
             this.changePrimaryRepresentation(record, { colourByMap });
@@ -748,40 +765,27 @@ export class MoorhenMap {
         positiveMapColour: { r: number; g: number; b: number };
         negativeMapColour: { r: number; g: number; b: number };
     } {
-        const record = this.primaryRepresentation;
-        if (record) {
-            return {
-                mapRadius: currentRadius(record),
-                contourLevel: record.contourLevel,
-                mapAlpha: currentAlpha(record),
-                mapStyle: record.style,
-                mapColour: record.colour ?? this.defaultMapColour,
-                positiveMapColour: record.positiveColour ?? this.defaultPositiveMapColour,
-                negativeMapColour: record.negativeColour ?? this.defaultNegativeMapColour,
-            };
-        }
-        // Not in the store yet
-        const state = this.store.getState();
-        const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius;
-        const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel;
-        const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha;
-        const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style;
-        const mapColour = state.mapContourSettings.mapColours.find(item => item.molNo === this.molNo)?.rgb;
-        const negativeMapColour = state.mapContourSettings.negativeMapColours.find(item => item.molNo === this.molNo)?.rgb;
-        const positiveMapColour = state.mapContourSettings.positiveMapColours.find(item => item.molNo === this.molNo)?.rgb;
+        // Not in the store yet: what its first record will be (MapDisplayDriver)
+        return this.getMapContourParamsOf(this.primaryRepresentation ?? this.prospectiveRepresentation());
+    }
+
+    private getMapContourParamsOf(record: MapRepresentationData): ReturnType<MoorhenMap["getMapContourParams"]> {
         return {
-            mapRadius: radius ? radius : _DEFAULT_RADIUS,
-            contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
-            mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
-            mapStyle: style ? style : _DEFAULT_STYLE,
-            mapColour: mapColour ? { r: mapColour.r / 255, g: mapColour.g / 255, b: mapColour.b / 255 } : this.defaultMapColour,
-            negativeMapColour: negativeMapColour
-                ? { r: negativeMapColour.r / 255, g: negativeMapColour.g / 255, b: negativeMapColour.b / 255 }
-                : this.defaultNegativeMapColour,
-            positiveMapColour: positiveMapColour
-                ? { r: positiveMapColour.r / 255, g: positiveMapColour.g / 255, b: positiveMapColour.b / 255 }
-                : this.defaultPositiveMapColour,
+            mapRadius: currentRadius(record),
+            contourLevel: record.contourLevel,
+            mapAlpha: currentAlpha(record),
+            mapStyle: record.style,
+            mapColour: record.colour ?? this.defaultMapColour,
+            positiveMapColour: record.positiveColour ?? this.defaultPositiveMapColour,
+            negativeMapColour: record.negativeColour ?? this.defaultNegativeMapColour,
         };
+    }
+
+    /** The record the map display driver will make for this map when it reaches the store (mapDisplayRecords.ts) */
+    private prospectiveRepresentation(): MapRepresentationData {
+        const settings = this.store?.getState?.()?.mapContourSettings;
+        const preferences = { defaultMapLitLines: !!settings?.defaultMapLitLines, defaultMapSurface: !!settings?.defaultMapSurface };
+        return withChanges(createDefaultMapRepresentationData(this, preferences), this.initialDisplay ?? {});
     }
 
     /**
@@ -838,7 +842,12 @@ export class MoorhenMap {
      * Hide the map contour
      */
     hideMapContour(): void {
-        this.store.dispatch(hideMap(this));
+        const record = this.primaryRepresentation;
+        if (record) {
+            this.changePrimaryRepresentation(record, { visible: false });
+        } else {
+            this.showOnLoad = false;
+        }
     }
 
     /** The map sampled anywhere, for its 2D slice: from its whole unit cell, fetched once per dataRevision. */
@@ -898,7 +907,7 @@ export class MoorhenMap {
         if (call !== this.sliceDrawCount || !sampler) return;
         // Asked to stop being a slice, or hidden, while the grid was on its way.
         const record = this.primaryRepresentation;
-        const visible = record ? record.visible : this.store.getState().mapContourSettings.visibleMaps.includes(this.molNo);
+        const visible = record ? record.visible : false;
         if (!visible || this.getMapContourParams().mapStyle !== "slice") return;
 
         // Up to the largest value in the slice, or the map: known only once the grid is here.
@@ -1190,12 +1199,14 @@ export class MoorhenMap {
      * @param {number} molNo - The imol for the other map
      * @param {number} min - The min value
      * @param {number} max - The max value
+     * @param gradient - The colours from min to max, as the gradient picker gives them (stops 0-1, colours 0-255);
+     * by default the one the map already has, else "Pool Party"
      */
-    setOtherMapForColouring(molNo: number, min: number = -0.9, max: number = 0.9) {
+    setOtherMapForColouring(molNo: number, min: number = -0.9, max: number = 0.9, gradient?: GradientColourTable) {
         if (molNo === null) {
             this.otherMapForColouring = null;
         } else {
-            this.otherMapForColouring = { molNo, min, max };
+            this.otherMapForColouring = { molNo, min, max, gradient };
         }
     }
 

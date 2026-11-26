@@ -8,7 +8,7 @@ import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
-import { changeMapRadius } from "../store/mapContourSettingsSlice";
+import { setPrimaryMapRepresentationRadius } from "../store/mapRepresentationsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store";
 import { Shortcut } from '../InstanceManager/Preferences';
@@ -337,7 +337,8 @@ export const moorhenKeyPress = (
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
         if (activeMap) {
-            dispatch( changeMapRadius({ molNo: activeMap.molNo, factor: action === 'increase_map_radius' ? 2 : -2 }) )
+            // The radius of the draw mode the map is in (its display record, map-display.md)
+            dispatch( setPrimaryMapRepresentationRadius({ mapUid: activeMap.uniqueId, by: action === 'increase_map_radius' ? 2 : -2 }) )
         }
     }
 

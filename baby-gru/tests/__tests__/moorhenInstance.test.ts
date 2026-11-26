@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { MoorhenInstance } from '@/InstanceManager';
+import { selectPrimaryMapRepresentation } from "../../src/store/mapRepresentationsSlice";
 import { _MoorhenReduxStore as MoorhenReduxStore } from '@/store/MoorhenReduxStore';
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre';
 import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
@@ -820,8 +821,9 @@ describe('files.loadMtz', () => {
 
         const state = MoorhenReduxStore.getState();
         expect(state.generalStates.activeMap.uniqueId).toBe(map.uniqueId);
-        expect(state.mapContourSettings.positiveMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 0, g: 1, b: 0 });
-        expect(state.mapContourSettings.negativeMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 1, g: 0, b: 0 });
+        // The requested colours (0-1) are the difference map's display record's (map-display.md)
+        expect(selectPrimaryMapRepresentation(state, diffMap.uniqueId)?.positiveColour).toEqual({ r: 0, g: 1, b: 0 });
+        expect(selectPrimaryMapRepresentation(state, diffMap.uniqueId)?.negativeColour).toEqual({ r: 1, g: 0, b: 0 });
     });
 
     test('applies defaults: name, isDifference, calcStructFact', async () => {

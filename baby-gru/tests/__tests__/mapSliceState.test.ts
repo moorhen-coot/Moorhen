@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
-import { setMapRadius, setMapSlice, setMapSliceContourSpacing, setMapSliceNodalLines } from "../../src/store/mapContourSettingsSlice";
+import { setMapSlice, setMapSliceContourSpacing, setMapSliceNodalLines } from "../../src/store/mapContourSettingsSlice";
 import { addMap } from "../../src/store/mapsSlice";
 import { addMapRepresentation, setMapRepresentation } from "../../src/store/mapRepresentationsSlice";
 import { setMovingMapSlice, setSelectedThreeDObject } from "../../src/store/generalStatesSlice";
@@ -62,7 +62,6 @@ describe("a map slice's state", () => {
     it("has handles at its centre, as wide as the slice, only while shown as a slice", () => {
         const store = createMoorhenStore();
         store.dispatch(setMapSlice({ molNo: 3, origin: [1, 2, 3], orientation: IDENTITY_ORIENTATION }));
-        store.dispatch(setMapRadius({ molNo: 3, radius: 6 }));
         store.dispatch(setMovingMapSlice(3));
         // Shown or not, and how, is the map's display record (map-display.md)
         store.dispatch(addMap(map));

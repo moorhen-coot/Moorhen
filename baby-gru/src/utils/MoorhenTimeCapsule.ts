@@ -17,16 +17,10 @@ import {
     setQuat,
     setSpecular,
     setSpecularPower,
-    setZoom, setContourLevel,
-    setMapAlpha,
-    setMapColours,
-    setMapRadius,
-    setMapStyle,
+    setZoom,
     setMapSlice,
     setMapSliceNodalLines,
-    setMapSliceContourSpacing,
-    setNegativeMapColours,
-    setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
+    setMapSliceContourSpacing, addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
     setReflectionMapMolNo,
@@ -1176,49 +1170,28 @@ export class MoorhenTimeCapsule {
         newMaps.forEach((map, index) => {
             const storedMapData = sessionData.mapData[index];
             map.showOnLoad = storedMapData.showOnLoad;
-            map.suggestedRadius = storedMapData.radius;
             map.suggestedContourLevel = storedMapData.contourLevel;
             // Absent in sessions written before cubes were readable, which is why it is coerced
             // rather than assigned: those maps are not orbitals and should get the full map card.
             map.isCube = Boolean(storedMapData.isCube);
+            // What the map showed, as its first display record (map-display.md): sessions hold one radius (the draw
+            // mode's in use when saved), one opacity (the style's in use) and colours 0-255 where set. The saved
+            // radius no longer overwrites the map's suggested one, which the other draw mode still starts from.
+            const toUnit = (rgb: { r: number; g: number; b: number } | null | undefined) =>
+                rgb ? { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 } : null;
+            map.initialDisplay = {
+                visible: Boolean(storedMapData.showOnLoad),
+                ...(storedMapData.contourLevel !== undefined && storedMapData.contourLevel !== null && { contourLevel: storedMapData.contourLevel }),
+                ...(storedMapData.style && { style: storedMapData.style as MapStyle }),
+                ...(storedMapData.radius && { currentRadius: storedMapData.radius }),
+                // proto3 has no unset float: a session without alpha reads back 0, which means the default
+                currentAlpha: storedMapData.rgba?.a || 1,
+                colour: toUnit(storedMapData.rgba?.mapColour),
+                positiveColour: toUnit(storedMapData.rgba?.positiveDiffColour),
+                negativeColour: toUnit(storedMapData.rgba?.negativeDiffColour),
+            };
             batch(() => {
-                dispatch(
-                    setMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.mapColour,
-                    })
-                );
-                dispatch(
-                    setNegativeMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.negativeDiffColour,
-                    })
-                );
-                dispatch(
-                    setPositiveMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.positiveDiffColour,
-                    })
-                );
-                dispatch(
-                    setMapRadius({
-                        molNo: map.molNo,
-                        radius: storedMapData.radius,
-                    })
-                );
-                dispatch(
-                    setContourLevel({
-                        molNo: map.molNo,
-                        contourLevel: storedMapData.contourLevel,
-                    })
-                );
-                dispatch(
-                    setMapAlpha({
-                        molNo: map.molNo,
-                        alpha: storedMapData.rgba.a,
-                    })
-                );
-                // Before the style, so that a map saved as a slice is drawn where it was rather than
+                // Before the map, so that a map saved as a slice is drawn where it was rather than
                 // through the centre of the view.
                 if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
                     dispatch(
@@ -1234,12 +1207,6 @@ export class MoorhenTimeCapsule {
                         dispatch(setMapSliceContourSpacing({ molNo: map.molNo, spacing }));
                     }
                 }
-                dispatch(
-                    setMapStyle({
-                        molNo: map.molNo,
-                        style: storedMapData.style,
-                    })
-                );
                 dispatch(addMap(map));
             });
         });

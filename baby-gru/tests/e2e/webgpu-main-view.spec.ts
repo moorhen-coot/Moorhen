@@ -25,8 +25,8 @@ interface Host {
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
         sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoThreeWayView(value: boolean): void; setDoAnaglyphStereo(value: boolean): void; setDoShadowDepthDebug(value: boolean): void };
-        mapContourSettings: { setMapRadius(value: { molNo: number; radius: number }): void };
-        getMapList(): { molNo: number }[];
+        mapRepresentations: { setPrimaryMapRepresentationRadius(value: { mapUid: string; radius: number }): void };
+        getMapList(): { molNo: number; uniqueId: string }[];
         getVideoRecorderRef(): { current: Recorder | null };
     }>;
 }
@@ -311,7 +311,7 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
 
     // A map loaded while WebGPU draws is contoured on the GPU, not by Coot (no segments of its
     // own in the scene's buffers), and contoured again at a smaller radius with nothing else
-    // asking for a frame (the map contour settings do).
+    // asking for a frame (the map's display record does).
     const ribbonSegments = (await mainView()).lastFrame?.segments ?? 0;
     await moorhen.loadFiles([{ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" }]);
     await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
@@ -329,7 +329,7 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
     await page.evaluate(async targetId => {
         const host = document.getElementById(targetId) as unknown as Host;
         const instance = await host.getMoorhenInstance();
-        instance.mapContourSettings.setMapRadius({ molNo: instance.getMapList()[0].molNo, radius: 6 });
+        instance.mapRepresentations.setPrimaryMapRepresentationRadius({ mapUid: instance.getMapList()[0].uniqueId, radius: 6 });
     }, id);
     await expect.poll(async () => (await mainView()).lastFrame?.mapTriangles ?? 0, { timeout: 60_000 }).toBeLessThan(mapTriangles);
 

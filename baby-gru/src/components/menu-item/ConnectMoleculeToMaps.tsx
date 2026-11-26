@@ -1,8 +1,8 @@
 import { batch, useDispatch, useSelector } from "react-redux";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { useRef } from "react";
 import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
-import { setContourLevel } from "../../store/mapContourSettingsSlice";
 import {
     enableUpdatingMaps,
     setConnectedMoleculeMolNo,
@@ -98,7 +98,7 @@ export const ConnectMoleculeToMaps = () => {
                     if (currentMap.isDifference) {
                         newContourLevel -= newContourLevel * 0.3;
                     }
-                    dispatch(setContourLevel({ molNo: currentMap.molNo, contourLevel: newContourLevel }));
+                    dispatch(setPrimaryMapRepresentation({ mapUid: currentMap.uniqueId, changes: { contourLevel: newContourLevel } }));
                 })
             );
         } else {

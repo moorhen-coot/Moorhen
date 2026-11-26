@@ -1,7 +1,6 @@
 import { useDispatch } from "react-redux";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
-import { setRequestDrawScene } from "../../../store/glRefSlice";
-import { setMapColours, setNegativeMapColours, setPositiveMapColours } from "../../../store/mapContourSettingsSlice";
+import { setPrimaryMapRepresentation } from "../../../store/mapRepresentationsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenColourPicker } from "../../inputs";
 
@@ -24,45 +23,17 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
         return null;
     }
 
-    const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => {
-        try {
-            dispatch(
-                setPositiveMapColours({
-                    molNo: props.map.molNo,
-                    rgb: color,
-                })
-            );
-            props.map.fetchDiffMapColourAndRedraw("positiveDiffColour");
-            dispatch(setRequestDrawScene());
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
+    // The picker gives colours 0-255, the map's display record keeps them 0-1. A record change redraws the map.
+    const toUnit = (colour: { r: number; g: number; b: number }) => ({ r: colour.r / 255, g: colour.g / 255, b: colour.b / 255 });
+    const changeDisplay = (changes: Parameters<typeof setPrimaryMapRepresentation>[0]["changes"]) =>
+        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes }));
 
-    const handleNegativeMapColorChange = (color: { r: number; g: number; b: number }) => {
-        try {
-            dispatch(
-                setNegativeMapColours({
-                    molNo: props.map.molNo,
-                    rgb: color,
-                })
-            );
-            props.map.fetchDiffMapColourAndRedraw("negativeDiffColour");
-            dispatch(setRequestDrawScene());
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
+    const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ positiveColour: toUnit(color) });
 
-    const handleColorChange = (color: { r: number; g: number; b: number }) => {
-        try {
-            dispatch(setMapColours({ molNo: props.map.molNo, rgb: color }));
-            props.map.fetchColourAndRedraw();
-            dispatch(setRequestDrawScene());
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
+    const handleNegativeMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ negativeColour: toUnit(color) });
+
+    // A colour of its own: no longer coloured by another map
+    const handleColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ colour: toUnit(color), colourByMap: null });
 
     const dropdown = () => {
         if (!props.map.isDifference) {

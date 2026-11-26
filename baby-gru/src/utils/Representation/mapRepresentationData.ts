@@ -4,6 +4,7 @@
  * See .roadmaps/map-display.md.
  */
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
+import { type GradientColourTable, gradientPresets } from "../../components/inputs/MoorhenGradientPicker/gradientPresets";
 import type { MoorhenMap } from "../MoorhenMap";
 import { guid } from "../utils";
 
@@ -30,15 +31,34 @@ export type MapRepresentationData = {
     colour: MapColour | null;
     positiveColour: MapColour | null;
     negativeColour: MapColour | null;
-    /** Colour the contour by the values of another map (Coot colours, `colour` unused) */
-    colourByMap: { mapUid: string; min: number; max: number } | null;
+    /**
+     * Colour the contour by the values of another map, from `min` to `max` along `gradient` (as the gradient picker
+     * gives it: stops 0-1, colours 0-255). `colour` is then unused.
+     */
+    colourByMap: { mapUid: string; min: number; max: number; gradient: GradientColourTable } | null;
     /** Draw around a fixed centre (world coordinates, as given to Coot) instead of the view origin */
     originLock: { centre: Vec3 } | null;
 };
 
+/** Fields that can be changed; `radius` and `alpha` can be given for some draw modes / styles only */
+export type MapRepresentationChanges = Partial<Omit<MapRepresentationData, "id" | "mapUid" | "radius" | "alpha">> & {
+    radius?: Partial<Record<MapDrawMode, number>>;
+    alpha?: Partial<Record<MapStyle, number>>;
+};
+
+/**
+ * A new map's display, set on the map before it is added (`MoorhenMap.initialDisplay`) and applied over the defaults
+ * when its first record is made: by session loading, MTZ loading, the menu items that make a map from another.
+ * `currentRadius` / `currentAlpha`: the radius of the draw mode / the opacity of the style the map ends up in.
+ */
+export type MapInitialDisplay = MapRepresentationChanges & { currentRadius?: number; currentAlpha?: number };
+
 export const drawModeOf = (data: MapRepresentationData): MapDrawMode => (data.originLock ? "full" : "local");
 export const currentRadius = (data: MapRepresentationData): number => data.radius[drawModeOf(data)];
 export const currentAlpha = (data: MapRepresentationData): number => data.alpha[data.style] ?? 1;
+
+/** The gradient a map coloured by another map gets unless told otherwise (a copy: the store freezes its state) */
+export const defaultColourByMapGradient = (): GradientColourTable => JSON.parse(JSON.stringify(gradientPresets["Pool Party"]));
 
 /** The radius an EM map is drawn at around the view ("Draw Local Map"), until changed */
 export const EM_LOCAL_RADIUS = 30;
@@ -93,3 +113,20 @@ export const createDefaultMapRepresentationData = (
         originLock: map.isEM && centre ? { centre: centre.map(coord => -coord) as Vec3 } : null,
     };
 };
+
+/** A record with changes applied (a new object; `radius` and `alpha` merged per draw mode / style) */
+export const withChanges = (data: MapRepresentationData, changes: MapInitialDisplay): MapRepresentationData => {
+    const { radius, alpha, currentRadius: radiusNow, currentAlpha: alphaNow, ...rest } = changes;
+    const next: MapRepresentationData = { ...data, ...rest, radius: { ...data.radius, ...radius }, alpha: { ...data.alpha, ...alpha } };
+    if (radiusNow) {
+        next.radius[drawModeOf(next)] = radiusNow;
+    }
+    if (alphaNow !== undefined) {
+        next.alpha[next.style] = alphaNow;
+    }
+    return next;
+};
+
+/** What a map made from another (sharpened, masked, flipped...) takes of its display: level, radius, style, opacity */
+export const displayToCopy = (data: MapRepresentationData | undefined): MapInitialDisplay =>
+    data ? { contourLevel: data.contourLevel, radius: { ...data.radius }, style: data.style, alpha: { ...data.alpha } } : {};

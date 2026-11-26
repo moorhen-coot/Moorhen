@@ -10,19 +10,27 @@ import { MapSettingsAccordion } from "../../src/components/card/MapCard/MapSetti
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
-import { setMapSlice, showMap } from "../../src/store/mapContourSettingsSlice";
+import { setMapSlice } from "../../src/store/mapContourSettingsSlice";
+import { addMap } from "../../src/store/mapsSlice";
+import { addMapRepresentation, selectPrimaryMapRepresentation } from "../../src/store/mapRepresentationsSlice";
 import { setQuat } from "../../src/store/glRefSlice";
 import { quatToMat4 } from "../../src/WebGLgComponents/quatToMat4.js";
 import { moorhen } from "../../src/types/moorhen";
 import "./testUtils";
 
-const orbital = { molNo: 7, isEM: false, isDifference: true, headerInfo: null, isOriginLocked: false } as unknown as moorhen.Map;
+const orbital = { molNo: 7, uniqueId: "orbital-7", isEM: false, isDifference: true, headerInfo: null, isOriginLocked: false } as unknown as moorhen.Map;
 const density = { ...orbital, isDifference: false } as unknown as moorhen.Map;
 
 const renderSettings = async (offerSlice: boolean, map = orbital) => {
     const store = createMoorhenStore();
-    store.dispatch(showMap(map));
-    const styleOf = () => store.getState().mapContourSettings.mapStyles.find(item => item.molNo === 7)?.style ?? "lines";
+    // What the map shows is its display record (map-display.md)
+    store.dispatch(addMap(map));
+    store.dispatch(addMapRepresentation({
+        id: "rep-7", mapUid: map.uniqueId, visible: true, contourLevel: 0.02, radius: { local: 5, full: 5 }, style: "lines",
+        alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
+        colourByMap: null, originLock: null,
+    }));
+    const styleOf = () => selectPrimaryMapRepresentation(store.getState(), map.uniqueId)?.style;
     const menuSystem = new MoorhenMenuSystem();
     const view = () => (
         <Provider store={store}>
@@ -49,7 +57,7 @@ describe("the 2D slice in a map's Draw Settings", () => {
         expect(screen.queryByText("Move & turn")).toBeNull();
 
         await user.click(screen.getByText("Draw as 2D slice"));
-        expect(store.getState().mapContourSettings.mapStyles.find(item => item.molNo === 7)?.style).toBe("slice");
+        expect(selectPrimaryMapRepresentation(store.getState(), "orbital-7")?.style).toBe("slice");
         update();
         await user.click(screen.getByText("Move & turn"));
         expect(store.getState().generalStates.movingMapSlice).toBe(7);

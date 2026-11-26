@@ -192,29 +192,6 @@ export {
     setElementsIndicesRestrict,
 }  from "./glRefSlice";
 export {
-    showMap,
-    hideMap,
-    setContourLevel,
-    setMapRadius,
-    setMapFastRadius,
-    setMapAlpha,
-    setMapStyle,
-    setMapSlice,
-    setMapSliceNodalLines,
-    setMapSliceContourSpacing,
-    changeMapRadius,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setMapColours,
-    setNegativeMapColours,
-    setPositiveMapColours,
-    changeContourLevel,
-    setReContourMapOnlyOnMouseUp,
-    resetMapContourSettings,
-}  from "./mapContourSettingsSlice";
-export {
     addMolecule,
     removeMolecule,
     emptyMolecules,
@@ -318,8 +295,22 @@ export {
     setMapRepresentation,
     setMapRepresentationAlpha,
     setMapRepresentationRadius,
+    setPrimaryMapRepresentation,
+    setPrimaryMapRepresentationAlpha,
+    setPrimaryMapRepresentationRadius,
 }  from "./mapRepresentationsSlice";
 export { setSeqViewerOption, setValidationOption, setValidationGradient, setShownBottomPanel }  from "./bottomPanelsSlice";
+export {
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
+    setDefaultMapSamplingRate,
+    setDefaultMapLitLines,
+    setMapLineWidth,
+    setDefaultMapSurface,
+    setReContourMapOnlyOnMouseUp,
+    resetMapContourSettings,
+}  from "./mapContourSettingsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

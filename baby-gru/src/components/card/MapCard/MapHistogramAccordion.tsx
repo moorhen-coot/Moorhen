@@ -1,8 +1,8 @@
 import { Chart, registerables } from "chart.js";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
-import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
@@ -45,9 +45,9 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 const peakIndex = points[0].index;
 
                 dispatch(
-                    setContourLevel({
-                        molNo: props.map.molNo,
-                        contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1),
+                    setPrimaryMapRepresentation({
+                        mapUid: props.map.uniqueId,
+                        changes: { contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1) },
                     })
                 );
             }

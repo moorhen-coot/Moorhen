@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { setPrimaryMapRepresentation, setPrimaryMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -22,7 +22,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "solid"}
                     onChange={() => {
-                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "solid" ? "lines" : "solid" }));
+                        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { style: props.mapStyle === "solid" ? "lines" : "solid" } }));
                     }}
                     label="Draw as a surface"
                 />
@@ -32,7 +32,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "lit-lines"}
                     onChange={() => {
-                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" }));
+                        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" } }));
                     }}
                     label="Activate lit lines"
                 />
@@ -44,7 +44,8 @@ export const MapSettings = (props: {
                 scale="linear"
                 sliderTitle="Opacity"
                 value={props.mapOpacity}
-                setValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
+                // The opacity of the style in use (each style keeps its own)
+                setValue={(newVal: number) => dispatch(setPrimaryMapRepresentationAlpha({ mapUid: props.map.uniqueId, alpha: newVal }))}
             />
         </>
     );
