@@ -95,6 +95,22 @@ export const SCENE_LOOKS: SceneLook[] = [
         },
     },
     {
+        id: "soft",
+        label: "Soft",
+        description: "Even, shadowless light shaded by ambient occlusion, no highlights: gentle on surfaces",
+        settings: {
+            ...CLASSIC,
+            // As ChimeraX's soft lighting: nearly all ambient (the shader's 1.5 x 0.6), a touch of
+            // directional light so the shape still reads (1.2 x 0.2 facing the light, nothing
+            // turned away), and the shading left to a broad ambient occlusion
+            ambient: grey(0.45),
+            diffuse: grey(0.7),
+            specular: grey(0.05),
+            doSSAO: true,
+            ssaoRadius: 6.5,
+        },
+    },
+    {
         id: "glossy",
         label: "Glossy",
         description: "Strong highlights, no effects",
