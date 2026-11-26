@@ -981,15 +981,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 // opening a file, and the ease is a window in which the move can be interrupted.
                 // Compared against what this effect last saw, so the snap applies to the view it
                 // arrived with and to nothing afterwards.
-                if (cameraSnap !== lastCameraSnap.current) {
-                    glRef.current.moveCameraTo({ origin: [...originState], quat: [quat[0], quat[1], quat[2], quat[3]], zoom },
-                        { kind: "instant" })
-                } else {
-                    glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
-                }
+                glRef.current.setOriginOrientationAndZoomAnimated(originState, quat, zoom,
+                    { instant: cameraSnap !== lastCameraSnap.current })
             }
-            lastCameraSnap.current = cameraSnap
         }
+        // Consumed whether or not the renderer was there to take it, or a snap dispatched before
+        // it mounted would wait and turn some later, unrelated centring into a jump.
+        lastCameraSnap.current = cameraSnap
     }, [zoom,quat,originState,cameraSnap])
 
     return  <>

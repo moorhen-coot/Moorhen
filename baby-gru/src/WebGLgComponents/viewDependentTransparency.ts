@@ -46,7 +46,7 @@
  * Coot ships a plain on/off switch and why this does too. Below about 0.3 opacity nothing much
  * happens, which is honest: a surface that is barely there has no shell to look along.
  *
- * This module is the maths and the dev-time setting only; the shader is where it runs. They are
+ * This module is the maths only; the shader is where it runs. They are
  * written to match line for line, and the test file is what says they still do.
  */
 

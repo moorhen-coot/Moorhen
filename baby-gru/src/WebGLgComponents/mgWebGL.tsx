@@ -1520,8 +1520,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setViewAnimated(this, o, q, z)
     }
 
-    setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void {
-        setOriginOrientationAndZoomAnimated(this, o, q, z)
+    setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number, options: { instant?: boolean } = {}) : void {
+        setOriginOrientationAndZoomAnimated(this, o, q, z, options)
     }
 
     calculateOriginDelta(newOrigin: [number, number, number], oldOrigin: [number, number, number], nFrames: number): [number, number, number] {

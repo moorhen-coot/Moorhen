@@ -188,6 +188,7 @@ export const AddCustomRepresentationCard = memo(
                                 ? { ...representationRef.current.wormOptions }
                                 : null,
                         nonCustomOpacity: nonCustomAlpha,
+                        viewDependentTransparency,
                         hbondedTo,
                     });
 
@@ -236,6 +237,7 @@ export const AddCustomRepresentationCard = memo(
                                 ? { ...representationRef.current.wormOptions }
                                 : null,
                         nonCustomOpacity: nonCustomAlpha,
+                        viewDependentTransparency,
                         hbondedTo,
                     });}
 

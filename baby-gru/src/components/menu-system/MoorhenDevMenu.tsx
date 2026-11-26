@@ -14,7 +14,6 @@ import {
 import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
-import { setRequestDrawScene } from "../../store/glRefSlice";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
