@@ -1,5 +1,5 @@
 import { Chart, registerables } from "chart.js";
-import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { selectSelectedMapRepresentation, setMapRepresentation } from "@/store/mapRepresentationsSlice";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
@@ -26,6 +26,8 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [zoomFactor, setZoomFactor] = useState<number>(1);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    // The representation the card acts on
+    const selectedId = useSelector((state: moorhen.State) => selectSelectedMapRepresentation(state, props.map.uniqueId)?.id);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [exponential, setExponential] = useState<boolean>(props.map.isEM); // set Y axis to logarithmic if EM map
@@ -44,12 +46,14 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 }
                 const peakIndex = points[0].index;
 
-                dispatch(
-                    setPrimaryMapRepresentation({
-                        mapUid: props.map.uniqueId,
-                        changes: { contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1) },
-                    })
-                );
+                if (selectedId) {
+                    dispatch(
+                        setMapRepresentation({
+                            id: selectedId,
+                            changes: { contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1) },
+                        })
+                    );
+                }
             }
         };
 

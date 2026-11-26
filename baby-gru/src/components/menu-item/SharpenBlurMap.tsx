@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useState } from "react";
 import { RootState } from "@/store";
 import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
-import { setPrimaryMapRepresentation } from "../../store/mapRepresentationsSlice";
+import { setMapVisible } from "../../store/mapRepresentationsSlice";
 import { displayToCopy } from "../../utils/Representation/mapRepresentationData";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -66,7 +66,7 @@ export const SharpenBlurMap = () => {
             await newMap.initialise();
             // It shows what the map it was made from showed, which is hidden (display records, map-display.md)
             newMap.initialDisplay = displayToCopy(selectedMap.primaryRepresentation);
-            dispatch(setPrimaryMapRepresentation({ mapUid: selectedMap.uniqueId, changes: { visible: false } }));
+            dispatch(setMapVisible({ mapUid: selectedMap.uniqueId, visible: false }));
             dispatch(addMap(newMap));
         }
         console.log(`Sharpen/blur map result: ${result.data.result.result}`);

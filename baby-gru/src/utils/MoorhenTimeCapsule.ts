@@ -76,7 +76,7 @@ import { MoorhenInstance } from "@/InstanceManager";
 import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
-import { selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
+import { selectIsMapVisible, selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
 import { DEFAULT_SLICE_CONTOUR_SPACING } from "./mapSlice/mapSlice";
 import { currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
 
@@ -552,7 +552,8 @@ export class MoorhenTimeCapsule {
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                showOnLoad: record?.visible ?? false,
+                // The map is shown when any of its representations is
+                showOnLoad: selectIsMapVisible(state, map.uniqueId),
                 contourLevel: record?.contourLevel,
                 radius: record ? currentRadius(record) : undefined,
                 rgba: {

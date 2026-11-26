@@ -16,6 +16,9 @@ import mapRepresentationsReducer, {
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,
+    selectIsMapVisible,
+    selectSelectedMapRepresentation,
+    setMapVisible,
 } from "../../src/store/mapRepresentationsSlice";
 import {
     type MapRepresentationData,
@@ -127,6 +130,42 @@ describe("mapRepresentations slice", () => {
         store.dispatch(setPrimaryMapRepresentationRadius({ mapUid: "map-em", radius: 3 }));
         store.dispatch(setPrimaryMapRepresentationRadius({ mapUid: "map-em", by: -10 }));
         expect(selectMapRepresentation(store.getState(), "em").radius.full).toBe(1);
+    });
+
+    test("a map is hidden and shown as a whole, each representation keeping its own visibility", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("mesh", "map-a")));
+        store.dispatch(addMapRepresentation(record("surface", "map-a")));
+        store.dispatch(addMapRepresentation(record("hidden", "map-a", { visible: false })));
+        store.dispatch(addMapRepresentation(record("other", "map-b")));
+        const visibility = () =>
+            Object.fromEntries(Object.values(store.getState().mapRepresentations.representations).map(item => [item.id, item.visible]));
+
+        store.dispatch(setMapVisible({ mapUid: "map-a", visible: false }));
+        expect(visibility()).toEqual({ mesh: false, surface: false, hidden: false, other: true });
+        expect(selectIsMapVisible(store.getState(), "map-a")).toBe(false);
+
+        // Shown again: the ones that were shown, not the one hidden on its own
+        store.dispatch(setMapVisible({ mapUid: "map-a", visible: true }));
+        expect(visibility()).toEqual({ mesh: true, surface: true, hidden: false, other: true });
+        expect(selectMapRepresentation(store.getState(), "mesh").hiddenWithMap).toBeUndefined();
+
+        // Nothing remembered (all hidden one by one): its first representation
+        ["mesh", "surface"].forEach(id => store.dispatch(setMapRepresentation({ id, changes: { visible: false } })));
+        store.dispatch(setMapVisible({ mapUid: "map-a", visible: true }));
+        expect(visibility()).toEqual({ mesh: true, surface: false, hidden: false, other: true });
+    });
+
+    test("the selected representation of a map, else its first", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("mesh", "map-a")));
+        store.dispatch(addMapRepresentation(record("surface", "map-a")));
+        const withSelection = (selected: Record<string, string>) => ({ ...store.getState(), generalStates: { selectedMapRepresentations: selected } });
+        expect(selectSelectedMapRepresentation(withSelection({}), "map-a").id).toBe("mesh");
+        expect(selectSelectedMapRepresentation(withSelection({ "map-a": "surface" }), "map-a").id).toBe("surface");
+        // Gone, or another map's: the first
+        expect(selectSelectedMapRepresentation(withSelection({ "map-a": "deleted" }), "map-a").id).toBe("mesh");
+        expect(selectSelectedMapRepresentation(withSelection({ "map-b": "surface" }), "map-b")).toBeUndefined();
     });
 
     test("closing a map removes its representations only", () => {

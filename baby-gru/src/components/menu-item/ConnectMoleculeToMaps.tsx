@@ -1,5 +1,5 @@
-import { batch, useDispatch, useSelector } from "react-redux";
-import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { batch, useDispatch, useSelector, useStore } from "react-redux";
+import { selectMapRepresentationsOfMap, setMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { useRef } from "react";
 import { enqueueSnackbar } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
@@ -25,6 +25,7 @@ export const ConnectMoleculeToMaps = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
+    const store = useStore<moorhen.State>();
     const connectedMoleculeMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.connectedMolecule);
 
     const dispatch = useDispatch();
@@ -93,12 +94,14 @@ export const ConnectMoleculeToMaps = () => {
                 uniqueMaps.map(async (imol, index) => {
                     const currentMap = maps.find(map => map.molNo === imol);
                     const postRmsd = await currentMap.fetchMapRmsd();
-                    const { contourLevel } = currentMap.getMapContourParams();
-                    let newContourLevel = (contourLevel * postRmsd) / prevRmsd[index];
-                    if (currentMap.isDifference) {
-                        newContourLevel -= newContourLevel * 0.3;
-                    }
-                    dispatch(setPrimaryMapRepresentation({ mapUid: currentMap.uniqueId, changes: { contourLevel: newContourLevel } }));
+                    // Each representation of the map keeps its level relative to the map's rms
+                    selectMapRepresentationsOfMap(store.getState(), currentMap.uniqueId).forEach(record => {
+                        let newContourLevel = (record.contourLevel * postRmsd) / prevRmsd[index];
+                        if (currentMap.isDifference) {
+                            newContourLevel -= newContourLevel * 0.3;
+                        }
+                        dispatch(setMapRepresentation({ id: record.id, changes: { contourLevel: newContourLevel } }));
+                    });
                 })
             );
         } else {

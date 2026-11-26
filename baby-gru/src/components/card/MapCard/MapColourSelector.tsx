@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
-import { setPrimaryMapRepresentation } from "../../../store/mapRepresentationsSlice";
+import { setMapRepresentation } from "../../../store/mapRepresentationsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenColourPicker } from "../../inputs";
 
@@ -25,8 +25,10 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
 
     // The picker gives colours 0-255, the map's display record keeps them 0-1. A record change redraws the map.
     const toUnit = (colour: { r: number; g: number; b: number }) => ({ r: colour.r / 255, g: colour.g / 255, b: colour.b / 255 });
-    const changeDisplay = (changes: Parameters<typeof setPrimaryMapRepresentation>[0]["changes"]) =>
-        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes }));
+    // On the representation the card acts on (the selected one, else the map's first)
+    const changeDisplay = (changes: Parameters<typeof setMapRepresentation>[0]["changes"]) => {
+        if (display.record) dispatch(setMapRepresentation({ id: display.record.id, changes }));
+    };
 
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ positiveColour: toUnit(color) });
 

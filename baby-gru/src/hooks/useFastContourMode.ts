@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useEffect, useRef } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
-import { setPrimaryMapRepresentation } from '../store/mapRepresentationsSlice';
+import { selectSelectedMapRepresentation, setMapRepresentation } from '../store/mapRepresentationsSlice';
 import { useMoorhenInstance } from '../InstanceManager/useMoorhenInstance';
 import { moorhen } from '../types/moorhen';
 import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
@@ -71,12 +71,18 @@ export const useFastContourMode = ({
         setIsInFastMode(false);
     };
 
+    /** The level of the representation the map's card acts on (the selected one, else the map's first) */
+    const setLevel = (contourLevel: number) => {
+        const record = selectSelectedMapRepresentation(store.getState(), map.uniqueId);
+        if (record) dispatch(setMapRepresentation({ id: record.id, changes: { contourLevel } }));
+    };
+
     const fastMapContourLevel = (newContourLevel: number) => {
         if (!map) return;
 
         // GPU contours are drawn at the full radius anyway
         if ((mapRadius <= radiusThreshold || gpuMapContourSetting.enabled) && !isInFastModeRef.current) {
-            dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes: { contourLevel: newContourLevel } }));
+            setLevel(newContourLevel);
             return;
         }
 
@@ -85,7 +91,7 @@ export const useFastContourMode = ({
             moorhenInstance?.mapDisplay?.setFastRadius(map.uniqueId, radius);
             setIsInFastMode(true);
         }
-        dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes: { contourLevel: newContourLevel } }));
+        setLevel(newContourLevel);
 
         if (fastModeTimeoutRef.current) {
             clearTimeout(fastModeTimeoutRef.current);

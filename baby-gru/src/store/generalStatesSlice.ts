@@ -25,6 +25,13 @@ const initialState: {
     selected2DObjectId: string | null;
     /** The map representation whose 2D slice shows manipulation handles (its id), or none */
     movingMapSlice: string | null;
+    /**
+     * Per map uid, the representation its card's controls, the scroll wheel and the keyboard act on (its id). A map
+     * absent here, or whose id is gone, uses its first representation (selectSelectedMapRepresentation).
+     */
+    selectedMapRepresentations: Record<string, string>;
+    /** The maps (uids) whose card shows its representations card even with a single one (Draw Settings toggle) */
+    multiRepresentationMaps: string[];
     isShowingTomograms: boolean;
     /** Progress of a long task that reports it (e.g. files.batchLoadLigands), shown by the long job notification */
     jobProgress: { label: string; done: number; total: number } | null;
@@ -62,6 +69,8 @@ const initialState: {
     selectedThreeDObjectId: null,
     selected2DObjectId: null,
     movingMapSlice: null,
+    selectedMapRepresentations: {},
+    multiRepresentationMaps: [],
     residueSelection: {
         molecule: null,
         first: null,
@@ -194,6 +203,15 @@ const generalStatesSlice = createSlice({
             state.movingMapSlice = action.payload;
             if (action.payload !== null) state.selectedThreeDObjectId = null;
         },
+        /** The representation of a map its card's controls act on */
+        setSelectedMapRepresentation: (state, action: PayloadAction<{ mapUid: string; id: string }>) => {
+            state.selectedMapRepresentations = { ...state.selectedMapRepresentations, [action.payload.mapUid]: action.payload.id };
+        },
+        /** Show a map's representations card in its card even with a single representation (or stop) */
+        setMapMultiRepresentation: (state, action: PayloadAction<{ mapUid: string; on: boolean }>) => {
+            const others = state.multiRepresentationMaps.filter(uid => uid !== action.payload.mapUid);
+            state.multiRepresentationMaps = action.payload.on ? [...others, action.payload.mapUid] : others;
+        },
         /** Which 2D overlay object is showing its handles, or none. */
         setSelected2DObject: (state, action: PayloadAction<string | null>) => {
             state.selected2DObjectId = action.payload;
@@ -243,6 +261,8 @@ export const {
     setSelected2DObject,
     setMovingMapSlice,
     setActiveMap,
+    setSelectedMapRepresentation,
+    setMapMultiRepresentation,
     setViewOnly,
     setTheme,
     setIsDraggingAtoms,

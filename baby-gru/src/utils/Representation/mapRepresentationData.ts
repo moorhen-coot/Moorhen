@@ -55,6 +55,10 @@ export type MapRepresentationData = {
     originLock: { centre: Vec3 } | null;
     /** The 2D slice, null until the map is first drawn as one (then through the centre of the view) */
     slice: MapSliceSettings | null;
+    /**
+     * Shown when its map was hidden as a whole (`setMapVisible`): shown again when the map is. Absent otherwise.
+     */
+    hiddenWithMap?: boolean;
 };
 
 /** Fields that can be changed; `radius` and `alpha` can be given for some draw modes / styles only */

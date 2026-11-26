@@ -111,6 +111,38 @@ const mapRepresentationsSlice = createSlice({
         },
         // API
         /**
+         * Show or hide a map as a whole, keeping each representation's own visibility: hiding hides the shown ones and
+         * remembers them (`hiddenWithMap`), showing brings those back (the first representation if none are
+         * remembered). A map is shown when any of its representations is.
+         */
+        setMapVisible: (state, action: PayloadAction<{ mapUid: string; visible: boolean }>) => {
+            const { mapUid, visible } = action.payload;
+            const ofMap = Object.values(state.representations).filter(representation => representation.mapUid === mapUid);
+            if (ofMap.length === 0) {
+                return;
+            }
+            if (!visible) {
+                ofMap.forEach(representation => {
+                    if (representation.visible) {
+                        representation.visible = false;
+                        representation.hiddenWithMap = true;
+                    }
+                });
+                return;
+            }
+            if (ofMap.some(representation => representation.visible)) {
+                return;
+            }
+            const remembered = ofMap.filter(representation => representation.hiddenWithMap);
+            (remembered.length > 0 ? remembered : [ofMap[0]]).forEach(representation => {
+                representation.visible = true;
+            });
+            ofMap.forEach(representation => {
+                delete representation.hiddenWithMap;
+            });
+        },
+        // API
+        /**
          * Change a representation's 2D slice: some of where it is (centre, orientation), its nodal lines, its contour
          * spacing. A representation without a slice yet gets one, through the origin facing down z where not given.
          */
@@ -162,6 +194,22 @@ export const selectMapRepresentation = (state: StateWithMapRepresentations, id: 
 export const selectPrimaryMapRepresentation = (state: StateWithMapRepresentations, mapUid: string): MapRepresentationData | undefined =>
     primaryOf(state.mapRepresentations, mapUid);
 
+/**
+ * The representation of a map its card's controls act on (`generalStates.selectedMapRepresentations`), or its first
+ * when none is selected or the selected one is gone.
+ */
+export const selectSelectedMapRepresentation = (
+    state: StateWithMapRepresentations & { generalStates: { selectedMapRepresentations?: Record<string, string> } },
+    mapUid: string
+): MapRepresentationData | undefined => {
+    const selected = state.mapRepresentations.representations[state.generalStates.selectedMapRepresentations?.[mapUid] ?? ""];
+    return selected && selected.mapUid === mapUid ? selected : primaryOf(state.mapRepresentations, mapUid);
+};
+
+/** Whether a map is shown: any of its representations is */
+export const selectIsMapVisible = (state: StateWithMapRepresentations, mapUid: string): boolean =>
+    Object.values(state.mapRepresentations.representations).some(representation => representation.mapUid === mapUid && representation.visible);
+
 /** A map's representations, in the order they were added */
 export const selectMapRepresentationsOfMap = createSelector(
     [(state: StateWithMapRepresentations) => state.mapRepresentations.representations, (_state: StateWithMapRepresentations, mapUid: string) => mapUid],
@@ -178,6 +226,7 @@ export const {
     setMapRepresentationAlpha,
     setMapRepresentationRadius,
     setMapRepresentationSlice,
+    setMapVisible,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,

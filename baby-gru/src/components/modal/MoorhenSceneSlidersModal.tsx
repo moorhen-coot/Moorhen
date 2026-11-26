@@ -241,13 +241,12 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         threeDObjects.forEach(obj => {
             spheres.push({ centre: centreOfObject(obj) as [number, number, number], radius: extentOfObject(obj) })
         })
-        maps.forEach(map => {
-            const record = map.primaryRepresentation
-            if (!record?.visible || record.style === 'slice') return
+        // Every shown representation of a map (map-display.md): around its locked centre, else the view
+        Object.values(mapRepresentations).forEach(record => {
+            if (!record.visible || record.style === 'slice') return
             const radius = currentRadius(record)
             if (!Number.isFinite(radius)) return
-            const drawOrigin = map.isOriginLocked ? (map.drawOrigin ?? map.mapCentre) : null
-            spheres.push({ centre: (drawOrigin ? drawOrigin.map(c => -c) : centre) as [number, number, number], radius })
+            spheres.push({ centre: (record.originLock ? [...record.originLock.centre] : centre) as [number, number, number], radius })
         })
         return reachFrom(centre, spheres)
     }, [atomSphere, threeDObjects, maps, mapRepresentations, originState])

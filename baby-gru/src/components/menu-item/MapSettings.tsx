@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux";
-import { setPrimaryMapRepresentation, setPrimaryMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectSelectedMapRepresentation, setMapRepresentation, setMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -12,6 +12,8 @@ export const MapSettings = (props: {
     disabled: boolean;
 }) => {
     const dispatch = useDispatch();
+    // The representation the map's card acts on (the selected one, else its first)
+    const selectedId = useSelector((state: moorhen.State) => selectSelectedMapRepresentation(state, props.map.uniqueId)?.id);
 
     const menuItemText = "Draw settings";
 
@@ -22,7 +24,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "solid"}
                     onChange={() => {
-                        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { style: props.mapStyle === "solid" ? "lines" : "solid" } }));
+                        if (selectedId) dispatch(setMapRepresentation({ id: selectedId, changes: { style: props.mapStyle === "solid" ? "lines" : "solid" } }));
                     }}
                     label="Draw as a surface"
                 />
@@ -32,7 +34,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "lit-lines"}
                     onChange={() => {
-                        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" } }));
+                        if (selectedId) dispatch(setMapRepresentation({ id: selectedId, changes: { style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" } }));
                     }}
                     label="Activate lit lines"
                 />
@@ -45,7 +47,7 @@ export const MapSettings = (props: {
                 sliderTitle="Opacity"
                 value={props.mapOpacity}
                 // The opacity of the style in use (each style keeps its own)
-                setValue={(newVal: number) => dispatch(setPrimaryMapRepresentationAlpha({ mapUid: props.map.uniqueId, alpha: newVal }))}
+                setValue={(newVal: number) => selectedId && dispatch(setMapRepresentationAlpha({ id: selectedId, alpha: newVal }))}
             />
         </>
     );

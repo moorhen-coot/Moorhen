@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { setMapRepresentation, setMapVisible } from "@/store/mapRepresentationsSlice";
+import { MapRepresentationsCard } from "./MapRepresentationChips";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
@@ -7,7 +8,6 @@ import { setActiveMap } from "../../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { addMap } from "../../../store/mapsSlice";
 import { moorhen } from "../../../types/moorhen";
-import { convertPxToRem, convertRemToPx } from "../../../utils/utils";
 import { doDownload } from "../../../utils/utils";
 import { MoorhenNumberInput, MoorhenPopoverButton, MoorhenSlider } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
@@ -33,7 +33,8 @@ type MoorhenMapCardPropsInterface = {
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const { initialContour = 0.8, initialRadius = 13 } = props;
 
-    // From the map's display record (map-display.md): the radius of the draw mode and the opacity of the style in use
+    // From the representation the card acts on (the selected one, else the map's first; map-display.md): the radius of
+    // the draw mode and the opacity of the style in use
     const display = useMapDisplay(props.map);
     const mapRadius = display.record ? display.radius : initialRadius;
     const mapContourLevel = display.record ? display.contourLevel : initialContour;
@@ -41,6 +42,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const mapOpacity = display.alpha;
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+    // The controls act on the selected representation: usable while it is shown. The eye shows / hides the map.
     const mapIsVisible = display.visible;
     const dispatch = useDispatch();
 
@@ -59,7 +61,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         if (Date.now() - lastCall < 500) {
             fastMapContourLevel(newContourLevel);
         } else {
-            dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { contourLevel: newContourLevel } }));
+            if (display.record) dispatch(setMapRepresentation({ id: display.record.id, changes: { contourLevel: newContourLevel } }));
         }
         setLastCall(Date.now());
     };
@@ -82,7 +84,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     };
 
     const handleVisibility = () => {
-        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { visible: !mapIsVisible } }));
+        dispatch(setMapVisible({ mapUid: props.map.uniqueId, visible: !display.mapVisible }));
         dispatch(setRequestDrawScene()); //this is annoying idk why the map manager doesn't redraw here
     };
 
@@ -106,7 +108,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const extraControls: React.JSX.Element[] = [
         <MoorhenButton
             key="visibility"
-            icon={`${mapIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}`}
+            icon={`${display.mapVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}`}
             onClick={handleVisibility}
             type="icon-only"
             size="accordion"
@@ -145,6 +147,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
+                <MapRepresentationsCard map={props.map} />
                 <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}

@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import {
@@ -8,6 +8,7 @@ import {
     setMapLineWidth,
     setReContourMapOnlyOnMouseUp,
 } from "../../store/mapContourSettingsSlice";
+import { selectIsMapVisible } from "../../store/mapRepresentationsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
@@ -22,6 +23,7 @@ export const MapContourSettings = () => {
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface);
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp);
     const commandCentre = useCommandCentre();
+    const store = useStore<moorhen.State>();
 
     const [mapSampling, setMapSampling] = useState<number>(defaultMapSamplingRate);
 
@@ -57,7 +59,8 @@ export const MapContourSettings = () => {
                                     },
                                     true
                                 )) as moorhen.WorkerResponse<number>;
-                                if (map.primaryRepresentation?.visible) {
+                                // Shown: any of its representations is
+                                if (selectIsMapVisible(store.getState(), map.uniqueId)) {
                                     return map.redrawWithNewData();
                                 } else {
                                     // Contoured when shown; the GPU contours fetch it then.

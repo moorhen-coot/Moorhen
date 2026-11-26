@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { useMoorhenInstance, usePersistentState } from "@/hooks";
 import { RootState } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
-import { setPrimaryMapRepresentation } from "../../store/mapRepresentationsSlice";
+import { setMapVisible } from "../../store/mapRepresentationsSlice";
 import { displayToCopy } from "../../utils/Representation/mapRepresentationData";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -88,7 +88,7 @@ export const MapMasking = () => {
             // It shows what the map it was made from showed (an EM map keeps its own radius), which is hidden (display records, map-display.md)
             newMap.initialDisplay = displayToCopy(selectedMap.primaryRepresentation);
             if (newMap.isEM) delete newMap.initialDisplay.radius;
-            dispatch(setPrimaryMapRepresentation({ mapUid: selectedMap.uniqueId, changes: { visible: false } }));
+            dispatch(setMapVisible({ mapUid: selectedMap.uniqueId, visible: false }));
             dispatch(addMap(newMap));
         }
     };

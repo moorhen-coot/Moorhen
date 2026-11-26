@@ -4,7 +4,7 @@ import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setOrigin, setZoom } from "../store";
-import { selectPrimaryMapRepresentation, setMapRepresentation, setMapRepresentationSlice } from "../store/mapRepresentationsSlice";
+import { selectPrimaryMapRepresentation, setMapRepresentation, setMapRepresentationSlice, setMapVisible } from "../store/mapRepresentationsSlice";
 import {
     type MapInitialDisplay,
     type MapRepresentationData,
@@ -834,9 +834,9 @@ export class MoorhenMap {
      * Hide the map contour
      */
     hideMapContour(): void {
-        const record = this.primaryRepresentation;
-        if (record) {
-            this.changePrimaryRepresentation(record, { visible: false });
+        if (this.primaryRepresentation) {
+            // The map as a whole: all its representations (shown again together by setMapVisible)
+            this.store.dispatch(setMapVisible({ mapUid: this.uniqueId, visible: false }));
         } else {
             this.showOnLoad = false;
         }

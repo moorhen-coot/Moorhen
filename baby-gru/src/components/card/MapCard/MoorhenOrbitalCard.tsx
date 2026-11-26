@@ -18,7 +18,8 @@
  */
 
 import { useDispatch } from "react-redux";
-import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { setMapRepresentation, setMapVisible } from "@/store/mapRepresentationsSlice";
+import { MapRepresentationsCard } from "./MapRepresentationChips";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
@@ -66,13 +67,14 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
         if (Date.now() - lastCall < 500) {
             fastMapContourLevel(newContourLevel);
         } else {
-            dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { contourLevel: newContourLevel } }));
+            if (display.record) dispatch(setMapRepresentation({ id: display.record.id, changes: { contourLevel: newContourLevel } }));
         }
         setLastCall(Date.now());
     };
 
     const handleVisibility = () => {
-        dispatch(setPrimaryMapRepresentation({ mapUid: props.map.uniqueId, changes: { visible: !mapIsVisible } }));
+        // The map as a whole (each representation keeps its own visibility)
+        dispatch(setMapVisible({ mapUid: props.map.uniqueId, visible: !display.mapVisible }));
         dispatch(setRequestDrawScene());
     };
 
@@ -111,7 +113,7 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
     const extraControls: React.JSX.Element[] = [
         <MoorhenButton
             key="visibility"
-            icon={mapIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+            icon={display.mapVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
             onClick={handleVisibility}
             type="icon-only"
             size="accordion"
@@ -140,6 +142,7 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
+                <MapRepresentationsCard map={props.map} />
                 <MoorhenStack direction="vertical" gap={"0.5rem"} style={{ justifyContent: "center" }}>
                     <MoorhenStack direction="row" justify="center" align="center">
                         <MoorhenNumberInput
