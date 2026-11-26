@@ -123,6 +123,14 @@ message Representation {
     string neighboursMoleculeUid = 16;
     /** A "Worm"'s; absent for other styles. */
     WormOptions wormOptions = 17;
+    /**
+     * Whether the surface thickens where it is seen edge-on (viewDependentTransparency.ts).
+     *
+     * The companion to nonCustomOpacity above, and declared here for the reason that field's
+     * comment records: a value written and read but never declared is one pbjs drops on the way
+     * out, and the symptom is a setting that survives a JSON backup and not a .pb session.
+     */
+    optional bool viewDependentTransparency = 18;
 }
 
 message MoleculeSessionData {
@@ -165,6 +173,10 @@ message MapDataSession {
   // Where its 2D contour slice was (utils/mapSlice/mapSlice.ts), whether or not it is drawn as one
   // now, so that it comes back there. Absent for a map that never had one, and in older sessions.
   optional MapSliceSession slice = 16;
+  // Whether the surface thickens where it is seen edge-on (viewDependentTransparency.ts). It only
+  // shows on a transparent map, but it is saved whatever the opacity is, so that turning the
+  // opacity back down after a reload finds the switch where it was left.
+  optional bool viewDependentTransparency = 17;
 }
 
 message MapSliceSession {

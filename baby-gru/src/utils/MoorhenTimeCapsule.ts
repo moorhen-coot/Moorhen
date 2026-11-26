@@ -23,6 +23,7 @@ import {
     setMapRadius,
     setMapStyle,
     setMapSlice,
+    setMapViewDependentTransparency,
     setMapSliceNodalLines,
     setMapSliceContourSpacing,
     setNegativeMapColours,
@@ -118,6 +119,11 @@ export type moleculeSessionData = {
         /** A "Worm"'s own options; absent for a worm with the general ones, other styles and sessions written before them. */
         wormOptions?: Partial<wormOptions> | null;
         nonCustomOpacity: number;
+        /**
+         * Whether the surface thickens where it is seen edge-on. Absent in sessions written
+         * before it existed, which read as off.
+         */
+        viewDependentTransparency?: boolean;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
         restrictToNeighbours: boolean;
@@ -166,6 +172,11 @@ export type mapDataSession = {
      * never had one, and in sessions written before slices.
      */
     slice?: { origin: number[]; orientation: number[]; nodalLines?: boolean; contourSpacing?: string } | null;
+    /**
+     * Whether the surface thickens where it is seen edge-on. Absent in sessions written before it
+     * existed, which read as off.
+     */
+    viewDependentTransparency?: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -521,6 +532,7 @@ export class MoorhenTimeCapsule {
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             wormOptions: item.style === "Worm" && !item.useDefaultWormOptions ? item.wormOptions : null,
                             nonCustomOpacity: item.nonCustomOpacity,
+                            viewDependentTransparency: item.viewDependentTransparency,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
@@ -563,6 +575,8 @@ export class MoorhenTimeCapsule {
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
+                viewDependentTransparency:
+                    state.mapContourSettings.mapViewDependentTransparency.includes(map.molNo),
                 slice: (() => {
                     const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
                     return slice ? {
@@ -1131,6 +1145,13 @@ export class MoorhenTimeCapsule {
                     );
                     representationIdsTaken.add(representation.uniqueId);
 
+                    // After the representation exists rather than through addRepresentation,
+                    // which takes its arguments positionally and is long enough already. It is a
+                    // uniform, so setting it afterwards costs nothing: the buffers are drawn and
+                    // the next frame reads it. Coerced because it is absent in older sessions.
+                    representation.setViewDependentTransparency(
+                        Boolean(item.viewDependentTransparency));
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
@@ -1215,6 +1236,14 @@ export class MoorhenTimeCapsule {
                     setMapAlpha({
                         molNo: map.molNo,
                         alpha: storedMapData.rgba.a,
+                    })
+                );
+                // Coerced rather than assigned: absent in any session written before the switch
+                // existed, and those maps are not edge-dense.
+                dispatch(
+                    setMapViewDependentTransparency({
+                        molNo: map.molNo,
+                        enabled: Boolean(storedMapData.viewDependentTransparency),
                     })
                 );
                 // Before the style, so that a map saved as a slice is drawn where it was rather than

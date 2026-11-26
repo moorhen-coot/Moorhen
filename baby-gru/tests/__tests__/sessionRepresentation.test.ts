@@ -29,8 +29,8 @@ const Representation = schema.lookupType("Representation");
  */
 const SAVED_FIELDS = [
     "uniqueId", "cid", "style", "isCustom", "colourRules", "bondOptions", "m2tParams", "wormOptions",
-    "nonCustomOpacity", "resEnvOptions", "neighboursCid", "restrictToNeighbours",
-    "excludeNeighbours", "hbondedToCid", "hbondedTo", "neighboursDistance",
+    "nonCustomOpacity", "viewDependentTransparency", "resEnvOptions", "neighboursCid",
+    "restrictToNeighbours", "excludeNeighbours", "hbondedToCid", "hbondedTo", "neighboursDistance",
 ] as const;
 
 describe("the representation message", () => {
@@ -86,6 +86,55 @@ describe("the representation message", () => {
 
         expect(transparent.nonCustomOpacity).toBe(0);
         expect(silent.nonCustomOpacity ?? null).toBeNull();
+    });
+
+    it("carries the edge-density switch through an encode and decode", () => {
+        // The companion to nonCustomOpacity and the same trap: it is saved and restored, so if it
+        // were not declared here it would survive a JSON backup and vanish from a .pb session.
+        const on = Representation.toObject(Representation.decode(
+            Representation.encode(Representation.create({ viewDependentTransparency: true })).finish()));
+        const off = Representation.toObject(Representation.decode(
+            Representation.encode(Representation.create({ viewDependentTransparency: false })).finish()),
+            { defaults: true });
+
+        expect(on.viewDependentTransparency).toBe(true);
+        expect(off.viewDependentTransparency).toBe(false);
+    });
+
+    it("reads an older session, which never mentioned it, as off", () => {
+        const silent = Representation.toObject(
+            Representation.decode(Representation.encode(Representation.create({})).finish()),
+            { defaults: true });
+        expect(Boolean(silent.viewDependentTransparency)).toBe(false);
+    });
+});
+
+describe("the map message", () => {
+    const MapData = schema.lookupType("MapDataSession");
+
+    it("declares the edge-density switch", () => {
+        expect(Object.keys(MapData.fields)).toContain("viewDependentTransparency");
+    });
+
+    it("carries it through an encode and decode, and reads an older session as off", () => {
+        const on = MapData.toObject(MapData.decode(
+            MapData.encode(MapData.create({ viewDependentTransparency: true })).finish()));
+        const silent = MapData.toObject(
+            MapData.decode(MapData.encode(MapData.create({})).finish()), { defaults: true });
+
+        expect(on.viewDependentTransparency).toBe(true);
+        expect(Boolean(silent.viewDependentTransparency)).toBe(false);
+    });
+
+    it("has not disturbed the fields around it", () => {
+        // Two tags were added here in quick succession - a map slice from main, and this. A
+        // collision would not fail to compile; it would silently decode one as the other.
+        const tags = Object.fromEntries(
+            Object.entries(MapData.fields).map(([name, field]) => [name, (field as { id: number }).id]));
+        expect(tags.isCube).toBe(15);
+        expect(tags.slice).toBe(16);
+        expect(tags.viewDependentTransparency).toBe(17);
+        expect(new Set(Object.values(tags)).size).toBe(Object.values(tags).length);
     });
 });
 

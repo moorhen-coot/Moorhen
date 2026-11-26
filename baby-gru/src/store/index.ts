@@ -120,6 +120,7 @@ export {
     setMapRadius,
     setMapFastRadius,
     setMapAlpha,
+    setMapViewDependentTransparency,
     setMapStyle,
     setMapSlice,
     setMapSliceNodalLines,
