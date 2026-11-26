@@ -18,12 +18,20 @@ import { describe, expect, it } from "@jest/globals";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import {
-    BULK_FALLOFF, MINIMUM_FACING, viewDependentAlpha, viewDependentTransparencySetting,
+    BULK_FALLOFF, MINIMUM_FACING, viewDependentAlpha,
 } from "../../src/WebGLgComponents/viewDependentTransparency";
 
 describe("leaving things alone", () => {
-    it("is off until something turns it on", () => {
-        expect(viewDependentTransparencySetting.enabled).toBe(false);
+    it("is driven only by the buffer, with no global switch behind it", () => {
+        // There was one, to judge the effect before the interface had a control for it. Its
+        // removal is worth asserting: a global that quietly turns this on everywhere would be
+        // indistinguishable, from inside a single test, from the per-representation switch
+        // working.
+        const drawCore = readFileSync(
+            join(__dirname, "../../src/WebGLgComponents/mgWebGLParts/drawCore.ts"), "utf8");
+        expect(drawCore).toContain(
+            "const bufferViewDependent = !!displayBuffers[idx].viewDependentTransparency;");
+        expect(drawCore).not.toContain("viewDependentTransparencySetting");
     });
 
     it("leaves both extremes of opacity where they are", () => {

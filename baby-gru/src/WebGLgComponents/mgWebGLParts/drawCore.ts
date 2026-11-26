@@ -10,7 +10,6 @@ import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
 import { isInvisible, shouldCastShadow } from '../objectFade';
-import { viewDependentTransparencySetting } from '../viewDependentTransparency';
 import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
 import { highlightSiblings } from '../highlightGroup';
@@ -612,11 +611,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // Faded at all: it stops casting a shadow. An object that has half vanished while its
             // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
             const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
-            // The buffer's own setting, or - while there is nothing in the interface to set it -
-            // whatever the dev menu is asking for. The per-buffer value wins, so wiring a
-            // representation up to it later takes this global out of the picture for that buffer.
-            const bufferViewDependent = displayBuffers[idx].viewDependentTransparency
-                || viewDependentTransparencySetting.enabled;
+            const bufferViewDependent = !!displayBuffers[idx].viewDependentTransparency;
             if (isInvisible(bufferFade)) {
                 continue;
             }

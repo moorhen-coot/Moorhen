@@ -14,7 +14,6 @@ import {
 import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
-import { viewDependentTransparencySetting } from "../../WebGLgComponents/viewDependentTransparency";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -203,8 +202,6 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
-    const [viewDependentTransparency, setViewDependentTransparency] =
-        useState<boolean>(viewDependentTransparencySetting.enabled);
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
     // every WebGPU switch shows off and cannot be changed, whatever it is set to.
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
@@ -650,26 +647,6 @@ export const MoorhenDevMenu = () => {
                     >
                         Log triangles by representation
                     </MoorhenMenuItem>
-                    {/*
-                      * Here, and not in map or molecule settings, because it drives every
-                      * transparent surface at once - enough to judge the effect on a real map
-                      * before the interface commits to it. The per-representation switch replaces
-                      * this one.
-                      */}
-                    <MoorhenToggle
-                        type="switch"
-                        checked={viewDependentTransparency}
-                        label="View-dependent transparency (all surfaces)"
-                        tooltip="Transparent surfaces thicken where they are seen edge-on. Coot's curve; needs an opacity below 1 to do anything, and little happens below about 0.3."
-                        onChange={() => {
-                            const enabled = !viewDependentTransparency;
-                            viewDependentTransparencySetting.enabled = enabled;
-                            setViewDependentTransparency(enabled);
-                            // A uniform changes nothing until something draws, and a switch asks
-                            // for no frame of its own.
-                            dispatch(setRequestDrawScene(true));
-                        }}
-                    />
                 </MoorhenStack>
             </MoorhenAccordion>
             <MoorhenAccordion title="Files">

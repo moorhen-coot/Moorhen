@@ -90,11 +90,3 @@ export const viewDependentAlpha = (base: number, facing: number): number => {
     const shell = 1 - Math.pow(transmitted, 1 / towards);
     return Math.pow(shell, BULK_FALLOFF);
 };
-
-/**
- * Whether it runs, while there is nothing in the interface to say.
- *
- * Off, so that until something turns it on nothing anywhere is changed. The per-representation
- * switch replaces this; it is not meant to survive that.
- */
-export const viewDependentTransparencySetting = { enabled: false };
