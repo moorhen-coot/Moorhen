@@ -1,9 +1,11 @@
 import {
+    addAnnotations,
     addCustomRepresentation,
     addObject,
     addUserScene,
     addUserSnapshot,
     addVectors,
+    emptyAnnotations,
     emptyObjects,
     emptyVectors,
     applySceneSettingsSnapshot,
@@ -650,9 +652,10 @@ export class MoorhenUserSceneManager {
      */
     private capture(): SceneContent {
         const content = emptyContent(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
-        const { vectors, threeDObjects } = this.instance.store.getState();
+        const { vectors, threeDObjects, annotations } = this.instance.store.getState();
         // Copies: the store freezes what it holds, and the shown lists keep changing
         content.sections.vectors = structuredClone(vectors.vectorsList);
+        content.sections.annotations = structuredClone(annotations.annotationsList);
         content.sections.threeDObjects = structuredClone(threeDObjects.objects);
         // The map representation records (map-display.md), of the maps loaded now
         const maps = this.instance.getMapList();
@@ -783,12 +786,17 @@ export class MoorhenUserSceneManager {
     }
 
     /**
-     * Show the scene's vectors and 3D shapes, if it has them (an older scene keeps the shown ones).
+     * Show the scene's vectors, 3D shapes and text annotations, if it has them (an older scene keeps
+     * the shown ones).
      * A list already shown is left alone, so it is not redrawn.
      */
     private showAnnotations(content: SceneContent) {
-        const { vectors, threeDObjects, generalStates } = this.instance.store.getState();
-        const { vectors: sceneVectors, threeDObjects: sceneObjects } = content.sections;
+        const { vectors, threeDObjects, annotations, generalStates } = this.instance.store.getState();
+        const { vectors: sceneVectors, threeDObjects: sceneObjects, annotations: sceneAnnotations } = content.sections;
+        if (sceneAnnotations && JSON.stringify(sceneAnnotations) !== JSON.stringify(annotations.annotationsList)) {
+            this.instance.dispatch(emptyAnnotations());
+            this.instance.dispatch(addAnnotations(structuredClone(sceneAnnotations)));
+        }
         if (sceneVectors && JSON.stringify(sceneVectors) !== JSON.stringify(vectors.vectorsList)) {
             this.instance.dispatch(emptyVectors());
             // Copies: the scene's are frozen in the store, the shown ones can be edited

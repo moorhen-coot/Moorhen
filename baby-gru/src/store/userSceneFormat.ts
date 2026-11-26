@@ -5,6 +5,7 @@ import type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
 import type { ThreeDObject } from "./threeDObjectsSlice";
 import type { UserScene } from "./userScenesSlice";
 import type { MoorhenVector } from "./vectorsSlice";
+import type { MoorhenAnnotation } from "./annotationsSlice";
 
 /** Version of the scene data format saved in session files ({@link UserSceneState}) */
 export const USER_SCENE_FORMAT_VERSION = 1;
@@ -28,6 +29,8 @@ export type SceneSections = {
     vectors?: MoorhenVector[];
     /** The 3D shapes the scene shows. Absent (older scene): the shown ones are kept */
     threeDObjects?: ThreeDObject[];
+    /** The 3D text annotations the scene shows. Absent (older scene): the shown ones are kept */
+    annotations?: MoorhenAnnotation[];
     /**
      * How the scene shows each map: the map representation records (map-display.md) of the maps in `objects.maps`.
      * Absent (older scene): the shown ones are kept. A map loaded after the scene was saved keeps its own.
@@ -165,7 +168,7 @@ const readNames = (value: unknown): { [uniqueId: string]: string } =>
 export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
     const scene: UserScene = { id: entry.id, name: entry.name };
     if (!isObject(entry.sections)) return scene;
-    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects, maps } = entry.sections;
+    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects, annotations, maps } = entry.sections;
     const molecules = isObject(entry.objects?.molecules) ? entry.objects.molecules : {};
     const content: SceneContent = {
         objects: {
@@ -189,6 +192,7 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
         content.sections.threeDObjects = readIdentified(threeDObjects).filter(
             item => typeof item.type === "string"
         ) as unknown as ThreeDObject[];
+    if (annotations !== undefined) content.sections.annotations = readIdentified(annotations) as unknown as MoorhenAnnotation[];
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
         content.camera = { origin: [...camera.origin] as [number, number, number], zoom: camera.zoom, quat: [...camera.quat] };

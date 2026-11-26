@@ -35,6 +35,7 @@ import { MoorhenSuperposeStructuresModal } from "../../modal/MoorhenSuperposeStr
 import { MoorhenUnmodelledBlobsModal } from "../../modal/MoorhenUnmodelledBlobsModal";
 import { MoorhenValidationPlotModal } from "../../modal/MoorhenValidationPlotModal";
 import { MoorhenVectorsModal } from "../../modal/MoorhenVectorsModal";
+import { MoorhenAnnotationsModal } from "../../modal/MoorhenAnnotationsModal";
 import { MoorhenWaterValidationModal } from "../../modal/MoorhenWaterValidationModal";
 import { MoorhenNOERestraints } from "../../modal/MoorhenNOERestraints";
 import { MoorhenCheckListTestModal } from "../../modal/MoorhenCheckListTestModal";
@@ -65,6 +66,7 @@ export type BuiltInModalKey =
     | "mrparse"
     | "colour-map-by-map"
     | "vectors"
+    | "annotations"
     | "overlays-2d"
     | "conkit"
     | "pae-plot"
@@ -109,6 +111,7 @@ const modalsMap: Record<BuiltInModalKey, React.FC<ModalComponentProps>> = {
     qscore: MoorhenQScoreModal,
     "colour-map-by-map": MoorhenColourMapByOtherMapModal,
     vectors: MoorhenVectorsModal,
+    annotations: MoorhenAnnotationsModal,
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,

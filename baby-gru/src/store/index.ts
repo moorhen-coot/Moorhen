@@ -100,40 +100,6 @@ export {
     spreadSceneFromKeyframe, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 }  from "./movieSlice";
-export {
-    addImageOverlay,
-    addTextOverlay,
-    addSvgPathOverlay,
-    addFracPathOverlay,
-    emptyOverlays,
-    addCallback,
-    addLatexOverlay,
-    removeImageOverlay,
-    removeLatexOverlay,
-    removeTextOverlay,
-    removeSvgPathOverlay,
-    removeFracPathOverlay,
-}  from "./overlaysSlice";
-export {
-    addObject,
-    removeObject,
-    removeObjectById,
-    removeObjectsByTag,
-    updateObject,
-    emptyObjects,
-
-}  from "./threeDObjectsSlice";
-export {
-    addVector,
-    removeVector,
-    emptyVectors,
-    addVectors,
-    removeVectors,
-    removeVectorsMatchingIDString,
-    removeVectorsByTag,
-    removeVectorById,
-    removeVectorsByIds
-}  from "./vectorsSlice";
 export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
 export {
     setRequestDrawScene,
@@ -274,8 +240,10 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
+export { addAnnotation, addAnnotations, updateAnnotation, removeAnnotationById, removeAnnotationsByTag, emptyAnnotations }  from "./annotationsSlice";
 export {
     setSelectedThreeDObject,
+    setSelected2DObject,
     setMovingMapSlice,
     setActiveMap,
     setViewOnly,
@@ -310,6 +278,43 @@ export {
     setAllowMergeFittedLigand,
     setDisableFileUpload,
 }  from "./generalStatesSlice";
+export {
+    addImageOverlay,
+    addTextOverlay,
+    addSvgPathOverlay,
+    addFracPathOverlay,
+    emptyOverlays,
+    addCallback,
+    addLatexOverlay,
+    removeImageOverlay,
+    removeLatexOverlay,
+    removeTextOverlay,
+    removeSvgPathOverlay,
+    removeFracPathOverlay,
+    addShapeOverlay,
+    removeShapeOverlay,
+    updateOverlay,
+}  from "./overlaysSlice";
+export {
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
+
+}  from "./threeDObjectsSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

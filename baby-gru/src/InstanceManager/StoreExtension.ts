@@ -545,6 +545,9 @@ export class StoreExtension {
             addVector(value:MoorhenVector){
             dispatch(addVector(value));
             },
+            /** *
+            * Vectors that do not say whether their label is LaTeX are read the old way ($...$), so a
+            * caller or scene from before the switch keeps its typeset labels. */
             addVectors(value:MoorhenVector[]){
             dispatch(addVectors(value));
             },
