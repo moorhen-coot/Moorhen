@@ -48,10 +48,12 @@ describe("scene looks", () => {
         expect(currentLook(store.getState().sceneSettings)).toBeUndefined();
     });
 
-    test("soft: mostly ambient light, no highlights or shadows, shaded by a broad ambient occlusion", () => {
+    test("soft: more ambient light than Classic, gentler light, almost no highlight, no shadows, a broad ambient occlusion", () => {
         const { settings } = look("soft");
-        expect(settings.ambient[0]).toBeGreaterThan(settings.diffuse[0]);
-        expect(settings.specular).toEqual([0, 0, 0, 1]);
+        const classic = SCENE_LOOKS[0].settings;
+        expect(settings.ambient[0]).toBeGreaterThan(classic.ambient[0]);
+        expect(settings.diffuse[0]).toBeLessThan(classic.diffuse[0]);
+        expect(settings.specular[0]).toBeLessThan(0.1);
         expect(settings).toMatchObject({ doSSAO: true, doShadow: false, doEdgeDetect: false });
         expect(settings.ssaoRadius).toBeGreaterThan(SCENE_LOOKS[0].settings.ssaoRadius);
     });
