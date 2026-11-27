@@ -640,6 +640,14 @@ const sceneSettingsSlice = createSlice({
         setClipEnd: (state, action: PayloadAction<number>) => {
             state.clipEnd = action.payload;
         },
+        /**
+         * Clip and fog together, in one update: the camera's slab echoed back (mgWebGL.echoSlabToStore). One at a
+         * time, each update re-renders and MoorhenWebMG's slab effects write the half-updated slab back to the camera,
+         * which echoes again, nested: a scene switch, which changes all four, looped until React gave up.
+         */
+        setClipAndFog: (state, action: PayloadAction<SlabChanges>) => {
+            Object.assign(state, action.payload);
+        },
         // API
         /* Set the origin of the scene to the provided coordinates.
         @param value [number, number, number] X, Y, Z coordinates */
@@ -676,6 +684,9 @@ const sceneSettingsSlice = createSlice({
 
     },
 });
+
+/** Some of the slab's four values, as the store keeps them (setClipAndFog) */
+export type SlabChanges = { clipStart?: number; clipEnd?: number; fogStart?: number; fogEnd?: number };
 
 export const {
     setOrigin,
@@ -740,6 +751,7 @@ export const {
     setFogEnd,
     setClipStart,
     setClipEnd,
+    setClipAndFog,
     setZoom,
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
