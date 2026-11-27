@@ -47,6 +47,15 @@ describe("map representation presets", () => {
         expect(new Set(records.map(record => record.id)).size).toBe(2);
     });
 
+    test("filled mesh: a mesh and a faint surface (5% opaque, not denser at its edges) at the load level", () => {
+        const records = presetRecords(preset("filled-mesh"), base, { isDifference: false }, UNIT);
+        expect(summary(records)).toEqual([
+            ["lines", 0.3, 1],
+            ["solid", 0.3, 0.05],
+        ]);
+        expect(records.map(record => record.viewDependentTransparency)).toEqual([false, false]);
+    });
+
     test("density layers: three transparent surfaces at 1, 2 and 4 times the load level, blue, yellow and red, denser at their edges", () => {
         const records = presetRecords(preset("density-layers"), base, { isDifference: false }, UNIT);
         expect(summary(records)).toEqual([

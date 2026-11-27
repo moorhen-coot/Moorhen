@@ -34,6 +34,16 @@ export const MAP_REPRESENTATION_PRESETS: MapRepresentationPreset[] = [
         ],
     },
     {
+        id: "filled-mesh",
+        name: "Filled mesh",
+        description: "A mesh at the default level, filled with a faint surface at the same level",
+        layers: [
+            { style: "lines", times: 1 },
+            // Plain transparency: thickening at the edges would outline the surface, not fill the mesh
+            { style: "solid", times: 1, alpha: 0.05 },
+        ],
+    },
+    {
         id: "density-layers",
         name: "Density layers",
         description: "Three transparent surfaces: the default level in blue, twice it in yellow, four times it in red",
