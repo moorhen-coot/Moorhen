@@ -48,11 +48,12 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
 
     // From the map's display record (map-display.md): the radius of the draw mode and the opacity of the style in use
     const display = useMapDisplay(props.map);
-    const mapContourLevel = display.record ? display.contourLevel : initialContour;
     const mapRadius = display.radius;
     const mapStyle = display.style;
     const mapOpacity = display.alpha;
+    // Draw Settings act on the first representation: usable while it is shown. The map's own actions while any is
     const mapIsVisible = display.visible;
+    const mapShown = display.mapVisible;
 
     // Multi-representation mode: each representation's level and draw settings are in its chip's edit popover
     const isMultiRepresentation = useIsMultiRepresentation(props.map);
@@ -66,16 +67,16 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
     const cardTitle = useMemo(() => (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
             <span style={{ flexShrink: 0 }}>#{props.map.molNo}</span>
-            <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
+            <MapColourSelector map={props.map} mapIsVisible={mapShown} />
             <div style={{ minWidth: 0, flex: "1 1 0" }}>
                 <ItemName item={props.map} />
             </div>
         </div>
-    ), [props.map, mapIsVisible]);
+    ), [props.map, mapShown]);
 
     const dropDownMenu: React.JSX.Element = (
         <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
-            <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
+            <MoorhenMapInfoCard key="info-map" disabled={!mapShown} map={props.map} />
             <MoorhenMenuItemPopover menuItemText="Delete Orbital">
                 <DeleteDisplayObject key="delete-map" item={props.map} />
             </MoorhenMenuItemPopover>

@@ -54,6 +54,27 @@ describe("a scene's maps section, read from a file", () => {
         ]);
     });
 
+    test("drops records that cannot be contoured: empty or partial radii, an unknown style; fills opacities in", () => {
+        const scene = fromFileEntry({
+            id: "custom-1",
+            name: "Figure",
+            objects: { molecules: {}, maps: { "map-1": "map.mtz" } },
+            sections: {
+                maps: [
+                    { ...record, id: "no-radius", radius: {} },
+                    { ...record, id: "half-radius", radius: { local: 15 } },
+                    { ...record, id: "bad-style", style: "sparkles" },
+                    { ...record, id: "some-alpha", alpha: { solid: 0.5 } },
+                    { ...record, id: "bad-colouring", colourByMap: { mapUid: "map-2", gradient: [] } },
+                ] as never,
+            },
+        });
+        expect(scene.content.sections.maps.map(item => item.id)).toEqual(["some-alpha", "bad-colouring"]);
+        expect(scene.content.sections.maps[0].alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 0.5, slice: 1 });
+        // A colouring map without its range: not coloured by it
+        expect(scene.content.sections.maps[1].colourByMap).toBeNull();
+    });
+
     test("is absent in a scene saved before maps were in scenes: the shown maps are kept", () => {
         const scene = fromFileEntry({ id: "custom-1", name: "Figure", objects: { molecules: {} }, sections: { representations: [] } });
         expect(scene.content.sections.maps).toBeUndefined();

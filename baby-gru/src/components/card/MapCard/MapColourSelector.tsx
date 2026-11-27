@@ -35,10 +35,6 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
     const swatch = colourByMap ? { style: { backgroundImage: colourTableToCssGradient(colourByMap.gradient) } } : {};
     const tooltip = colourByMap ? `Coloured by ${byMapName ?? "another map"}: pick a colour to use a plain one` : "Change Map Colour";
 
-    if (mapColour === null) {
-        return null;
-    }
-
     // The picker gives colours 0-255, the map's display record keeps them 0-1. A record change redraws the map.
     const toUnit = (colour: { r: number; g: number; b: number }) => ({ r: colour.r / 255, g: colour.g / 255, b: colour.b / 255 });
     // On `recordId`'s representation, else on every representation of the map
@@ -49,11 +45,11 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
         ids.forEach(id => dispatch(setMapRepresentation({ id, changes })));
     };
 
-    const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ positiveColour: toUnit(color) });
+    // A colour of its own: no longer coloured by another map (a difference map's too)
+    const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ positiveColour: toUnit(color), colourByMap: null });
 
-    const handleNegativeMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ negativeColour: toUnit(color) });
+    const handleNegativeMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ negativeColour: toUnit(color), colourByMap: null });
 
-    // A colour of its own: no longer coloured by another map
     const handleColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ colour: toUnit(color), colourByMap: null });
 
     const dropdown = () => {

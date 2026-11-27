@@ -1,8 +1,13 @@
-import { addMapRepresentation, removeMapRepresentationsOfMap, selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
+import {
+    addMapRepresentation,
+    removeMapRepresentationsOfMap,
+    selectPrimaryMapRepresentation,
+    setMapRepresentation,
+} from "../store/mapRepresentationsSlice";
 import type { RootState } from "../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../utils/MoorhenMap";
 import { MapRepresentation } from "../utils/Representation/MapRepresentation";
-import type { MapRepresentationData } from "../utils/Representation/mapRepresentationData";
+import { type MapRepresentationData, createDefaultMapRepresentationData } from "../utils/Representation/mapRepresentationData";
 import { guid } from "../utils/utils";
 import { onGpuMapContoursChanged } from "../WebGPUComponents/mapContour/setting";
 import { ensureLockedDrawOrigin, followViewWithLockedCell, initialMapRepresentationData } from "./mapDisplayRecords";
@@ -28,6 +33,7 @@ export class MapDisplayDriver {
     private readonly fastRadii = new Map<string, number>();
     private knownMapUids = new Set<string>();
 
+    private lastRecordsSeen: RootState["mapRepresentations"]["representations"] | null = null;
     private lastMaps: RootState["maps"] | null = null;
     private lastRecords: Record<string, MapRepresentationData> = {};
     private lastOrigin: number[] | null = null;
@@ -73,6 +79,7 @@ export class MapDisplayDriver {
         this.fastRadii.clear();
         this.knownMapUids = new Set();
         this.lastMaps = null;
+        this.lastRecordsSeen = null;
         this.lastRecords = {};
         this.lastFastRadii.clear();
     }
@@ -140,10 +147,12 @@ export class MapDisplayDriver {
         const origin = state.sceneSettings.origin;
         const viewMoved = origin !== this.lastOrigin;
 
-        if (state.maps !== this.lastMaps) {
+        // Records too: a map left without any (its last removed, a scene's dropped) gets a new one
+        if (state.maps !== this.lastMaps || state.mapRepresentations.representations !== this.lastRecordsSeen) {
             this.syncMaps(state.maps);
             this.lastMaps = state.maps;
             state = store.getState();
+            this.lastRecordsSeen = state.mapRepresentations.representations;
         }
 
         if (viewMoved) {
@@ -167,24 +176,40 @@ export class MapDisplayDriver {
         }
     }
 
-    /** New maps get their first record; closed maps lose their records */
+    /**
+     * New maps get their first record (with the display they were loaded with); a map left without any (its last
+     * removed by a host, a scene's records for it dropped) gets a new one at the defaults. Closed maps lose their
+     * records, and representations coloured by a closed map go back to their own colour.
+     */
     private syncMaps(maps: RootState["maps"]): void {
         const dispatch = this.instance.dispatch;
         const uids = new Set(maps.map(map => map.uniqueId));
-        maps.filter(map => !this.knownMapUids.has(map.uniqueId)).forEach(map => {
-            // Before the record exists the map fields are the map's own; the record takes them from here on
-            ensureLockedDrawOrigin(map, this.instance.store.getState().sceneSettings.origin);
-            if (!selectPrimaryMapRepresentation(this.instance.store.getState(), map.uniqueId)) {
-                dispatch(addMapRepresentation(initialMapRepresentationData(map, this.instance.store.getState(), guid())));
+        maps.forEach(map => {
+            const isNew = !this.knownMapUids.has(map.uniqueId);
+            if (isNew) {
+                // Before the record exists the map fields are the map's own; the record takes them from here on
+                ensureLockedDrawOrigin(map, this.instance.store.getState().sceneSettings.origin);
+            }
+            const state = this.instance.store.getState();
+            if (selectPrimaryMapRepresentation(state, map.uniqueId)) return;
+            if (isNew) {
+                dispatch(addMapRepresentation(initialMapRepresentationData(map, state, guid())));
+            } else {
+                const { defaultMapLitLines, defaultMapSurface } = state.mapContourSettings;
+                dispatch(addMapRepresentation({ ...createDefaultMapRepresentationData(map, { defaultMapLitLines, defaultMapSurface }), id: guid() }));
             }
         });
-        [...this.knownMapUids]
-            .filter(uid => !uids.has(uid))
-            .forEach(uid => {
-                this.fastRadii.delete(uid);
-                this.lastFastRadii.delete(uid);
-                dispatch(removeMapRepresentationsOfMap(uid));
-            });
+        const closed = [...this.knownMapUids].filter(uid => !uids.has(uid));
+        closed.forEach(uid => {
+            this.fastRadii.delete(uid);
+            this.lastFastRadii.delete(uid);
+            dispatch(removeMapRepresentationsOfMap(uid));
+        });
+        if (closed.length > 0) {
+            Object.values(this.instance.store.getState().mapRepresentations.representations)
+                .filter(record => record.colourByMap && closed.includes(record.colourByMap.mapUid))
+                .forEach(record => dispatch(setMapRepresentation({ id: record.id, changes: { colourByMap: null } })));
+        }
         this.knownMapUids = uids;
     }
 

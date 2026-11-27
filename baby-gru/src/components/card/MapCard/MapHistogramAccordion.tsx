@@ -1,8 +1,7 @@
 import { Chart, registerables } from "chart.js";
-import { selectPrimaryMapRepresentation, selectShownLevelsBase, setMapRepresentation, shiftMapRepresentationLevels } from "@/store/mapRepresentationsSlice";
-import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
+import { mapLevelChange, selectMapRepresentationsOfMap } from "@/store/mapRepresentationsSlice";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
@@ -27,11 +26,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [zoomFactor, setZoomFactor] = useState<number>(1);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    // The card's level: in multi-representation mode all shown representations move by the same amount, else the
-    // map's one representation
-    const isMultiRepresentation = useIsMultiRepresentation(props.map);
-    const firstId = useSelector((state: moorhen.State) => selectPrimaryMapRepresentation(state, props.map.uniqueId)?.id);
-    const shownBase = useSelector((state: moorhen.State) => selectShownLevelsBase(state, props.map.uniqueId));
+    const store = useStore<moorhen.State>();
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [exponential, setExponential] = useState<boolean>(props.map.isEM); // set Y axis to logarithmic if EM map
@@ -51,11 +46,14 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 const peakIndex = points[0].index;
 
                 const level = histogramData.base + histogramData.bin_width * (peakIndex + 1);
-                if (isMultiRepresentation) {
-                    if (shownBase !== undefined) dispatch(shiftMapRepresentationLevels({ mapUid: props.map.uniqueId, by: level - shownBase }));
-                } else if (firstId) {
-                    dispatch(setMapRepresentation({ id: firstId, changes: { contourLevel: level } }));
-                }
+                // The card's level: in multi-representation mode all shown representations move by the same amount,
+                // else the map's one representation. Read now, not when the chart was made: the chart (and this
+                // handler) outlives the levels and the representations it was made with.
+                const state = store.getState();
+                const uid = props.map.uniqueId;
+                const multi = state.generalStates.multiRepresentationMaps.includes(uid) || selectMapRepresentationsOfMap(state, uid).length > 1;
+                const change = mapLevelChange(state, uid, level, multi);
+                if (change) dispatch(change);
             }
         };
 

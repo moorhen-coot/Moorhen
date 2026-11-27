@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setMapVisible } from "@/store/mapRepresentationsSlice";
+import { selectShownLevelsBase, setMapVisible } from "@/store/mapRepresentationsSlice";
 import { MapRepresentationsToolbar, MapRepresentationsCard } from "./MapRepresentationChips";
 import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import { MapLevelControls } from "./MapLevelControls";
@@ -35,8 +35,8 @@ type MoorhenMapCardPropsInterface = {
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const { initialContour = 0.8, initialRadius = 13 } = props;
 
-    // From the representation the card acts on (the selected one, else the map's first; map-display.md): the radius of
-    // the draw mode and the opacity of the style in use
+    // From the map's first representation (map-display.md), which the single-representation controls act on: the
+    // radius of the draw mode and the opacity of the style in use
     const display = useMapDisplay(props.map);
     const mapRadius = display.record ? display.radius : initialRadius;
     const mapContourLevel = display.record ? display.contourLevel : initialContour;
@@ -44,18 +44,22 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const mapOpacity = display.alpha;
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    // The controls act on the selected representation: usable while it is shown. The eye shows / hides the map.
+    // Draw Settings act on the first representation: usable while it is shown. The map's own actions (colour, map
+    // info, weight) while any of its representations is. The eye shows / hides the map.
     const mapIsVisible = display.visible;
+    const mapShown = display.mapVisible;
     const dispatch = useDispatch();
 
     // Multi-representation mode: each representation's level and draw settings are in its chip's edit popover
     const isMultiRepresentation = useIsMultiRepresentation(props.map);
+    // The card's level in multi-representation mode: the lowest shown (the histogram's guide line)
+    const shownBase = useSelector((state: moorhen.State) => selectShownLevelsBase(state, props.map.uniqueId));
 
     const cardTitle = useMemo(() => {
         return (
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
                 <span style={{ flexShrink: 0 }}>#{props.map.molNo}</span>
-                <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
+                <MapColourSelector map={props.map} mapIsVisible={mapShown} />
                 <div style={{ minWidth: 0, flex: "1 1 0" }}>
                     <ItemName item={props.map} />
                 </div>
@@ -80,8 +84,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const dropDownMenu: React.JSX.Element = (
         <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
             <MoorhenMenuItem onClick={() => {handleCopyMap()}}>Copy Map</MoorhenMenuItem>
-            <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
-            <MoorhenMenuItemPopover disabled={!mapIsVisible} menuItemText="Set Map Weight">
+            <MoorhenMapInfoCard key="info-map" disabled={!mapShown} map={props.map} />
+            <MoorhenMenuItemPopover disabled={!mapShown} menuItemText="Set Map Weight">
                 <SetMapWeight key="set-map-weight" map={props.map} />
             </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Delete Map">
@@ -157,7 +161,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     {/* In multi-representation mode: all shown representations together, by the same amount */}
                     <MapLevelControls map={props.map} initialContour={initialContour} allShown={isMultiRepresentation} />
                 </MoorhenStack>
-                <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
+                <MapHistogramAccordion map={props.map} currentContourLevel={isMultiRepresentation && shownBase !== undefined ? shownBase : mapContourLevel} />
                 {!isMultiRepresentation && (
                     <MapSettingsAccordion
                         map={props.map}

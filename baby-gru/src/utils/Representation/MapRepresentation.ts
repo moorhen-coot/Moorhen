@@ -50,7 +50,6 @@ const sameContour = (a: ContourKey | null, b: ContourKey): boolean =>
     a.colourByMap?.max === b.colourByMap?.max &&
     JSON.stringify(a.colourByMap?.gradient) === JSON.stringify(b.colourByMap?.gradient);
 
-/** What only needs recolouring existing buffers */
 /** What only needs repainting the existing buffers: colours, opacity, and thickening where seen edge-on (a uniform) */
 type AppearanceKey = { alpha: number; colour: MapColour; positiveColour: MapColour; negativeColour: MapColour; viewDependentTransparency: boolean };
 
@@ -71,6 +70,12 @@ export class MapRepresentation {
 
     private buffers: ContourBuffer[] = [];
     private lastContour: ContourKey | null = null;
+    /**
+     * The contour last asked for, until it lands (or fails): what update() compares the record with while a contour
+     * runs. Against `lastContour` alone, a change undone while its contour ran was not asked for again, and the late
+     * contour of the undone change was then drawn (a level scrolled up and back down drawn at the upper one).
+     */
+    private pendingContour: ContourKey | null = null;
     private lastAppearance: AppearanceKey | null = null;
     /** Smaller radius while the user drags a control (MapDisplayDriver.setFastRadius), not a setting */
     private fastRadius: number | null = null;
@@ -114,7 +119,7 @@ export class MapRepresentation {
             return;
         }
         const contour = this.contourKey(data);
-        if (!sameContour(this.lastContour, contour)) {
+        if (!sameContour(this.pendingContour ?? this.lastContour, contour)) {
             // A new contour builds its buffers with the current appearance
             void this.requestContour();
         } else if (!sameAppearance(this.lastAppearance, this.appearanceKey(data))) {
@@ -141,6 +146,7 @@ export class MapRepresentation {
             return Promise.resolve();
         }
         this.lastContour = null;
+        this.pendingContour = null;
         return this.requestContour();
     }
 
@@ -154,7 +160,7 @@ export class MapRepresentation {
         if (!data?.visible || data.style === "slice" || !drawnByCoot(data) || (data.originLock && this.fastRadius === null)) {
             return Promise.resolve();
         }
-        return this.contour({ ...this.contourKey(data), centre: [...centre] as Vec3 }, this.appearanceKey(data)).catch(err => {
+        return this.contour({ ...this.contourKey(data), centre: [...centre] as Vec3 }).catch(err => {
             if (!(err instanceof CommandSquashedError)) {
                 console.error(`Map representation ${this.id}: contour failed`, err);
             }
@@ -185,6 +191,7 @@ export class MapRepresentation {
         }
         this.replaceBuffers([]);
         this.lastContour = null;
+        this.pendingContour = null;
         this.lastAppearance = null;
     }
 
@@ -240,14 +247,24 @@ export class MapRepresentation {
             this.update();
             return Promise.resolve();
         }
-        return this.contour(this.contourKey(data), this.appearanceKey(data)).catch(err => {
+        return this.contour(this.contourKey(data)).catch(err => {
             if (!(err instanceof CommandSquashedError)) {
                 console.error(`Map representation ${this.id}: contour failed`, err);
             }
         });
     }
 
-    private async contour(key: ContourKey, appearance: AppearanceKey): Promise<void> {
+    private async contour(key: ContourKey): Promise<void> {
+        this.pendingContour = key;
+        try {
+            await this.contourNow(key);
+        } finally {
+            // Landed, failed or squashed by a newer one (which is pending now)
+            if (this.pendingContour === key) this.pendingContour = null;
+        }
+    }
+
+    private async contourNow(key: ContourKey): Promise<void> {
         const worker = this.instance.workerCommand;
         const meshType = MESH_TYPES[key.style as Exclude<MapStyle, "slice">];
         const options = { squashKey: this.squashKey };
@@ -271,9 +288,11 @@ export class MapRepresentation {
         if (this.disposed || !now?.visible || now.style === "slice" || !drawnByCoot(now)) {
             return;
         }
-        this.buildContourBuffers(mesh, appearance, key.colourByMap !== null);
+        // Painted as the record is now: a colour or opacity change made while it ran was applied to the old buffers
+        const current = this.appearanceKey(now);
+        this.buildContourBuffers(mesh, current, key.colourByMap !== null);
         this.lastContour = key;
-        this.lastAppearance = appearance;
+        this.lastAppearance = current;
     }
 
     /**
@@ -327,7 +346,9 @@ export class MapRepresentation {
     /** Colour and alpha changes: recolour the existing buffers, no Coot call */
     private applyAppearance(data: MapRepresentationData): void {
         const appearance = this.appearanceKey(data);
-        this.paint(this.buffers, appearance, data.colourByMap !== null);
+        // Coot's colours were kept only if the buffers were contoured coloured by a map: not if the record names a
+        // map that is not there (closed, or not loaded), which is contoured plainly
+        this.paint(this.buffers, appearance, this.lastContour?.colourByMap != null);
         buildBuffers(
             this.buffers.map(({ buffer }) => buffer),
             this.instance.store

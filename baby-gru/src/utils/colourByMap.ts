@@ -16,7 +16,8 @@ export const LOCAL_RESOLUTION_VALUES = /_locres(\.mrc)?$/i;
 
 /** A guess at the range to colour with: the span of the other map's values on the contour (its vertices), 3 digits */
 export const guessColourByMapRange = async (map: MoorhenMap, otherMap: MoorhenMap, record?: MapRepresentationData): Promise<ColourByMapRange | null> => {
-    const at = record ? { contourLevel: record.contourLevel, radius: currentRadius(record) } : undefined;
+    // Where that representation is drawn: around its locked centre ("Draw full map"), else around the view
+    const at = record ? { contourLevel: record.contourLevel, radius: currentRadius(record), centre: record.originLock?.centre ?? null } : undefined;
     const histogram = await map.getVerticesHistogram(otherMap.molNo, 200, at);
     if (!histogram?.counts?.length || !Number.isFinite(histogram.base) || !Number.isFinite(histogram.bin_width)) {
         return null;

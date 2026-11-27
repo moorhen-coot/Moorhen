@@ -26,6 +26,10 @@ export type { MapRepresentationChanges };
 const applyChanges = (representation: MapRepresentationData, changes: MapRepresentationChanges): void => {
     const { radius, alpha, ...rest } = changes;
     Object.assign(representation, rest);
+    // Shown or hidden on its own: no longer one the map's eye hid (setMapVisible would bring it back)
+    if (changes.visible !== undefined) {
+        delete representation.hiddenWithMap;
+    }
     if (radius) {
         Object.assign(representation.radius, radius);
     }
@@ -131,6 +135,10 @@ const mapRepresentationsSlice = createSlice({
                 return;
             }
             if (ofMap.some(representation => representation.visible)) {
+                // Shown already: what the eye hid is forgotten, as when it shows them
+                ofMap.forEach(representation => {
+                    delete representation.hiddenWithMap;
+                });
                 return;
             }
             const remembered = ofMap.filter(representation => representation.hiddenWithMap);
@@ -261,3 +269,17 @@ export const {
 } = mapRepresentationsSlice.actions;
 
 export default mapRepresentationsSlice.reducer;
+
+/**
+ * What setting a map's level from its card does (the histogram), read from the state at the time: with `allShown`
+ * (multi-representation mode) every shown representation moves by the same amount, the lowest to `level`; otherwise
+ * the map's first representation goes to `level`. Null when there is nothing to change.
+ */
+export const mapLevelChange = (state: StateWithMapRepresentations, mapUid: string, level: number, allShown: boolean) => {
+    if (allShown) {
+        const base = selectShownLevelsBase(state, mapUid);
+        return base === undefined || level === base ? null : shiftMapRepresentationLevels({ mapUid, by: level - base });
+    }
+    const first = selectPrimaryMapRepresentation(state, mapUid);
+    return first ? setMapRepresentation({ id: first.id, changes: { contourLevel: level } }) : null;
+};

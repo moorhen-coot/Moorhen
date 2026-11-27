@@ -21,6 +21,7 @@ import mapRepresentationsReducer, {
     setMapVisible,
     selectShownLevelsBase,
     shiftMapRepresentationLevels,
+    mapLevelChange,
 } from "../../src/store/mapRepresentationsSlice";
 import {
     type MapRepresentationData,
@@ -302,3 +303,72 @@ describe("a new map's display (initialDisplay, withChanges) and a map made from 
         expect(displayToCopy(undefined)).toEqual({});
     });
 });
+
+describe("setting a map's level from its card (the histogram)", () => {
+    const levels = (store: ReturnType<typeof makeStore>) => selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.contourLevel);
+    const click = (store: ReturnType<typeof makeStore>, level: number, allShown: boolean) => {
+        // As the histogram's click handler: from the state when clicked
+        const change = mapLevelChange(store.getState(), "map-1", level, allShown);
+        if (change) store.dispatch(change);
+    };
+
+    test("several representations: each click moves the shown ones from where they are now", () => {
+        const store = makeStore();
+        [record("a", "map-1", { contourLevel: 1 }), record("b", "map-1", { contourLevel: 3 })].forEach(item => store.dispatch(addMapRepresentation(item)));
+        click(store, 2, true);
+        expect(levels(store)).toEqual([2, 4]);
+        // Not from the level of the first click's time (was: 3.5 and 5.5)
+        click(store, 2.5, true);
+        expect(levels(store)).toEqual([2.5, 4.5]);
+    });
+
+    test("one representation: it goes to the level, whichever record is first now", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("a", "map-1", { contourLevel: 1 })));
+        click(store, 2, false);
+        // Replaced since (a preset, a scene): the click goes to the new first one
+        store.dispatch(removeMapRepresentation("a"));
+        store.dispatch(addMapRepresentation(record("b", "map-1", { contourLevel: 1 })));
+        click(store, 0.5, false);
+        expect(levels(store)).toEqual([0.5]);
+    });
+
+    test("nothing to change: nothing shown, or no representation", () => {
+        const store = makeStore();
+        expect(mapLevelChange(store.getState(), "map-1", 1, false)).toBeNull();
+        store.dispatch(addMapRepresentation(record("a", "map-1", { contourLevel: 1, visible: false })));
+        expect(mapLevelChange(store.getState(), "map-1", 2, true)).toBeNull();
+    });
+});
+
+describe("the map's eye, after representations were shown or hidden on their own", () => {
+    test("shows back only what it hid and was not shown or hidden since", () => {
+        const store = makeStore();
+        [record("a", "map-1"), record("b", "map-1")].forEach(item => store.dispatch(addMapRepresentation(item)));
+        const visible = () => selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => [item.id, item.visible]);
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
+        // Both shown again from their chips, then "a" hidden from its chip
+        store.dispatch(setMapRepresentation({ id: "a", changes: { visible: true } }));
+        store.dispatch(setMapRepresentation({ id: "b", changes: { visible: true } }));
+        store.dispatch(setMapRepresentation({ id: "a", changes: { visible: false } }));
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: true }));
+        // "a" stays hidden: it was hidden by hand, not by the eye
+        expect(visible()).toEqual([
+            ["a", false],
+            ["b", true],
+        ]);
+    });
+
+    test("a representation shown on its own while the map was hidden is not marked any more", () => {
+        const store = makeStore();
+        [record("a", "map-1"), record("b", "map-1")].forEach(item => store.dispatch(addMapRepresentation(item)));
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
+        store.dispatch(setMapRepresentation({ id: "a", changes: { visible: true } }));
+        expect(selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.hiddenWithMap)).toEqual([undefined, true]);
+        // The eye then shows the map, which is shown already: nothing is left marked
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: true }));
+        expect(selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.hiddenWithMap)).toEqual([undefined, undefined]);
+    });
+});
+

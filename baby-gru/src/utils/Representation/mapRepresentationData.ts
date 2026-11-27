@@ -6,6 +6,8 @@
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { type GradientColourTable, gradientPresets } from "../../components/inputs/MoorhenGradientPicker/gradientPresets";
 import type { MapSlicePlacement, SliceContourSpacing } from "../mapSlice/mapSlice";
+import type { MoorhenMap } from "../MoorhenMap";
+import { guid } from "../utils";
 
 /**
  * Where a map's 2D slice is and how it is contoured (the "slice" style, MoorhenMap.drawMapSlice). Kept when the map is
@@ -20,8 +22,6 @@ export type MapSliceSettings = MapSlicePlacement & {
 
 /** Some of a slice's settings, to change them (`setMapRepresentationSlice`) */
 export type MapSliceChanges = Partial<MapSliceSettings>;
-import type { MoorhenMap } from "../MoorhenMap";
-import { guid } from "../utils";
 
 /** "slice" draws a contoured 2D slice (MoorhenMap.drawMapSlice), the others a 3D contour */
 export type { MapStyle };

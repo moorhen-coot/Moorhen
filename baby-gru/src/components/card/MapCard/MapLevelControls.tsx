@@ -70,7 +70,8 @@ export const MapLevelControls = (props: { map: moorhen.Map; initialContour?: num
                     setValue={newVal => changeLevel(+newVal)}
                     label={"Level:"}
                     decimalDigits={decimals}
-                    allowNegativeValues={true}
+                    // Moving all shown representations, the lowest cannot go to zero or below (useLevel)
+                    allowNegativeValues={!allShown}
                     disabled={!enabled}
                     waitReturn={true}
                 />
@@ -78,7 +79,7 @@ export const MapLevelControls = (props: { map: moorhen.Map; initialContour?: num
                 {map.mapRmsd && (
                     <MoorhenNumberInput
                         style={{ justifyContent: "center" }}
-                        allowNegativeValues={true}
+                        allowNegativeValues={!allShown}
                         value={level / map.mapRmsd}
                         setValue={newVal => changeLevel(+newVal * map.mapRmsd)}
                         label={"RMSD:"}

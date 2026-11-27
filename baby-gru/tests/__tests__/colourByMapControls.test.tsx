@@ -80,7 +80,7 @@ describe("colour by another map, from the colour swatch", () => {
         await open(user);
         expect(screen.getByRole("combobox", { name: /by this map/i })).toHaveValue("map-3");
         // The other map's values on "b"'s contour: its level, its radius in its draw mode (local)
-        await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenCalledWith(3, 200, { contourLevel: 0.5, radius: 15 }));
+        await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenCalledWith(3, 200, { contourLevel: 0.5, radius: 15, centre: null }));
         await waitFor(() => expect(screen.getByDisplayValue("6.00")).toBeInTheDocument());
         expect(screen.getByDisplayValue("2.00")).toBeInTheDocument();
 
@@ -95,12 +95,30 @@ describe("colour by another map, from the colour swatch", () => {
         expect(records()[1].colourByMap).toBeNull();
     });
 
+    test("drawn as the full map (locked): the range is guessed around its own centre, at its full radius", async () => {
+        const density = fakeMap(1, "run_locres_filtered");
+        const locres = fakeMap(3, "run_locres");
+        const store = createMoorhenStore();
+        [density, locres].forEach(item => store.dispatch(addMap(item)));
+        store.dispatch(addMapRepresentation(record("a")));
+        store.dispatch(addMapRepresentation(record("locked", { originLock: { centre: [10, 20, 30] } })));
+        render(
+            <Provider store={store}>
+                <MoorhenInstanceProvider menuSystem={new MoorhenMenuSystem()}>
+                    <MapColourSelector map={density} mapIsVisible={true} recordId="locked" />
+                </MoorhenInstanceProvider>
+            </Provider>
+        );
+        await open(userEvent.setup());
+        await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenCalledWith(3, 200, { contourLevel: 0.25, radius: 40, centre: [10, 20, 30] }));
+    });
+
     test("another map chosen: a new guess, with it", async () => {
         const { density, user } = setUp("b");
         await open(user);
         await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenCalledTimes(1));
         await user.selectOptions(screen.getByRole("combobox", { name: /by this map/i }), "map-2");
-        await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenLastCalledWith(2, 200, { contourLevel: 0.5, radius: 15 }));
+        await waitFor(() => expect(density.getVerticesHistogram).toHaveBeenLastCalledWith(2, 200, { contourLevel: 0.5, radius: 15, centre: null }));
     });
 
     test("from the card's title: every representation of the map", async () => {
@@ -109,5 +127,29 @@ describe("colour by another map, from the colour swatch", () => {
         await waitFor(() => expect(screen.getByDisplayValue("6.00")).toBeInTheDocument());
         await user.click(screen.getByRole("button", { name: "Apply" }));
         expect(records().map(item => item.colourByMap?.mapUid)).toEqual(["map-3", "map-3"]);
+    });
+
+    test("a difference map coloured by another: picking its positive colour goes back to plain colours", async () => {
+        const difference = { ...fakeMap(5, "fofc"), isDifference: true } as unknown as moorhen.Map;
+        const store = createMoorhenStore();
+        store.dispatch(addMap(difference));
+        const gradient: [number, [number, number, number]][] = [[0, [0, 0, 255]], [1, [255, 0, 0]]];
+        store.dispatch(addMapRepresentation(record("d", { mapUid: "map-5", colourByMap: { mapUid: "map-3", min: 2, max: 6, gradient } })));
+        render(
+            <Provider store={store}>
+                <MoorhenInstanceProvider menuSystem={new MoorhenMenuSystem()}>
+                    <MapColourSelector map={difference} mapIsVisible={true} recordId="d" />
+                </MoorhenInstanceProvider>
+            </Provider>
+        );
+        const user = userEvent.setup();
+        await user.click(screen.getByRole("button", { name: "Colour picker" }));
+        // Positive first, negative second
+        const positiveHex = (await screen.findAllByRole("textbox", { name: "Hex input" }))[0];
+        await user.clear(positiveHex);
+        await user.type(positiveHex, "00ff00");
+        const [d] = selectMapRepresentationsOfMap(store.getState(), "map-5");
+        expect(d.positiveColour).toEqual({ r: 0, g: 1, b: 0 });
+        expect(d.colourByMap).toBeNull();
     });
 });
