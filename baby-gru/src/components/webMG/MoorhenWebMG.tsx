@@ -831,11 +831,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     // These two are reconciliation now rather than the way the slab is set: the camera owns it and
     // echoes it back here. They skip when the renderer already agrees, which is what keeps the echo
-    // and the effect from chasing each other over a last-bit difference.
+    // and the effect from chasing each other over a last-bit difference, and when the store holds
+    // the camera's own echo: while the camera eases with auto clip / fog that echo is a step behind,
+    // and writing it back made the two chase each other until React gave up (slab.ts, isEchoOf).
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             const camera = glRef.current.cameraController.state
             if (Math.abs(camera.clipFront - clipStart) < 1e-9 && Math.abs(camera.clipBack - clipEnd) < 1e-9) return
+            // The camera's own echo, behind it while it eases: not a request (slab.ts, isEchoOf)
+            if (glRef.current.isOwnSlabEcho({ clipStart, clipEnd })) return
             glRef.current.set_clip_range(-clipStart, clipEnd)
             glRef.current.drawScene()
         }
@@ -846,6 +850,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const camera = glRef.current.cameraController.state
             if (Math.abs(camera.eyeDistance - camera.fogFront - fogStart) < 1e-9 &&
                 Math.abs(camera.eyeDistance + camera.fogBack - fogEnd) < 1e-9) return
+            if (glRef.current.isOwnSlabEcho({ fogStart, fogEnd })) return
             glRef.current.set_fog_range(fogStart, fogEnd)
             glRef.current.drawScene()
         }

@@ -95,3 +95,47 @@ export function clipOffsets(clipStart: number, clipEnd: number): Pick<CameraStat
 export function fogOffsets(eyeDistance: number, fogStart: number, fogEnd: number): Pick<CameraState, "fogFront" | "fogBack"> {
     return { fogFront: eyeDistance - fogStart, fogBack: fogEnd - eyeDistance };
 }
+
+/**
+ * The slab as the store keeps it (sceneSettings): clip as offsets from the view centre, fog as
+ * distances from the eye. The store's copy is an echo of the camera's (MGWebGL.echoSlabToStore).
+ */
+export interface StoreSlab {
+    clipStart: number;
+    clipEnd: number;
+    fogStart: number;
+    fogEnd: number;
+}
+
+/** Below this, two slab values are the same: converting fog to an offset and back is not exact to the last bit. */
+export const SLAB_EPSILON = 1e-9;
+
+/** The store's slab for where the camera is. */
+export function storeSlabFromCamera(camera: SlabSource): StoreSlab {
+    const slab = slabFromCamera(camera);
+    return { clipStart: camera.clipFront, clipEnd: camera.clipBack, fogStart: slab.fogStart, fogEnd: slab.fogEnd };
+}
+
+/** The values of `wanted` that `held` does not already agree with: what the echo needs to tell the store. */
+export function slabDifference(wanted: StoreSlab, held: StoreSlab): Partial<StoreSlab> {
+    const changes: Partial<StoreSlab> = {};
+    for (const key of ["clipStart", "clipEnd", "fogStart", "fogEnd"] as const) {
+        if (!(Math.abs(wanted[key] - held[key]) < SLAB_EPSILON)) changes[key] = wanted[key];
+    }
+    return changes;
+}
+
+/**
+ * Whether these store values are the camera's own echo: the slab it last told the store. Then they
+ * are not a request, and writing them back to the camera would be wrong.
+ *
+ * While the camera eases its zoom with auto clip / fog on, it re-derives its slab from the zoom
+ * every time anything writes to it. The store's copy is then always one step behind, and pushing
+ * it back to the camera as a manual slab made the camera re-derive and echo again, nested inside
+ * the same dispatch, until React stopped at its update limit (a scene switch just after taking a
+ * snapshot: tests/e2e/session-scenes.spec.ts, "save and reload").
+ */
+export function isEchoOf(values: Partial<StoreSlab>, echoed: StoreSlab | null): boolean {
+    if (!echoed) return false;
+    return (Object.keys(values) as (keyof StoreSlab)[]).every(key => Math.abs(values[key] - echoed[key]) < SLAB_EPSILON);
+}

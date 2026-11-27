@@ -5,7 +5,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
-import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
+import { type SlabChanges, setClipAndFog } from "../store/sceneSettingsSlice"
 
 /**
  * Where clip planes and fog go when they are turned off: far beyond anything drawn, in angstroms.
@@ -104,7 +104,7 @@ import { DisplayBuffer } from './displayBuffer'
 import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
 import type { CameraController, CameraState, CameraTarget, MoveResult, Transition } from './cameraController'
-import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
+import { type StoreSlab, clipOffsets, fogOffsets, isEchoOf, slabDifference, slabFromCamera, storeSlabFromCamera } from './slab'
 import { MAX_SHADOW_SOFTNESS, type ShadowMapRegion } from './shadowFrustum'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
 import { createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer, deleteTextureFramebuffer } from './mgWebGLParts/framebuffers'
@@ -343,6 +343,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         cameraTime: number | null;
         /** Detaches the store echo on unmount. */
         unsubscribeCamera: (() => void) | null;
+        /** The slab echoSlabToStore last told the store (isOwnSlabEcho) */
+        lastEchoedSlab: StoreSlab | null;
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
@@ -717,6 +719,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.cameraPumpHandle = null
         this.cameraTime = null
         this.unsubscribeCamera = null
+        this.lastEchoedSlab = null
         this.canvasRef = React.createRef();
         this.keysDown = {};
         this.atomLabelDepthMode = false;
@@ -1081,18 +1084,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      * MoorhenWebMG that write straight back here, and converting absolute fog to an offset and back
      * is not always exact to the last bit. Comparing before dispatching means a value that differs
      * only in its last place is left alone rather than chasing itself around the loop.
+     *
+     * And in one dispatch. Four used to run one after the other, each re-rendering at once: between
+     * them MoorhenWebMG's effects saw a half-written slab (a new clip start with the old clip end),
+     * wrote it to the camera, which echoed again from inside this one, and this one went on with the
+     * values it had read before. When all four change together - a scene switch - that never settled,
+     * and React stopped it at its update limit (session-scenes.spec.ts, save and reload).
      */
     echoSlabToStore() {
-        const scene = this.store.getState().sceneSettings
-        const camera = this._camera.controller.state
-        const slab = slabFromCamera(camera)
-        const same = (a: number, b: number) => Math.abs(a - b) < 1e-9
-
-        if (!same(scene.clipStart, camera.clipFront)) this.dispatch(setClipStart(camera.clipFront))
-        if (!same(scene.clipEnd, camera.clipBack)) this.dispatch(setClipEnd(camera.clipBack))
-        if (!same(scene.fogStart, slab.fogStart)) this.dispatch(setFogStart(slab.fogStart))
-        if (!same(scene.fogEnd, slab.fogEnd)) this.dispatch(setFogEnd(slab.fogEnd))
+        const echoed = storeSlabFromCamera(this._camera.controller.state)
+        this.lastEchoedSlab = echoed
+        const changes: SlabChanges = slabDifference(echoed, this.store.getState().sceneSettings)
+        if (Object.keys(changes).length > 0) this.dispatch(setClipAndFog(changes))
     }
+
+    /**
+     * Whether the store's clip / fog values are this viewer's own echo (isEchoOf): MoorhenWebMG's
+     * slab effects then leave the camera alone.
+     */
+    isOwnSlabEcho(values: Partial<StoreSlab>): boolean {
+        return isEchoOf(values, this.lastEchoedSlab)
+    }
+
 
     /**
      * Tell the store where the view ended up.
