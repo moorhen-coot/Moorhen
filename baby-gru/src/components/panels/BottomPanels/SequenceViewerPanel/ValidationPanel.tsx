@@ -41,11 +41,11 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
 
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
-            addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, undefined, scaleRMSZ);
+            addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, scaleRMSZ);
             // console.log(geoValidationData);
 
             const BValidationData = await moorhenInstance.cootCommand.getBValidationData(molecule.molNo);
-            addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });
+            addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", undefined, (value) => { return Math.min(value / 100 , 1); });
 
             if (!skipDensity) {
                 // const MMRRCC = (await moorhenInstance.commandCentre.cootCommand(
@@ -62,7 +62,6 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
                 //     sequences,
                 //     cootMMRCCToSeqViewer(MMRRCC.data.result.result),
                 //     "Density",
-                //     undefined,
                 //     true,              
                 // );
 
@@ -74,9 +73,7 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
                     sequences,
                     cootValidationDataToSeqViewer(newCootDensityCorrelationData, "Density Correlation"),
                     "Density",
-                    "mpl Viridis",
                     true,
-                    
                 );
 
                 const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map);
@@ -84,9 +81,7 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),
                     "Density",
-                    "mpl Viridis",
                     true,
-                    
                 );
             }
             molecule.seqViewerData = sequences;
@@ -97,6 +92,7 @@ export const ValidationPanel = () => {
     const moorhenInstance = useMoorhenInstance();
 
     const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+    const validationGradient = useSelector((state: RootState) => state.bottomPanels.validationGradient);
     const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -160,6 +156,7 @@ export const ValidationPanel = () => {
             showValidationData={true}
             nameColumnWidth={4}
             validationTracks={validationOption.shownData ?? []}
+            validationGradient={validationGradient}
             columnWidth={validationOption.columnWidth}
         /></OverlayModal>
         </div>

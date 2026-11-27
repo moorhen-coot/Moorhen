@@ -100,10 +100,8 @@ const mapContourSettingsSlice = createSlice({
             state.mapAlpha = [...state.mapAlpha.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        /** Whether this map thickens where it is seen edge-on. Nothing happens while it is solid. */
-        setMapViewDependentTransparency: (
-            state, action: PayloadAction<{ molNo: number; enabled: boolean }>
-        ) => {
+        /* Whether this map thickens where it is seen edge-on. Nothing happens while it is solid. */
+        setMapViewDependentTransparency: (state, action: PayloadAction<{ molNo: number; enabled: boolean }>) => {
             const others = state.mapViewDependentTransparency.filter(
                 molNo => molNo !== action.payload.molNo);
             state.mapViewDependentTransparency = action.payload.enabled

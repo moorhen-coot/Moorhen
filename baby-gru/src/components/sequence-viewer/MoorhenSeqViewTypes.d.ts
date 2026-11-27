@@ -1,5 +1,3 @@
-import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
-
 export type ResiduesSelection = {
     molNo: number;
     chain: string;
@@ -16,7 +14,6 @@ export type Residue = {
         [key: string]: {
             value: number | [number, number];
             reverseGradient?: boolean;
-            gradientPreset?: keyof typeof gradientPresets;
             category?: string;
         };
     };

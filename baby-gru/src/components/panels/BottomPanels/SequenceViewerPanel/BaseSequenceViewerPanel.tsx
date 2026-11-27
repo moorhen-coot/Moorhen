@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
+import type { GradientColourTable, GradientPreset } from "@/components/inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenSelectionToSeqViewer, handleResiduesSelection, useHoveredResidueSubscription } from "@/components/sequence-viewer/utils";
 import { RootState, setHoveredAtom } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
@@ -12,6 +13,7 @@ export interface BaseSequenceViewerPanelProps {
     showValidationData?: boolean;
     nameColumnWidth?: number;
     validationTracks?: string[];
+    validationGradient?: GradientPreset | GradientColourTable;
     showTitleBar?: boolean;
     columnWidth?: number;
 }
@@ -27,6 +29,7 @@ export const BaseSequenceViewerPanel = ({
     showValidationData = false,
     nameColumnWidth,
     validationTracks,
+    validationGradient,
     showTitleBar = false,
     columnWidth = 1,
 }: BaseSequenceViewerPanelProps) => {
@@ -85,6 +88,7 @@ export const BaseSequenceViewerPanel = ({
             showValidationData={showValidationData}
             nameColumnWidth={nameColumnWidth}
             validationTracks={validationTracks}
+            validationGradient={validationGradient}
             columnWidth={columnWidth}
         />
     );
