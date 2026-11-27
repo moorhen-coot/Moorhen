@@ -1,8 +1,9 @@
 /**
- * Several representations of a map in its card (.roadmaps/map-display.md): a "Multiple representations" switch and the map
- * wizard (presets) at the top; a representations card (chips) shown by the switch, and always for a map with more than one; each
- * chip acts on its own representation (eye, edit popover with its colour, level and draw settings, duplicate, delete);
- * the card's level moves all shown ones together; only one representation of a map can be a 2D slice.
+ * Several representations of a map in its card (.roadmaps/map-display.md): a "Multiple representations" switch at the
+ * top; a representations card shown by the switch, and always for a map with more than one, with chips, "+" (a copy of
+ * the last representation) and the map wizard (presets); each chip acts on its own representation (eye, edit popover
+ * with its colour, level and draw settings, delete); the card's level moves all shown ones together; only one
+ * representation of a map can be a 2D slice.
  */
 import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
@@ -83,23 +84,30 @@ const chips = () => screen.queryAllByTestId("map-representation-chip");
 
 describe("a map's representations in its card", () => {
     const wizardButton = () => screen.getByRole("button", { name: /map wizard/i });
+    const addButton = () => screen.queryByRole("button", { name: /add a representation/i });
     const toggle = () => screen.getByRole("checkbox", { name: /multiple representations/i });
     const chipButton = (chip: HTMLElement, name: RegExp) => within(chip).getByRole("button", { name });
 
     test("one representation: no representations card until the toggle is on", async () => {
         const { user, update } = await renderCard(record("mesh"));
         expect(chips()).toHaveLength(0);
+        // "+" and the wizard are in that card
+        expect(addButton()).toBeNull();
+        expect(screen.queryByRole("button", { name: /map wizard/i })).toBeNull();
         expect(toggle()).not.toBeChecked();
 
         await user.click(toggle());
         update();
         expect(chips()).toHaveLength(1);
+        expect(addButton()).toBeEnabled();
+        expect(wizardButton()).toBeEnabled();
         // The last one cannot be deleted
         expect(chipButton(chips()[0], /delete this representation/i)).toBeDisabled();
 
         await user.click(toggle());
         update();
         expect(chips()).toHaveLength(0);
+        expect(addButton()).toBeNull();
     });
 
     test("more than one: always shown, the toggle on and locked", async () => {
@@ -114,7 +122,7 @@ describe("a map's representations in its card", () => {
         expect(chips().map(chip => chip.textContent)).toEqual(["Mesh1.00σ", "Surface2.00σ"]);
     });
 
-    test("each chip shows, hides, duplicates and deletes its own representation", async () => {
+    test("each chip shows, hides and deletes its own representation; \"+\" copies the last one", async () => {
         const surface = record("surface", { style: "solid", contourLevel: 0.5, colour: { r: 1, g: 0, b: 0 } });
         const { user, update, records } = await renderCard(record("mesh"), surface);
         await user.click(chipButton(chips()[1], /hide this representation/i));
@@ -123,9 +131,9 @@ describe("a map's representations in its card", () => {
             ["surface", false],
         ]);
 
-        // A copy of exactly that one, shown
+        // A copy of exactly the last one, shown
         update();
-        await user.click(chipButton(chips()[1], /duplicate this representation/i));
+        await user.click(addButton());
         expect(records()).toHaveLength(3);
         expect(records()[2]).toEqual({ ...surface, id: records()[2].id, visible: true });
 
@@ -135,24 +143,20 @@ describe("a map's representations in its card", () => {
         expect(records()[1].style).toBe("solid");
     });
 
-    test("a duplicate of a 2D slice is drawn as a mesh: one slice per map", async () => {
-        const { user, records } = await renderCard(record("slice", { style: "slice" }), record("mesh"));
-        await user.click(chipButton(chips()[0], /duplicate this representation/i));
-        expect(records().map(item => item.style)).toEqual(["slice", "lines", "lines"]);
+    test("a copy of a 2D slice is drawn as a mesh: one slice per map", async () => {
+        const { user, records } = await renderCard(record("mesh"), record("slice", { style: "slice" }));
+        await user.click(addButton());
+        expect(records().map(item => item.style)).toEqual(["lines", "slice", "lines"]);
     });
 
-    test("the wizard, beside the switch, is there with one representation too", async () => {
-        await renderCard(record("mesh"));
-        expect(wizardButton()).toBeEnabled();
-    });
-
-    test("a wizard preset replaces the map's representations, at multiples of the map's level (the lowest shown)", async () => {
+    test("a wizard preset replaces the map's representations, at multiples of the map's load level (1 rms here)", async () => {
         const { user, records } = await renderCard(record("mesh", { contourLevel: 0.4 }), record("surface", { style: "solid", contourLevel: 0.2 }));
         await user.click(wizardButton());
         await user.click(await screen.findByRole("button", { name: "Wizard: Cascade" }));
         const cascade = MAP_REPRESENTATION_PRESETS.find(preset => preset.id === "cascade");
         expect(records().map(item => [item.style, Number(item.contourLevel.toFixed(4))])).toEqual(
-            cascade.layers.map(layer => ["solid", Number((0.2 * layer.times).toFixed(4))])
+            // Not the levels the representations were moved to (0.4, 0.2): the map's load level, 1 rms (0.25)
+            cascade.layers.map(layer => ["solid", Number((0.25 * layer.times).toFixed(4))])
         );
         expect(records().some(item => item.id === "mesh" || item.id === "surface")).toBe(false);
     });

@@ -1205,7 +1205,8 @@ export class MoorhenTimeCapsule {
         newMaps.forEach((map, index) => {
             const storedMapData = sessionData.mapData[index];
             map.showOnLoad = storedMapData.showOnLoad;
-            map.suggestedContourLevel = storedMapData.contourLevel;
+            // Not into suggestedContourLevel: the map worked that out when it was loaded (initialise), and the map
+            // wizard multiplies it (defaultContourLevel). The saved level goes into the record (initialDisplay below).
             // Absent in sessions written before cubes were readable, which is why it is coerced
             // rather than assigned: those maps are not orbitals and should get the full map card.
             map.isCube = Boolean(storedMapData.isCube);

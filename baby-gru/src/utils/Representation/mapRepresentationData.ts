@@ -90,6 +90,26 @@ export const defaultColourByMapGradient = (): GradientColourTable => JSON.parse(
 export const EM_LOCAL_RADIUS = 30;
 
 /**
+ * The level a map is contoured at when it is loaded: 1 rms for an X-ray map (3 for a difference map), the suggested
+ * level for an EM map (from its histogram; 5 rms for a difference map), the level a cube file gives. Worked out again
+ * at every load, sessions included (the level a session saved goes into the record, not into the map), so it stays the
+ * same for a map: the map wizard's unit.
+ */
+export const defaultContourLevel = (
+    map: Pick<MoorhenMap, "isCube" | "isEM" | "isDifference" | "mapRmsd" | "suggestedContourLevel">
+): number => {
+    if (map.isCube) {
+        // A cube says what level to contour at, in the field's own units (Psi4 writes the range covering 85% of the
+        // density). Signed cube fields are flagged as difference maps, hence before the isDifference tests.
+        return map.suggestedContourLevel;
+    }
+    if (map.isEM) {
+        return map.isDifference ? 5 * map.mapRmsd : map.suggestedContourLevel;
+    }
+    return map.isDifference ? 3 * map.mapRmsd : map.mapRmsd;
+};
+
+/**
  * The display a map gets when it is loaded.
  * `preferences` are the global map preferences (`mapContourSettings.defaultMapLitLines` / `defaultMapSurface`).
  */
@@ -111,16 +131,7 @@ export const createDefaultMapRepresentationData = (
             fullRadius = Math.ceil((map.headerInfo.cell.a * 1.732) / 2);
         }
     }
-    let contourLevel: number;
-    if (map.isCube) {
-        // A cube says what level to contour at, in the field's own units (Psi4 writes the range covering 85% of the
-        // density). Signed cube fields are flagged as difference maps, hence before the isDifference tests.
-        contourLevel = map.suggestedContourLevel;
-    } else if (map.isEM) {
-        contourLevel = map.isDifference ? 5 * map.mapRmsd : map.suggestedContourLevel;
-    } else {
-        contourLevel = map.isDifference ? 3 * map.mapRmsd : map.mapRmsd;
-    }
+    const contourLevel = defaultContourLevel(map);
     const preferredStyle: MapStyle = preferences.defaultMapLitLines ? "lit-lines" : preferences.defaultMapSurface ? "solid" : "lines";
     const centre = map.mapCentre ?? map.cellCentre;
     return {

@@ -4,6 +4,7 @@ import { MoorhenButton, MoorhenToggle } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { MoorhenPopoverButton } from "@/components/interface-base/Popovers/PopoverButton";
 import { MoorhenMenuItem } from "@/components/interface-base/MenuItems/MenuItem";
+import { MoorhenTooltip } from "@/components/interface-base/Popovers/Tooltip";
 import { setMapMultiRepresentation } from "../../../store/generalStatesSlice";
 import {
     addMapRepresentation,
@@ -11,13 +12,13 @@ import {
     replaceMapRepresentationsOfMaps,
     selectMapRepresentationsOfMap,
     selectPrimaryMapRepresentation,
-    selectShownLevelsBase,
     setMapRepresentation,
 } from "../../../store/mapRepresentationsSlice";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../../utils/MoorhenMap";
-import type { MapRepresentationData, MapStyle } from "../../../utils/Representation/mapRepresentationData";
+import type { MapStyle } from "../../../utils/Representation/mapRepresentationData";
 import { guid } from "../../../utils/utils";
+import { defaultContourLevel } from "../../../utils/Representation/mapRepresentationData";
 import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import { mapChipTint } from "./mapChipTint";
 import { MAP_REPRESENTATION_PRESETS, type MapRepresentationPreset, presetRecords } from "../../../utils/Representation/mapRepresentationPresets";
@@ -31,7 +32,7 @@ const levelLabel = (map: MoorhenMap, level: number) =>
 
 /**
  * A map's representations (.roadmaps/map-display.md), as chips: each with its eye, an edit popover (`editor(id)`: its
- * colour, level and draw settings), a duplicate and a delete (not the last one). Everything on a chip acts on its own
+ * colour, level and draw settings) and a delete (not the last one). Everything on a chip acts on its own
  * representation; the map card's own controls act on the map (all shown representations).
  */
 export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recordId: string) => React.ReactNode }) => {
@@ -39,13 +40,6 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const records = useSelector((state: RootState) => selectMapRepresentationsOfMap(state, map.uniqueId));
-
-    /** A copy, shown. A copy of a 2D slice is drawn as a mesh: one slice per map for now (its buffers are the map's) */
-    const duplicate = (record: MapRepresentationData) => {
-        // A shallow copy: records are immutable data, the new one only replaces fields
-        const { hiddenWithMap: _hiddenWithMap, ...source } = record;
-        dispatch(addMapRepresentation({ ...source, id: guid(), visible: true, style: source.style === "slice" ? "lines" : source.style }));
-    };
 
     return (
         <div className="moorhen__molecule_card_representation-chip-container">
@@ -57,6 +51,7 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
                         data-testid="map-representation-chip"
                         style={{
                             maxWidth: "13rem",
+                            width: '11rem',
                             color: isDark ? "white" : undefined,
                             ...mapChipTint(map, record),
                         }}
@@ -92,14 +87,6 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
                             <MoorhenButton
                                 type="icon-only"
                                 size="accordion"
-                                icon="MatSymCopyAll"
-                                tooltip="Duplicate this representation"
-                                ariaLabel="Duplicate this representation"
-                                onClick={() => duplicate(record)}
-                            />
-                            <MoorhenButton
-                                type="icon-only"
-                                size="accordion"
                                 icon="MatSymDelete"
                                 disabled={records.length < 2}
                                 tooltip="Delete this representation"
@@ -115,8 +102,34 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
 };
 
 /**
+ * "+": a copy of the map's last representation (the last made, or last in the list), shown. A copy of a 2D slice is
+ * drawn as a mesh: one slice per map for now (its buffers are the map's).
+ */
+export const AddMapRepresentationButton = (props: { map: MoorhenMap }) => {
+    const dispatch = useDispatch();
+    const last = useSelector((state: RootState) => selectMapRepresentationsOfMap(state, props.map.uniqueId).at(-1));
+    const add = () => {
+        if (!last) return;
+        // A shallow copy: records are immutable data, the new one only replaces fields
+        const { hiddenWithMap: _hiddenWithMap, ...source } = last;
+        dispatch(addMapRepresentation({ ...source, id: guid(), visible: true, style: source.style === "slice" ? "lines" : source.style }));
+    };
+    return (
+        <MoorhenButton
+            type="default"
+            icon="MatSymAdd"
+            disabled={!last}
+            tooltip="Add a representation: a copy of the last one"
+            ariaLabel="Add a representation"
+            style={{ width: "5rem" }}
+            onClick={add}
+        />
+    );
+};
+
+/**
  * The map wizard, as the molecule card's picture wizard: presets that replace the map's representations
- * (mapRepresentationPresets.ts), at multiples of the map's level (the card's: the lowest shown one), with its first
+ * (mapRepresentationPresets.ts), at multiples of the map's load level (defaultContourLevel), with its first
  * representation's radius, draw mode and colours.
  */
 export const MapRepresentationWizard = (props: { map: MoorhenMap; disabled?: boolean }) => {
@@ -124,10 +137,11 @@ export const MapRepresentationWizard = (props: { map: MoorhenMap; disabled?: boo
     const dispatch = useDispatch();
     const [isShown, setIsShown] = useState(false);
     const first = useSelector((state: RootState) => selectPrimaryMapRepresentation(state, map.uniqueId));
-    const level = useSelector((state: RootState) => selectShownLevelsBase(state, map.uniqueId));
     const applyPreset = (preset: MapRepresentationPreset) => {
         if (!first) return;
-        const records = presetRecords(preset, { ...first, contourLevel: level ?? first.contourLevel }, map);
+        // The map's load level, or its first representation's for a map that has none (a level not yet worked out)
+        const unit = defaultContourLevel(map) || first.contourLevel;
+        const records = presetRecords(preset, first, map, unit);
         dispatch(replaceMapRepresentationsOfMaps({ mapUids: [map.uniqueId], records }));
         setIsShown(false);
     };
@@ -143,14 +157,16 @@ export const MapRepresentationWizard = (props: { map: MoorhenMap; disabled?: boo
             isShown={isShown}
             setIsShown={setIsShown}
         >
-            <MoorhenStack direction="vertical" gap="0.1rem" style={{ minWidth: "14rem" }}>
-                <span style={{ fontSize: "0.8rem", opacity: 0.7 }}>Replace this map&apos;s representations with</span>
+            <MoorhenStack direction="vertical" gap="0.1rem" style={{ minWidth: "10rem" }}>
+                <MoorhenTooltip tooltip="Levels are multiples of the map's default level: the one it was loaded at" placement="top">
+                    <span style={{ fontSize: "0.8rem", opacity: 0.7 }}>Replace this map&apos;s representations with</span>
+                </MoorhenTooltip>
                 {MAP_REPRESENTATION_PRESETS.map(preset => (
-                    <MoorhenMenuItem key={preset.id} onClick={() => applyPreset(preset)} ariaLabel={`Wizard: ${preset.name}`}>
-                        <b>{preset.name}</b>
-                        <br />
-                        <span style={{ fontSize: "0.8rem" }}>{preset.description}</span>
-                    </MoorhenMenuItem>
+                    <MoorhenTooltip key={preset.id} tooltip={preset.description} placement="top">
+                        <MoorhenMenuItem onClick={() => applyPreset(preset)} ariaLabel={`Wizard: ${preset.name}`}>
+                            {preset.name}
+                        </MoorhenMenuItem>
+                    </MoorhenTooltip>
                 ))}
             </MoorhenStack>
         </MoorhenPopoverButton>
@@ -180,23 +196,31 @@ export const MapMultiRepresentationToggle = (props: { map: MoorhenMap }) => {
     );
 };
 
-/** The top row of a map's card: the "Multiple representations" switch and the map wizard */
+/** The top row of a map's card: the "Multiple representations" switch */
 export const MapRepresentationsToolbar = (props: { map: MoorhenMap }) => (
-    <MoorhenStack direction="row" align="center" justify="space-between" gap="0.5rem">
+    <MoorhenStack direction="row" align="center" gap="0.5rem">
         <MapMultiRepresentationToggle map={props.map} />
-        <MapRepresentationWizard map={props.map} />
     </MoorhenStack>
 );
 
-/** The representations card below it, in multi-representation mode: chips, each with its `editor(id)` */
+/**
+ * Below it, in multi-representation mode (hidden otherwise), as the molecule card: "+" and the map wizard, then the
+ * representations card with the chips, each with its `editor(id)`
+ */
 export const MapRepresentationsCard = (props: { map: MoorhenMap; editor: (recordId: string) => React.ReactNode }) => {
     const { map } = props;
     if (!useIsMultiRepresentation(map)) {
         return null;
     }
     return (
-        <MoorhenStack card direction="row" align="center" gap="0.25rem">
-            <MapRepresentationChips map={map} editor={props.editor} />
+        <MoorhenStack direction="vertical">
+            <MoorhenStack direction="row" justify="center">
+                <AddMapRepresentationButton map={map} />
+                <MapRepresentationWizard map={map} />
+            </MoorhenStack>
+            <MoorhenStack direction="vertical" card>
+                <MapRepresentationChips map={map} editor={props.editor} />
+            </MoorhenStack>
         </MoorhenStack>
     );
 };
