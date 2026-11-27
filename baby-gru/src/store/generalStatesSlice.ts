@@ -14,6 +14,11 @@ export type ResidueSelection = {
 const initialState: {
     devMode: boolean;
     useGemmi: boolean;
+    /**
+     * Draw molecular, van der Waals and accessible surfaces as Moorhen's smooth surface
+     * (smoothSurface.ts) rather than M2T's. A user preference; on by default.
+     */
+    useSmoothSurface: boolean;
     userPreferencesMounted: boolean;
     appTitle: string;
     cootInitialized: boolean;
@@ -52,6 +57,7 @@ const initialState: {
 } = {
     devMode: null,
     useGemmi: true,
+    useSmoothSurface: true,
     userPreferencesMounted: false,
     appTitle: "Moorhen",
     cootInitialized: false,
@@ -165,6 +171,9 @@ const generalStatesSlice = createSlice({
         setUseGemmi: (state, action: PayloadAction<boolean>) => {
             state.useGemmi = action.payload;
         },
+        setUseSmoothSurface: (state, action: PayloadAction<boolean>) => {
+            state.useSmoothSurface = action.payload;
+        },
         clearResidueSelection: state => {
             state.residueSelection = {
                 molecule: null,
@@ -269,6 +278,7 @@ export const {
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,
+    setUseSmoothSurface,
     setShowHoverInfo,
     setAllowScripting,
     setAllowAddNewFittedLigand,

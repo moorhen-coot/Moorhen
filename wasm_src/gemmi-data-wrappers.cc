@@ -426,6 +426,18 @@ EMSCRIPTEN_BINDINGS(gemmi_data) {
 
     register_vector<LigandInfo>("VectorLigandInfo");
 
+    value_object<ligand_bonding::ligand_t>("LigandBonding")
+    .field("cid", &ligand_bonding::ligand_t::cid)
+    .field("resName", &ligand_bonding::ligand_t::res_name)
+    .field("chainName", &ligand_bonding::ligand_t::chain_name)
+    .field("resNum", &ligand_bonding::ligand_t::res_num)
+    .field("modelName", &ligand_bonding::ligand_t::model_name)
+    .field("covalent", &ligand_bonding::ligand_t::covalent)
+    .field("anchor", &ligand_bonding::ligand_t::anchor)
+    ;
+
+    register_vector<ligand_bonding::ligand_t>("VectorLigandBonding");
+
     value_object<AtomInfo>("AtomInfo")
     .field("x", &AtomInfo::x)
     .field("y", &AtomInfo::y)
@@ -609,6 +621,7 @@ GlobWalk
     function("cif_parse_string",&cif_parse_string);
     function("get_atom_info_for_selection", &get_atom_info_for_selection);
     function("get_ligand_info_for_structure", &get_ligand_info_for_structure);
+    function("get_ligand_bonding_for_structure", &get_ligand_bonding_for_structure);
     function("get_sequence_info", &get_sequence_info);
     function("get_structure_bfactors", &get_structure_bfactors);
     function("guess_coord_data_format", &guess_coord_data_format);

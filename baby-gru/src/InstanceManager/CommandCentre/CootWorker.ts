@@ -1941,6 +1941,71 @@ const describeError = (err: any): string => {
     return String(err)
 }
 
+type SmoothSurfaceOptions = Record<string, number | boolean>
+type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
+/** What the C++ smoothSurfaceUnblurredFieldFromAtoms returns: the opened field before the blur, and what the blur needs. */
+type SmoothNativeUnblurred = {
+    field: Float32Array; changed: Uint8Array | null; interior: number; clamp: number
+    nx: number; ny: number; nz: number; origin: number[]; spacing: number
+    timings: { sas: number; seeds: number; transform: number; distance: number }
+}
+/** What the C++ smoothSurfaceFieldFromAtoms returns: the field ready to contour, its grid, and timings. */
+type SmoothNativeField = {
+    input: Float32Array; nx: number; ny: number; nz: number; origin: number[]; spacing: number
+    timings: { sas: number; seeds: number; transform: number; distance: number; blur: number }
+}
+/** What the C++ smoothSurfaceFromAtoms (moorhen-wrappers-helpers.h) returns: the surface, its grid and timings. */
+type SmoothNativeSurface = SmoothAtomSurface & {
+    grid: { nx: number; ny: number; nz: number; spacing: number }
+    timings: { sas: number; seeds: number; transform: number; distance: number; blur: number; contour: number; atoms: number }
+}
+
+/**
+ * Moorhen's smooth surface of atoms packed x, y, z, r (wasm_src/smooth-surface.cc, threaded): the mesh
+ * and each vertex's atoms, for colouring afterwards on the main thread (colours and residue owners
+ * come from each vertex's atoms). `residueOf`: each atom's residue, as an index. { surface }, or
+ * { surface: null } if there is nothing to contour.
+ */
+const smoothSurfaceFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const native = (cootModule as unknown as { smoothSurfaceFromAtoms?: (atoms: Float32Array, residueOf: Int32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeSurface | null }).smoothSurfaceFromAtoms
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceFromAtoms: rebuild it with the current wasm_src")
+    const surface = native(packedAtoms, residueOf, probe, options)
+    if (!surface) return { surface: null }
+    const t = surface.timings
+    const field = t.sas + t.seeds + t.transform + t.distance + t.blur
+    console.debug(`Smooth surface: ${packedAtoms.length / 4} atoms, grid ${surface.grid.nx}x${surface.grid.ny}x${surface.grid.nz} ` +
+        `at ${surface.grid.spacing.toFixed(2)} Å, σ ${options.sigma} Å, max shift ${options.maxShift} Å; ` +
+        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field ${field.toFixed(0)} ms ` +
+        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
+        `blur ${t.blur.toFixed(0)}), contour (C++) ${(t.contour + t.atoms).toFixed(0)} ms`)
+    const { grid, timings, ...arrays } = surface
+    return { surface: arrays as SmoothAtomSurface }
+}
+
+/**
+ * The smooth surface's field only (C++ smoothSurfaceFieldFromAtoms), for the rest of the surface to be
+ * made on the GPU on the main thread (src/WebGPUComponents/smoothSurface): { field } with the field
+ * ready to contour and its grid, or { field: null }.
+ */
+const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const native = (cootModule as unknown as { smoothSurfaceFieldFromAtoms?: (atoms: Float32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeField | null }).smoothSurfaceFieldFromAtoms
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceFieldFromAtoms: rebuild it with the current wasm_src")
+    return { field: native(packedAtoms, probe, options) }
+}
+
+/**
+ * The smooth surface's field up to the opening, unblurred (C++ smoothSurfaceUnblurredFieldFromAtoms),
+ * for the GPU to blur and finish on the main thread (stage 2): { field } or { field: null }.
+ */
+const smoothSurfaceUnblurredFieldFromAtoms = (packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const native = (cootModule as unknown as { smoothSurfaceUnblurredFieldFromAtoms?: (atoms: Float32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeUnblurred | null }).smoothSurfaceUnblurredFieldFromAtoms
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceUnblurredFieldFromAtoms: rebuild it with the current wasm_src")
+    return { field: native(packedAtoms, probe, options) }
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -2043,6 +2108,15 @@ const doCootCommand = (messageData: {
                 break
             case "shim_get_map_unit_cell_grid":
                 cootResult = getMapUnitCellGrid(...commandArgs as [number])
+                break
+            case "shim_smooth_surface_from_atoms":
+                cootResult = smoothSurfaceFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_field_from_atoms":
+                cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_unblurred_field_from_atoms":
+                cootResult = smoothSurfaceUnblurredFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
                 break
             default:
                 console.log("Calling",command)
@@ -2574,6 +2648,16 @@ const dispatchMessage = function (e: MessageEvent) {
         // A unit-cell map grid can be hundreds of MB: hand its buffer over rather than copy it.
         const grid = e.data.command === "shim_get_map_unit_cell_grid"
             ? (result as { result?: { result?: { data?: unknown } } }).result?.result?.data : null
-        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : [])
+        // A smooth surface's arrays were made for this reply: hand them over too.
+        const surface = e.data.command === "shim_smooth_surface_from_atoms"
+            ? (result as { result?: { result?: { surface?: SmoothAtomSurface | null } } }).result?.result?.surface : null
+        const field = e.data.command === "shim_smooth_surface_field_from_atoms"
+            ? (result as { result?: { result?: { field?: SmoothNativeField | null } } }).result?.result?.field : null
+        const unblurred = e.data.command === "shim_smooth_surface_unblurred_field_from_atoms"
+            ? (result as { result?: { result?: { field?: SmoothNativeUnblurred | null } } }).result?.result?.field : null
+        const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))]
+            : field ? [field.input.buffer as ArrayBuffer]
+            : unblurred ? [unblurred.field.buffer as ArrayBuffer, ...(unblurred.changed ? [unblurred.changed.buffer as ArrayBuffer] : [])] : []
+        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)
     }
 }

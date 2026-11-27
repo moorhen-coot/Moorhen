@@ -32,6 +32,7 @@ import {
     restrictCidToAltConf,
 } from "./utils";
 import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
+import { yieldToBrowser } from "./timeSlicing";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
@@ -52,10 +53,31 @@ export type LigandInfo = {
     resNum: string;
     modelName: string;
     cid: string;
+    /** Covalently bound to the polymer, directly or through other ligands (LigandBonding). */
+    covalent?: boolean;
     svg?: string;
     flev_svg?: string;
     smiles?: string;
     chem_comp_info?: { first: string; second: string }[];
+};
+
+/**
+ * A ligand - any residue neither polymer nor water: small molecules, sugars, ions - and whether it is
+ * covalently bound to the polymer (wasm_src/ligand-bonding.hh): bonded to a polymer residue, or to a
+ * ligand that is, so every sugar of an N-linked glycan is bound through the NAG on its Asn. Bonded:
+ * a covalent or disulphide LINK in the file, or two atoms within the sum of their covalent radii plus
+ * 0.4 A (hydrogens, metals and symmetry copies left out).
+ */
+export type LigandBonding = {
+    /** /model/chain/seqid(NAME), as LigandInfo.cid */
+    cid: string;
+    resName: string;
+    chainName: string;
+    resNum: string;
+    modelName: string;
+    covalent: boolean;
+    /** The polymer residue it is bound to (through other ligands, the one their chain is bound to); "" if none. */
+    anchor: string;
 };
 
 export type Sequence = {
@@ -157,6 +179,8 @@ export class MoorhenMolecule {
     sequences: Sequence[];
     representations: moorhen.MoleculeRepresentation[];
     ligands: LigandInfo[];
+    /** Every ligand and whether it is covalently bound to the polymer; updated with `ligands`. */
+    ligandBonding: LigandBonding[];
     ligandDicts: { [comp_id: string]: string };
     /**
      * Facts about the molecule as plain strings, by name: what a file said about it that is not a
@@ -225,6 +249,7 @@ export class MoorhenMolecule {
         this.cachedLigandSVGs = null;
         this.cachedPrivateerValidation = null;
         this.ligands = null;
+        this.ligandBonding = null;
         this.ligandDicts = {};
         this.metadata = {};
         this.connectedToMaps = null;
@@ -1632,6 +1657,9 @@ export class MoorhenMolecule {
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
      * @param {string} [neighboursMoleculeUid=""] - The molecule neighboursCid is in (uniqueId), if not this one.
      * @param {wormOptions} [wormOptions=undefined] - A "Worm"'s own options (see wormRadii.ts); none: the general ones.
+     * @param surface - Surfaces: `chainsSeparate`, each chain's smooth surface from its own atoms;
+     * `excludeBondedLigands` / `excludeFreeLigands`, leave out the ligands covalently bound to the
+     * polymer (default false) / the rest (default true) (LigandBonding).
      * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
@@ -1650,7 +1678,8 @@ export class MoorhenMolecule {
         hbondedTo: boolean = false,
         neighboursDistance: number = 6.0,
         neighboursMoleculeUid: string = "",
-        wormOptions?: Partial<wormOptions>
+        wormOptions?: Partial<wormOptions>,
+        surface: { chainsSeparate?: boolean; excludeBondedLigands?: boolean; excludeFreeLigands?: boolean } = {}
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1672,6 +1701,9 @@ export class MoorhenMolecule {
         representation.neighboursDistance = neighboursDistance;
         representation.neighboursMoleculeUid = neighboursMoleculeUid;
         representation.setWormOptions(wormOptions);
+        representation.surfaceChainsSeparate = !!surface.chainsSeparate;
+        representation.surfaceExcludeBondedLigands = !!surface.excludeBondedLigands;
+        representation.surfaceExcludeFreeLigands = surface.excludeFreeLigands ?? true;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         representation.buildParams = cidBuildParams(representation);
 
@@ -2295,7 +2327,15 @@ export class MoorhenMolecule {
         }
         ligandInfoVec.delete();
 
+        const bondingVec = window.gemmiModule.get_ligand_bonding_for_structure(this.gemmiStructure);
+        const bonding: LigandBonding[] = [];
+        for (let i = 0; i < bondingVec.size(); i++) bonding.push({ ...bondingVec.get(i) });
+        bondingVec.delete();
+        const covalent = new Map(bonding.map(ligand => [ligand.cid, ligand.covalent]));
+        for (const ligand of ligandList) ligand.covalent = covalent.get(ligand.cid) ?? false;
+
         this.ligands = ligandList;
+        this.ligandBonding = bonding;
         this.checkIsLigand();
         this.refreshRecord();
         void this.refreshMissingDictionaries();
@@ -2342,6 +2382,17 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Whether the residue `cid` (/model/chain/seqid(NAME), or /model/chain/seqid) is a ligand covalently
+     * bound to the polymer (LigandBonding); false for a ligand that is not, undefined for a residue
+     * that is no ligand (polymer, water) or not there.
+     */
+    isCovalentlyBound(cid: string): boolean | undefined {
+        const key = cid.replace(/\/\*$/, "");
+        const found = (this.ligandBonding ?? []).find(ligand => ligand.cid === key || ligand.cid.replace(/\(.*\)$/, "") === key);
+        return found?.covalent;
+    }
+
+    /**
      * Get atom information for a given CID selection
      * @param {string} cid - The CID selection
      * @returns {Promise<moorhen.AtomInfo[]>} JS objects containing atom information
@@ -2362,7 +2413,15 @@ export class MoorhenMolecule {
             omitExcludedCids ? this.excludedSelections.join("||") : ""
         );
         const atomInfoVecSize = atomInfoVec.size();
+        // Each atom comes over as an object, a few microseconds each: on a large structure, about a
+        // tenth of a second - so the browser gets a turn every 10 ms (timeSlicing.ts). The vector
+        // is a copy, independent of the structure, so it stays valid across the turns.
+        let slice = performance.now();
         for (let i = 0; i < atomInfoVecSize; i++) {
+            if ((i & 1023) === 1023 && performance.now() - slice > 10) {
+                await yieldToBrowser();
+                slice = performance.now();
+            }
             const atomInfo = atomInfoVec.get(i);
             result.push(atomInfo);
         }

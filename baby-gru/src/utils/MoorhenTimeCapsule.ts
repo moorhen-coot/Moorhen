@@ -120,6 +120,11 @@ export type moleculeSessionData = {
         /** A "Worm"'s own options; absent for a worm with the general ones, other styles and sessions written before them. */
         wormOptions?: Partial<wormOptions> | null;
         nonCustomOpacity: number;
+        /** Absent in sessions saved before it existed. */
+        surfaceChainsSeparate?: boolean;
+        /** Surfaces: leave out bonded / other ligands. Absent in older sessions: everything surfaced. */
+        surfaceExcludeBondedLigands?: boolean;
+        surfaceExcludeFreeLigands?: boolean;
         /**
          * Whether the surface thickens where it is seen edge-on. Absent in sessions written
          * before it existed, which read as off.
@@ -533,6 +538,9 @@ export class MoorhenTimeCapsule {
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             wormOptions: item.style === "Worm" && !item.useDefaultWormOptions ? item.wormOptions : null,
                             nonCustomOpacity: item.nonCustomOpacity,
+                            surfaceChainsSeparate: item.surfaceChainsSeparate,
+                            surfaceExcludeBondedLigands: item.surfaceExcludeBondedLigands,
+                            surfaceExcludeFreeLigands: item.surfaceExcludeFreeLigands,
                             viewDependentTransparency: item.viewDependentTransparency,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
@@ -1136,7 +1144,12 @@ export class MoorhenTimeCapsule {
                         item.hbondedTo,
                         item.neighboursDistance,
                         item.neighboursMoleculeUid ?? "",
-                        item.wormOptions ?? undefined
+                        item.wormOptions ?? undefined,
+                        {
+                            chainsSeparate: !!item.surfaceChainsSeparate,
+                            excludeBondedLigands: !!item.surfaceExcludeBondedLigands,
+                            excludeFreeLigands: !!item.surfaceExcludeFreeLigands,
+                        }
                     );
                     // Its identity, back as it was saved. A session written before the format
                     // carried this keeps the guid minted a moment ago, which is what has always

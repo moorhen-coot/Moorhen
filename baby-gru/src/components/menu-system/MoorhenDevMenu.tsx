@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import {
     instrumentGl,
     measuredTrianglesPerFrame,
@@ -15,7 +16,9 @@ import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/tex
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { shadingDebug } from "../../WebGPUComponents/previewScene";
 import { setUseGemmi } from "../../store/generalStatesSlice";
+import { setRequestDrawScene } from "../../store/glRefSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -31,14 +34,16 @@ import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
+import type { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
-import { modalKeys } from "../../utils/enums";
+import { M2T_SURFACE_REPRESENTATIONS, modalKeys } from "../../utils/enums";
+import { smoothSurfaceSetting } from "../../utils/smoothSurface";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
-import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { readGzippedTextFile } from "../../utils/utils";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { formatSurfaceBenchmark, runSurfaceBenchmark } from "../../utils/surfaceBenchmark";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenAccordion, MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
@@ -201,6 +206,38 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
+    const smoothSurface = useSelector((state: RootState) => state.generalStates.useSmoothSurface);
+    const [smoothSpacing, setSmoothSpacing] = useState<number>(smoothSurfaceSetting.spacing);
+    const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
+    const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
+    const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
+    const [smoothRefine, setSmoothRefine] = useState<boolean | "auto">(smoothSurfaceSetting.refine);
+    const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
+    const [smoothFieldShading, setSmoothFieldShading] = useState<boolean>(smoothSurfaceSetting.fieldShading);
+    const [smoothPixelColours, setSmoothPixelColours] = useState<boolean>(smoothSurfaceSetting.pixelColours);
+    const [smoothOpenUncapped, setSmoothOpenUncapped] = useState<boolean>(smoothSurfaceSetting.openUncapped);
+    const [smoothHealBlur, setSmoothHealBlur] = useState<number>(smoothSurfaceSetting.healBlur);
+    const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
+    const [smoothColourSmoothing, setSmoothColourSmoothing] = useState<number>(smoothSurfaceSetting.colourSmoothing);
+    const [shadingStripes, setShadingStripes] = useState<boolean>(shadingDebug.stripes);
+    // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
+    // The colour blend and smoothing need no new surface: recolour, or redraw what cannot.
+    const recolourSurfaces = () => {
+        (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
+            molecule.representations
+                .filter(representation => M2T_SURFACE_REPRESENTATIONS.includes(representation.style) && representation.visible)
+                .forEach(async representation => {
+                    if (!(await representation.recolour())) await representation.redraw();
+                });
+        });
+    };
+    const redrawSurfaces = () => {
+        (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
+            molecule.representations
+                .filter(representation => M2T_SURFACE_REPRESENTATIONS.includes(representation.style) && representation.visible)
+                .forEach(representation => representation.redraw());
+        });
+    };
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
     // every WebGPU switch shows off and cannot be changed, whatever it is set to.
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
@@ -549,7 +586,7 @@ export const MoorhenDevMenu = () => {
                             })();
                         }}
                     >
-                        Renderer report (a few seconds; copied to the clipboard)
+                        Renderer report (copied to the clipboard)
                     </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"
@@ -606,6 +643,191 @@ export const MoorhenDevMenu = () => {
                     />
                 </MoorhenStack>
             </MoorhenAccordion>
+            <MoorhenAccordion title="Smooth surface">
+                <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            void (async () => {
+                                document.body.click();
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: "Surface benchmark: about a minute, more on a slow machine. Leave the view alone until it says it is done.",
+                                    variant: "info",
+                                });
+                                try {
+                                    // surfaceBenchmark.ts: every way of shading the surfaces, timed, then all put back.
+                                    const facts = await runSurfaceBenchmark(moorhenInstance, {
+                                        onProgress: text => console.info(`Surface benchmark: ${text}`),
+                                    });
+                                    const text = formatSurfaceBenchmark(facts);
+                                    console.info(text);
+                                    let copied = false;
+                                    try {
+                                        await navigator.clipboard.writeText(text);
+                                        copied = true;
+                                    } catch {
+                                        // The click is too long ago for the clipboard: a file instead.
+                                        const link = document.createElement("a");
+                                        link.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+                                        link.download = "moorhen-surface-benchmark.txt";
+                                        link.click();
+                                        setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
+                                    }
+                                    moorhenInstance.snackbar.enqueueSnackbar({
+                                        message: `Surface benchmark done: ${copied ? "copied to the clipboard" : "saved as moorhen-surface-benchmark.txt"} (also in the console). Please paste it back.`,
+                                        variant: "success",
+                                    });
+                                } catch (err) {
+                                    moorhenInstance.snackbar.enqueueSnackbar({
+                                        message: `Surface benchmark not run: ${err instanceof Error ? err.message : String(err)}`,
+                                        variant: "warning",
+                                    });
+                                }
+                            })();
+                        }}
+                    >
+                        Surface benchmark (report copied to the clipboard)
+                    </MoorhenMenuItem>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && smoothOnGpu}
+                        disabled={noWebGPU !== null}
+                        label="Finish on the GPU"
+                        tooltip={`The C++ makes the field in the worker, the GPU the contour, split, normals and vertex atoms. On by default; off, no WebGPU, or a software adapter (SwiftShader): the C++ makes all of it.${noWebGPU ? ` No WebGPU here: ${noWebGPU}` : ""}`}
+                        onChange={() => {
+                            smoothSurfaceSetting.gpu = !smoothOnGpu;
+                            setSmoothOnGpu(!smoothOnGpu);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && smoothOnGpu && smoothFieldShading}
+                        disabled={noWebGPU !== null || !smoothOnGpu}
+                        label="Shade per pixel from the field"
+                        tooltip="Each pixel's normal from the field's smooth gradient, in the WebGPU view: no trace of the triangles in the light. The field stays on the GPU while the surface is shown, so this switches at once - unless the split is on auto, which splits only surfaces shaded per vertex: then they are made again. Screenshots are shaded per pixel whatever this says. On by default; needs the GPU finish."
+                        onChange={() => {
+                            smoothSurfaceSetting.fieldShading = !smoothFieldShading;
+                            setSmoothFieldShading(!smoothFieldShading);
+                            // On auto, whether surfaces are split follows this: made again. Otherwise only how they are drawn changes.
+                            if (smoothSurface && smoothRefine === "auto") redrawSurfaces();
+                            else dispatch(setRequestDrawScene(true));
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && smoothOnGpu && smoothFieldShading && smoothPixelColours}
+                        disabled={noWebGPU !== null || !smoothOnGpu || !smoothFieldShading}
+                        label="Colour per pixel from the atoms"
+                        tooltip="Each pixel's colour from the atoms nearest it, by the colour blend's weights: colour boundaries follow the surface at screen resolution instead of stepping along the triangles. Switches at once; screenshots are coloured per pixel whatever this says. On by default; needs per-pixel shading. Not for electrostatics."
+                        onChange={() => {
+                            smoothSurfaceSetting.pixelColours = !smoothPixelColours;
+                            setSmoothPixelColours(!smoothPixelColours);
+                            // Drawn so or not each frame: nothing to make again.
+                            dispatch(setRequestDrawScene(true));
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={smoothRefine === "auto" ? !(noWebGPU === null && smoothOnGpu && smoothFieldShading) : smoothRefine}
+                        label={smoothRefine === "auto" ? "Split every triangle (auto)" : "Split every triangle"}
+                        tooltip="Split every triangle once, positions and normals from the field: smoother shading and colour edges, and a finer outline, for 4x the triangles. On auto (the default) only surfaces shaded per vertex are split - the WebGL view, chains surfaced separately, the C++ alone - as per-pixel shading hides the triangles in the light without. Switching it sets it on or off for every surface, shaded per pixel or not."
+                        onChange={() => {
+                            const now = smoothRefine === "auto" ? !(noWebGPU === null && smoothOnGpu && smoothFieldShading) : smoothRefine;
+                            smoothSurfaceSetting.refine = !now;
+                            setSmoothRefine(!now);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={smoothOpenUncapped}
+                        label="No blur cap round cut necks"
+                        tooltip="Where a neck is cut, the dent it leaves is deeper than the blur's cap lets it fill: lift the cap there. On by default."
+                        onChange={() => {
+                            smoothSurfaceSetting.openUncapped = !smoothOpenUncapped;
+                            setSmoothOpenUncapped(!smoothOpenUncapped);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
+                    <MoorhenStack direction="row">
+                        <MoorhenNumberInput
+                            label="Grid (Å)"
+                            value={smoothSpacing}
+                            minMax={[0.2, 1.5]}
+                            setValue={val => {
+                                smoothSurfaceSetting.spacing = val;
+                                setSmoothSpacing(val);
+                                if (smoothSurface) redrawSurfaces();
+                            }}
+                        />
+                        <MoorhenNumberInput
+                            label="Blur σ (Å)"
+                            value={smoothSigma}
+                            minMax={[0, 3]}
+                            setValue={val => {
+                                smoothSurfaceSetting.sigma = val;
+                                setSmoothSigma(val);
+                                if (smoothSurface) redrawSurfaces();
+                            }}
+                        />
+                        <MoorhenNumberInput
+                            label="Max shift (Å, 0 = none)"
+                            value={smoothMaxShift}
+                            minMax={[0, 3]}
+                            setValue={val => {
+                                // 0 in the box means no cap: the plain blur.
+                                smoothSurfaceSetting.maxShift = val > 0 ? val : Infinity;
+                                setSmoothMaxShift(val);
+                                if (smoothSurface) redrawSurfaces();
+                            }}
+                        />
+                    </MoorhenStack>
+                    <MoorhenStack direction="row">
+                        <MoorhenNumberInput
+                            label="Cut necks under (Å, 0 = none)"
+                            value={smoothOpenRadius}
+                            minMax={[0, 2]}
+                            setValue={val => {
+                                smoothSurfaceSetting.openRadius = val;
+                                setSmoothOpenRadius(val);
+                                if (smoothSurface) redrawSurfaces();
+                            }}
+                        />
+                        <MoorhenNumberInput
+                            label="Blur round cuts (Å σ, ≤ blur = off)"
+                            value={smoothHealBlur}
+                            minMax={[0, 2]}
+                            setValue={val => {
+                                smoothSurfaceSetting.healBlur = val;
+                                setSmoothHealBlur(val);
+                                if (smoothSurface) redrawSurfaces();
+                            }}
+                        />
+                    </MoorhenStack>
+                    <MoorhenStack direction="row">
+                        <MoorhenNumberInput
+                            label="Colour blend (Å, 0 = hard edge)"
+                            value={smoothColourBlend}
+                            minMax={[0, 2]}
+                            setValue={val => {
+                                smoothSurfaceSetting.colourBlend = val;
+                                setSmoothColourBlend(val);
+                                if (smoothSurface) recolourSurfaces();
+                            }}
+                        />
+                        <MoorhenNumberInput
+                            label="Colour smoothing passes"
+                            value={smoothColourSmoothing}
+                            minMax={[0, 10]}
+                            setValue={val => {
+                                smoothSurfaceSetting.colourSmoothing = Math.round(val);
+                                setSmoothColourSmoothing(Math.round(val));
+                                if (smoothSurface) recolourSurfaces();
+                            }}
+                        />
+                    </MoorhenStack>
+                </MoorhenStack>
+            </MoorhenAccordion>
             <MoorhenAccordion title="Draw diagnostics">
                 <MoorhenStack>
                     <MoorhenToggle
@@ -628,6 +850,17 @@ export const MoorhenDevMenu = () => {
                         onChange={() => {
                             renderStats.syncGpu = !syncingGpu;
                             setSyncingGpu(!syncingGpu);
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={shadingStripes}
+                        label="Shading as contour stripes"
+                        tooltip="Draw N.L as contour stripes, to show banding in the diffuse light. WebGPU only."
+                        onChange={() => {
+                            shadingDebug.stripes = !shadingStripes;
+                            setShadingStripes(!shadingStripes);
+                            dispatch(setRequestDrawScene(true));
                         }}
                     />
                     <MoorhenToggle
@@ -693,7 +926,7 @@ export const MoorhenDevMenu = () => {
                                 setValue={val => {
                                     dispatch(setOrigin([origin[0], origin[1], val]));
                                 }}
-                            />{" "}
+                            />
                         </MoorhenStack>
                     </MoorhenStack>
                 </MoorhenStack>

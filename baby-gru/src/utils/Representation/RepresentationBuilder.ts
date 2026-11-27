@@ -377,6 +377,12 @@ export interface CreateRepresentationParams {
      */
     viewDependentTransparency?: boolean;
     hbondedTo?: boolean;
+    /** Surfaces: build each chain's smooth surface from its own atoms (MoleculeRepresentation.surfaceChainsSeparate). */
+    surfaceChainsSeparate?: boolean;
+    /** Surfaces: leave out the ligands covalently bound to the polymer (MoleculeRepresentation.surfaceExcludeBondedLigands). */
+    surfaceExcludeBondedLigands?: boolean;
+    /** Surfaces: leave out the other ligands (MoleculeRepresentation.surfaceExcludeFreeLigands). Default true. */
+    surfaceExcludeFreeLigands?: boolean;
     /**
      * Unique ID for the new representation (e.g. to restore one from MoleculeRepresentation.backup()).
      * Ignored in edit mode; a new ID is generated if omitted or already used on the molecule.
@@ -423,6 +429,9 @@ export interface RepresentationBackup {
     /** A "Worm"'s own; null for a worm with the general ones, and for other styles */
     wormOptions: wormOptions | null;
     nonCustomOpacity: number | null;
+    surfaceChainsSeparate: boolean;
+    surfaceExcludeBondedLigands: boolean;
+    surfaceExcludeFreeLigands: boolean;
     /** Whether the surface thickens where it is seen edge-on. */
     viewDependentTransparency: boolean;
     uniqueId: string;
@@ -509,6 +518,9 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
         wormOptions: representation.style === "Worm" && !representation.useDefaultWormOptions ? copy(representation.wormOptions) : null,
         nonCustomOpacity: representation.nonCustomOpacity,
+        surfaceChainsSeparate: representation.surfaceChainsSeparate,
+        surfaceExcludeBondedLigands: representation.surfaceExcludeBondedLigands,
+        surfaceExcludeFreeLigands: representation.surfaceExcludeFreeLigands,
         viewDependentTransparency: representation.viewDependentTransparency,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,
@@ -570,6 +582,9 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
         viewDependentTransparency = existingParams?.viewDependentTransparency ?? false,
         hbondedTo = existingParams?.hbondedTo ?? false,
+        surfaceChainsSeparate = existingParams?.surfaceChainsSeparate ?? false,
+        surfaceExcludeBondedLigands = existingParams?.surfaceExcludeBondedLigands ?? false,
+        surfaceExcludeFreeLigands = existingParams?.surfaceExcludeFreeLigands ?? true,
         existingRepresentation,
     } = params;
     // ncsColourRule may come in serialised form (e.g. from a backup)
@@ -681,6 +696,9 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.setResidueEnvOptions(residueEnvironmentOptions);
     representation.setWormOptions(wormOptions);
     representation.setNonCustomOpacity(nonCustomOpacity);
+    representation.surfaceChainsSeparate = surfaceChainsSeparate;
+    representation.surfaceExcludeBondedLigands = surfaceExcludeBondedLigands;
+    representation.surfaceExcludeFreeLigands = surfaceExcludeFreeLigands;
     representation.setViewDependentTransparency(!!viewDependentTransparency);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = params.interfaceVisible ?? true;

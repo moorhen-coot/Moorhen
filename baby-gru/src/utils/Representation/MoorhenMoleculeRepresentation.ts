@@ -10,23 +10,39 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import { createRepresentation, extractRepresentationParams, neighbourResidues, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, M2T_SURFACE_REPRESENTATIONS } from "../enums";
 import { defaultWormOptions, wormM2tIntParameters, wormOptions, wormResidueProperties, wormResidueRadii } from "./wormRadii";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
-import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
+import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo, ownedMeshPickInfoSliced } from "../../WebGLgComponents/ownedMeshPick";
 import { reassignNucleotideOwners } from "../../WebGLgComponents/nucleotideOwners";
 import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
     gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
+import {
+    type AtomSurface, type SurfaceAtom, type VertexAtoms, COLOUR_ATOMS, atomSurfaceColoursSliced,
+    atomSurfaceInfluencesSliced, atomSurfaceMeshSliced, mergeAtomSurfaces, nearestVertices, packAtoms, residueCid, smoothSurfaceSetting, splitSurface,
+    smoothVertexColoursSliced, vertexNeighbours,
+} from "../smoothSurface";
+import { influenceListsFromSharesSliced } from "../../WebGLgComponents/ownedMeshPick";
+import { runSliced, yieldToBrowser } from "../timeSlicing";
+import { surfaceAtomRadius } from "../m2tAtomRadii";
+import {
+    GPU_SMOOTH_MAX_LINE, type SmoothUnblurredField, attachSurfaceColouring, gpuSmoothSurfaceIfFast, ownershipBand, releaseSurfaceField,
+    setSurfaceColours, smoothGrid,
+} from "../../WebGPUComponents/smoothSurface";
+import { surfaceChainGroups } from "../surfaceChainGroups";
 
 /**
  * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
  * highlight such as the hover ball can sit on.
  */
+/** Water, left out of a smooth surface (M2T's names for it, m2tAtomRadii.ts). */
+const WATER_RESIDUES = new Set(["HOH", "WAT", "DOD", "H2O", "OH2"]);
+
 export const ATOM_LEVEL_STYLES: string[] = ["CBs", "CAs", "VdwSpheres", "ligands"];
 
 export type MeshType =
@@ -151,9 +167,17 @@ export type gaussianSurfSettings = {
  * memory for the life of the buffer, megabytes of it on a ribosome, and mergeBufferObjects
  * calls concat on every key it finds, which a Uint32Array does not have.
  */
+/** A smooth surface's hover shares (atomSurfaceMesh), for ownedMeshPickInfo; undefined for any other mesh. */
+const smoothInfluences = (mesh: libcootApi.SimpleMeshJS) => {
+    const { vertex_influence_owners: owners, vertex_influence_weights: weights } =
+        mesh as libcootApi.SimpleMeshJS & { vertex_influence_owners?: Uint32Array; vertex_influence_weights?: Float32Array };
+    const count = (mesh.vert_tri?.[0]?.[0]?.length ?? 0) / 3;
+    return owners && weights && count > 0 ? { stride: owners.length / count, owners, weights } : undefined;
+};
+
 const withoutOwnershipArrays = (mesh: libcootApi.SimpleMeshJS) => {
-    const { vertex_owners, owners, vertex_owners_other, vertex_owner_weights, ...rest } =
-        mesh as libcootApi.SimpleMeshJS;
+    const { vertex_owners, owners, vertex_owners_other, vertex_owner_weights, vertex_influence_owners, vertex_influence_weights, ...rest } =
+        mesh as libcootApi.SimpleMeshJS & { vertex_influence_owners?: Uint32Array; vertex_influence_weights?: Float32Array };
     return rest;
 };
 
@@ -217,6 +241,28 @@ export class MoleculeRepresentation {
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
     cavities: {index: number, mesh: libcootApi.SimpleMeshJS[]} | null;
+    /**
+     * Surface each chain separately: a smooth surface made from the atoms is built chain by chain,
+     * each from its own atoms alone, so every chain is surfaced whole - the interfaces between them
+     * included - rather than the complex as one. Smooth surfaces from the atoms only (not
+     * electrostatics, not M2T). Set when the representation is created or edited.
+     */
+    surfaceChainsSeparate: boolean = false;
+    /** Surfaces: leave out the ligands covalently bound to the polymer (MoorhenMolecule.ligandBonding). */
+    surfaceExcludeBondedLigands: boolean = false;
+    /** Surfaces: leave out the ligands not covalently bound to it. On by default: bound ligands only. */
+    surfaceExcludeFreeLigands: boolean = true;
+    /**
+     * What a smooth surface made from the atoms keeps to be coloured again without being rebuilt
+     * (recolour): its atoms, each vertex's nearest atoms, and its triangles. Null for anything else.
+     */
+    smoothColouring: {
+        records: moorhen.AtomInfo[];
+        residueOf: Int32Array;
+        vertex: VertexAtoms;
+        indices: Uint32Array;
+        neighbours?: { indices: ArrayLike<number>; count: Int32Array };
+    } | null = null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
@@ -733,7 +779,7 @@ export class MoleculeRepresentation {
      */
     async draw() {
         this.visible = true;
-        await this.applyColourRules();
+        if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
@@ -769,7 +815,7 @@ export class MoleculeRepresentation {
      */
     async redraw() {
         this.visible = true;
-        await this.applyColourRules();
+        if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.deleteBuffers();
         this.buildBuffers(objects);
@@ -814,6 +860,8 @@ export class MoleculeRepresentation {
             const gl = this.parentMolecule.store.getState().glRef.glCtx;
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
+                    // A smooth surface's field, kept on the GPU for per-pixel shading, goes with it.
+                    buffer.fieldShading?.forEach(field => releaseSurfaceField(field));
                     buffer.clearBuffers(gl);
                     newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
@@ -1708,35 +1756,71 @@ export class MoleculeRepresentation {
     ): Promise<PickableMesh[]> {
         const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection, restrictSelection);
 
-        await this.applyM2tParams();
-
         let colorStyle: string = "";
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
 
         const ssUsageScheme = this.getM2tSsUsageScheme();
 
-        // The residues' secondary structure as ssUsageScheme says, and a worm's radii, are the
-        // molecule's: set and put back around the mesh in one worker command (see
-        // withM2tMoleculeState in CootWorker).
-        const response = (await this.commandCentre.cootCommand(
-            {
-                returnType: "mesh",
-                command: "shim_get_molecular_representation_mesh",
-                commandArgs: [
-                    this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme,
-                    this.getWormResidueProperties(), this.getWormM2tIntParameters(),
-                ],
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+
+        // Moorhen's smooth surface unless the user prefers M2T's (Preferences, useSmoothSurface): made
+        // from the atoms in the Coot worker (the C++), coloured and owned here from each vertex's
+        // atoms. Not for a residue environment's restricted surface, which it does not cut down.
+        const useSmoothSurface = this.parentMolecule.store.getState().generalStates.useSmoothSurface;
+        const smoothInput = useSmoothSurface && M2T_SURFACE_REPRESENTATIONS.includes(m2tStyle) && !restrictSelection
+            ? await this.smoothSurfaceInput(m2tStyle, cidSelection).catch(err => {
+                console.warn("Smooth surface: no atoms; drawing the M2T surface.", err);
+                return null;
+            })
+            : null;
+
+        // The M2T mesh of `selection` as it is, with this representation's M2T parameters and (only now
+        // for a surface: colourRulesOnDemand) its colour rules - sent to Coot only when Coot makes the
+        // mesh, so a smooth surface made from the atoms sends neither.
+        const m2tSurfaceMesh = async (selection: string): Promise<libcootApi.SimpleMeshJS> => {
+            await this.applyM2tParams();
+            if (this.colourRulesOnDemand) await this.applyColourRules();
+            // The residues' secondary structure as ssUsageScheme says, and a worm's radii, are the
+            // molecule's: set and put back around the mesh in one worker command (see
+            // withM2tMoleculeState in CootWorker).
+            const response = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "mesh",
+                    command: "shim_get_molecular_representation_mesh",
+                    commandArgs: [
+                        this.parentMolecule.molNo, selection, colorStyle, m2tStyle, ssUsageScheme,
+                        this.getWormResidueProperties(), this.getWormM2tIntParameters(),
+                    ],
+                },
+                false
+            )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            return response.data.result.result as libcootApi.SimpleMeshJS;
+        };
+
+        let m2tMesh: libcootApi.SimpleMeshJS | null = null;
+        this.smoothColouring = null;
+        if (smoothInput) {
+            // Electrostatics: M2T works out the potential on its own surface; each smooth vertex takes
+            // the colour of the nearest M2T vertex.
+            const potential = colorStyle === "ByOwnPotential" ? await m2tSurfaceMesh(m2tSelection) : null;
+            const options = {
+                spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
+                openRadius: smoothSurfaceSetting.openRadius, openUncapped: smoothSurfaceSetting.openUncapped,
+                healBlur: smoothSurfaceSetting.healBlur,
+                // Split, for a surface shaded per vertex; atomSurfaceFor decides again for one kept with its field.
+                refine: splitSurface(false),
+            };
+            // "Surface each chain separately" (this representation's): each chain's from its own atoms.
+            m2tMesh = await this.smoothSurfaceFromAtoms(smoothInput, options, this.surfaceChainsSeparate, potential);
+            if (!m2tMesh) console.warn("Smooth surface failed; drawing the M2T surface.");
+        }
+        if (!m2tMesh) m2tMesh = await m2tSurfaceMesh(m2tSelection);
 
         // A mesh that knows which residue made each of its vertices is hoverable per residue.
         //
         // Coot fills this in for the molecular surface and for nothing else so far, so this is
         // a question about the mesh rather than about the style: ask what arrived. Ribbons and
         // the rest simply have no owners and fall through unchanged.
-        const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
         if (this.meshFailedToBuild(m2tMesh)) {
             return [];
         }
@@ -1754,9 +1838,10 @@ export class MoleculeRepresentation {
             ? reassignNucleotideOwners(m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
                 await this.parentMolecule.gemmiAtomsForCid("/*/*/*/*"))
             : m2tMesh.vertex_owners
-        const meshPickInfo = ownedMeshPickInfo(
+        const influences = smoothInfluences(m2tMesh);
+        const meshPickInfo = await runSliced(ownedMeshPickInfoSliced(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], ribbonOwners as Uint32Array | number[] | undefined, m2tMesh.owners,
-            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering)
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering, influences))
         const ribbonBufferObjects = [{
             ...withoutOwnershipArrays(m2tMesh),
             pick_info: meshPickInfo ? { ...meshPickInfo, highlight_group: highlightGroup } : {},
@@ -1793,6 +1878,272 @@ export class MoleculeRepresentation {
         }
 
         return resultBufferObjects
+    }
+
+    /**
+     * What a smooth surface of this M2T style is made from, as M2T sizes its spheres
+     * (CXXSurfaceMaker-gemmi.cc): the molecular surface rolls the probe over the atoms; the van
+     * der Waals surface is the atoms themselves (radii times ballsStyleRadiusMultiplier), which is
+     * a molecular surface with no probe; the accessible surface is the same on atoms grown by the
+     * probe radius.
+     */
+    async smoothSurfaceInput(m2tStyle: string, cidSelection?: string): Promise<{ atoms: SurfaceAtom[]; probe: number; records: moorhen.AtomInfo[] }> {
+        const params = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams : this.m2tParams;
+        const surfaceProbe = params.surfaceStyleProbeRadius;
+        const multiplier = params.ballsStyleRadiusMultiplier > 0 ? params.ballsStyleRadiusMultiplier : 1;
+        const { atoms: chosen, records } = await this.smoothSurfaceAtoms(cidSelection);
+        const atoms = chosen.map(atom =>
+            m2tStyle === "MolecularSurface" ? atom
+            : m2tStyle === "VdWSurface" ? { ...atom, r: atom.r * multiplier }
+            : { ...atom, r: atom.r * multiplier + surfaceProbe });
+        return { atoms, probe: m2tStyle === "MolecularSurface" ? surfaceProbe : 0, records };
+    }
+
+    /**
+     * A smooth surface made from the atoms alone, with no M2T mesh, coloured here afterwards: each
+     * vertex's colour and residue owners come from its nearest atom (and, near a boundary between
+     * residues, the other residue's atom), so a colour-rule change needs no new surface. The worker
+     * makes the surface (the C++). `potential`: M2T's electrostatics surface, whose colours the
+     * vertices take instead, nearest vertex for vertex. Null if nothing could be made (the caller then
+     * draws the M2T surface).
+     */
+    async smoothSurfaceFromAtoms(input: { atoms: SurfaceAtom[]; probe: number; records: moorhen.AtomInfo[] },
+                                 options: Record<string, number | boolean>, separateChains = false,
+                                 potential: libcootApi.SimpleMeshJS | null = null): Promise<libcootApi.SimpleMeshJS | null> {
+        const { atoms, probe, records } = input;
+        // The owner table, one entry per residue, named as M2T names them.
+        const residueIndex = new Map<string, number>();
+        const residues: string[] = [];
+        const residueOf = new Int32Array(records.length);
+        records.forEach((record, i) => {
+            const cid = residueCid(record.mol_name, record.chain_id, record.res_no, record.res_name);
+            let k = residueIndex.get(cid);
+            if (k === undefined) { k = residues.length; residues.push(cid); residueIndex.set(cid, k); }
+            residueOf[i] = k;
+        });
+        let surface: AtomSurface | null = null;
+        // Each polymer chain with the glycan and ligand chains it touches (surfaceChainGroups).
+        const chainOf = separateChains ? surfaceChainGroups(records) : [];
+        const chains = [...new Set(chainOf)];
+        if (chains.length > 1) {
+            // Each group from its own atoms, then one surface: atom indices back to the whole list's.
+            const parts: { surface: AtomSurface; atomIndex: number[] }[] = [];
+            for (const chain of chains) {
+                const atomIndex = records.map((_, i) => i).filter(i => chainOf[i] === chain);
+                // Per-vertex normals: one surface from parts has no one field to shade it from.
+                const part = await this.atomSurfaceFor(atomIndex.map(i => atoms[i]), Int32Array.from(atomIndex, i => residueOf[i]), probe, options);
+                if (part) parts.push({ surface: part, atomIndex });
+            }
+            surface = parts.length > 0 ? mergeAtomSurfaces(parts) : null;
+        } else {
+            // Its field kept, to shade it per pixel from, where WebGPU draws the view - whether it is shaded
+            // so now or not (smoothSurfaceSetting.fieldShading), which the renderer reads each frame.
+            const keepField = !!this.parentMolecule.store.getState().sceneSettings.useWebGPU;
+            surface = await this.atomSurfaceFor(atoms, residueOf, probe, options, keepField);
+        }
+        if (!surface) return null;
+        // Kept for recolour: only what colours and hover shares are made from.
+        this.smoothColouring = {
+            records, residueOf, indices: surface.indices,
+            vertex: { atom: surface.atom, other: new Int32Array(0), weight: new Float32Array(0), near: surface.near, nearGap: surface.nearGap },
+        };
+        // Electrostatics colours come from M2T's potential below: no atom colours needed (its rule has
+        // no colour list to read).
+        const colours = potential ? new Float32Array(4 * records.length).fill(1) : await this.smoothSurfaceAtomColours(records);
+        // In slices: on a large structure this is hundreds of milliseconds, which in one go froze the view.
+        // Shaded from its field: its atoms with it, to colour it per pixel too (smoothSurfaceSetting.pixelColours,
+        // read each frame) and to light it per pixel when hovered (their residues) - but not for
+        // electrostatics, whose colours are M2T's, per vertex.
+        if (surface.field && !potential) {
+            void attachSurfaceColouring(surface.field, packAtoms(atoms), colours, ownershipBand(probe), smoothSurfaceSetting.colourBlend, residueOf);
+        }
+        const mesh = await runSliced(atomSurfaceMeshSliced(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
+            smoothSurfaceSetting.colourSmoothing));
+        // Electrostatics: the colours of the nearest vertices of M2T's surface, which carries the potential.
+        const m2tPositions = potential?.vert_tri?.[0]?.[0], m2tColours = potential?.col_tri?.[0]?.[0];
+        if (m2tPositions?.length && m2tColours?.length) {
+            const nearest = nearestVertices(surface.positions, m2tPositions);
+            const stride = Math.round(m2tColours.length / (m2tPositions.length / 3));
+            const out = mesh.col_tri[0][0];
+            for (let v = 0; v < nearest.length; v++) {
+                const n = nearest[v];
+                for (let k = 0; k < 4; k++) out[4 * v + k] = n >= 0 ? (k < stride ? m2tColours[stride * n + k] : 1) : 0.5;
+            }
+        }
+        return mesh as unknown as libcootApi.SimpleMeshJS;
+    }
+
+    /**
+     * The surface of `atoms`, with each vertex's atoms numbered as in `atoms`. With WebGPU
+     * (smoothSurfaceSetting.gpu), the C++ makes the field in the worker and the GPU the rest
+     * (src/WebGPUComponents/smoothSurface); otherwise, or if the GPU fails, the C++ makes all of it.
+     * Null if nothing could be made.
+     */
+    async atomSurfaceFor(atoms: SurfaceAtom[], residueOf: Int32Array, probe: number,
+                         options: Record<string, number | boolean>, keepField = false): Promise<AtomSurface | null> {
+        const packed = packAtoms(atoms);
+        const gpu = smoothSurfaceSetting.gpu ? await gpuSmoothSurfaceIfFast(smoothSurfaceSetting.gpuOnSoftware) : null;
+        if (gpu) {
+            try {
+                const blur = {
+                    sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
+                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur, fieldShading: keepField,
+                    // Split or not (smoothSurfaceSetting.refine): "auto" leaves one shaded per pixel whole.
+                    split: splitSurface(keepField && smoothSurfaceSetting.fieldShading),
+                };
+                // All of it on the GPU, from the atoms (stages 5 to 1) - unless the grid's lines are too long.
+                const grid = smoothGrid(packed, probe, smoothSurfaceSetting.spacing, smoothSurfaceSetting.sigma, smoothSurfaceSetting.openRadius);
+                if (Math.max(grid.nx, grid.ny, grid.nz) <= GPU_SMOOTH_MAX_LINE) {
+                    const { surface, exposureMs } = await gpu.surfaceFromAtoms(packed, residueOf, {
+                        ...blur, probe, openRadius: smoothSurfaceSetting.openRadius, spacing: smoothSurfaceSetting.spacing,
+                    });
+                    if (surface) {
+                        console.debug(`Smooth surface: ${atoms.length} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ` +
+                            `${grid.spacing.toFixed(2)} Å; ${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; ` +
+                            `exposed SAS (WebGPU) ${exposureMs.toFixed(0)} ms, field + blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, ` +
+                            `finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms; ${surface.field ? "shaded per pixel (unsplit)" : "per-vertex normals (split)"}`);
+                    }
+                    return surface;
+                }
+                let started = performance.now();
+                // A grid line longer than the GPU's feature transform takes: the C++ makes the field up
+                // to the opening, the GPU the rest.
+                started = performance.now();
+                const response = (await this.commandCentre.cootCommand(
+                    { returnType: "smoothed_field", command: "shim_smooth_surface_unblurred_field_from_atoms", commandArgs: [packed.slice(), probe, options] },
+                    false
+                )) as moorhen.WorkerResponse<{ field: (SmoothUnblurredField & { timings: Record<string, number> }) | null }>;
+                if (response.data.result.status !== "Completed") throw new Error("the worker made no field");
+                const field = response.data.result.result.field;
+                if (!field) return null;
+                const fieldMs = performance.now() - started;
+                const surface = await gpu.surfaceFromUnblurred(field, blur, packed, residueOf, probe);
+                if (surface) {
+                    const t = field.timings;
+                    console.debug(`Smooth surface: ${atoms.length} atoms, grid ${field.nx}x${field.ny}x${field.nz} at ${field.spacing.toFixed(2)} Å; ` +
+                        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field to the opening (C++) ${fieldMs.toFixed(0)} ms ` +
+                        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}), ` +
+                        `blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                }
+                return surface;
+            } catch (err) {
+                console.warn("GPU smooth surface failed; the C++ makes it.", err);
+            }
+        }
+        const response = (await this.commandCentre.cootCommand(
+            { returnType: "smoothed_surface", command: "shim_smooth_surface_from_atoms", commandArgs: [packed, residueOf.slice(), probe, options] },
+            false
+        )) as moorhen.WorkerResponse<{ surface: AtomSurface | null }>;
+        return response.data.result.status === "Completed" ? response.data.result.result.surface : null;
+    }
+
+    /**
+     * Each atom's colour (RGBA, 4 per atom of `records`) from this representation's colour rules, as
+     * M2T applies them (ColorScheme::colorForAtom): in order, the last rule whose selection holds the
+     * atom wins, and an atom no rule selects is white. Each rule as it is sent to Coot - its CID and
+     * colour, or a multi-colour rule's CID^colour list.
+     */
+    /**
+     * Colour this representation again without rebuilding it - its colour rules, or the colour
+     * blend and smoothing settings, changed - and say whether it could. Only a smooth surface made
+     * from the atoms can: its vertex colours and hover shares are worked out again from the atoms
+     * it kept (smoothColouring) and handed to its buffer, which uploads them on the next frame. No
+     * Coot, no field, no worker. Anything else returns false, for the caller to redraw it.
+     */
+    async recolour(): Promise<boolean> {
+        const state = this.smoothColouring;
+        if (!state || !this.buffers?.length) return false;
+        // Electrostatics colours from the M2T mesh's potential: that needs a redraw.
+        if (this.colourRules?.length > 0 && this.colourRules[0].ruleType === "electrostatics") return false;
+        const count = state.vertex.atom.length;
+        const buffer = this.buffers.find(b => b.triangleColours?.[0]?.length === 4 * count);
+        if (!buffer) return false;
+        const atomColours = await this.smoothSurfaceAtomColours(state.records);
+        // In slices (timeSlicing.ts), as when the surface was made: a large surface recolours without freezing the view.
+        let colours = await runSliced(atomSurfaceColoursSliced(state.vertex, atomColours, smoothSurfaceSetting.colourBlend));
+        if (smoothSurfaceSetting.colourSmoothing > 0) {
+            state.neighbours ??= vertexNeighbours(state.indices, count);
+            colours = await runSliced(smoothVertexColoursSliced(colours, state.neighbours, smoothSurfaceSetting.colourSmoothing));
+        }
+        // The opacity lives in the vertex colours' alpha (setNonCustomOpacity): kept through a recolour.
+        if (this.nonCustomOpacity < 0.99) {
+            for (let i = 3; i < colours.length; i += 4) colours[i] = this.nonCustomOpacity;
+        }
+        buffer.setVertexColours(colours);
+        // Coloured per pixel: the atoms' new colours and the blend width, a few thousand entries.
+        const field = buffer.fieldShading?.[0];
+        if (field?.colouring) void setSurfaceColours(field, atomColours, smoothSurfaceSetting.colourBlend);
+        // The hover's shares follow the blend width; owners and their codes stay what they were.
+        const pickInfo = buffer.pick_info;
+        if (pickInfo?.vertex_pick_points && pickInfo.owner_codes) {
+            const shares = await runSliced(atomSurfaceInfluencesSliced(state.vertex, state.residueOf, smoothSurfaceSetting.colourBlend));
+            const lists = await runSliced(influenceListsFromSharesSliced(pickInfo.vertex_pick_points, { stride: COLOUR_ATOMS, ...shares }, pickInfo.owner_codes));
+            buffer.setInfluence({ weights: lists.weights, point_indexes: lists.point_indexes, index_offsets: lists.index_offsets });
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        return true;
+    }
+
+    async smoothSurfaceAtomColours(records: moorhen.AtomInfo[]): Promise<Float32Array> {
+        const colours = new Float32Array(4 * records.length).fill(1);
+        const index = new Map<number, number>();
+        records.forEach((record, i) => index.set(record.serial, i));
+        // Each selection's atoms come over from gemmi as objects - a few milliseconds a chain on a large
+        // structure - so the browser gets a turn between them (timeSlicing.ts).
+        let slice = performance.now();
+        for (const rule of this.colourRules ?? []) {
+            const pairs = rule.isMultiColourRule
+                ? (rule.multiColourData ?? "").split("|").filter(Boolean).map(entry => entry.split("^"))
+                : [[rule.cid, rule.color]];
+            for (const [cid, hex] of pairs) {
+                if (!cid || !hex) continue;
+                if (performance.now() - slice > 10) {
+                    await yieldToBrowser();
+                    slice = performance.now();
+                }
+                const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
+                const found = await this.parentMolecule.gemmiAtomsForCid(cid);
+                for (const atom of found) {
+                    const i = index.get(atom.serial);
+                    if (i !== undefined) colours.set([r / 255, g / 255, b / 255, a], 4 * i);
+                }
+            }
+        }
+        return colours;
+    }
+
+    /**
+     * The atoms a smooth surface is made from, and their radii: everything in the selection - protein,
+     * nucleic acids, glycans, ligands, modified residues - but water and monatomic ions (a residue of a
+     * single atom other than hydrogen), hydrogens included; and ligands bound to the polymer, or the
+     * others, left out if this representation says so (surfaceExcludeBondedLigands / FreeLigands). (M2T itself surfaces only the standard
+     * amino acids when there are any.) Radii are M2T's united-atom radii where its table has the atom,
+     * else by element (surfaceAtomRadius).
+     */
+    async smoothSurfaceAtoms(cidSelection?: string): Promise<{ atoms: SurfaceAtom[]; records: moorhen.AtomInfo[] }> {
+        // The first model only, as M2T (MyMolecule::getModel); mol_name is the model number.
+        const atoms = await this.parentMolecule.gemmiAtomsForCid(cidSelection || "/*/*/*/*", true);
+        const all = atoms.filter(atom => atom.mol_name === atoms[0]?.mol_name);
+        const isHydrogen = (atom: moorhen.AtomInfo) => ["H", "D"].includes(atom.element.trim().toUpperCase());
+        const residueKey = (atom: moorhen.AtomInfo) => `${atom.chain_id}/${atom.res_no}/${atom.res_name}`;
+        const heavyAtoms = new Map<string, number>();
+        for (const atom of all) if (!isHydrogen(atom)) heavyAtoms.set(residueKey(atom), (heavyAtoms.get(residueKey(atom)) ?? 0) + 1);
+        let chosen = all.filter(atom => !WATER_RESIDUES.has(atom.res_name.trim()) && (heavyAtoms.get(residueKey(atom)) ?? 0) > 1);
+        // This representation's ligand options: bound ligands and the rest left out if asked
+        // (MoorhenMolecule.ligandBonding). Polymer residues, modified ones included, always stay.
+        if (this.surfaceExcludeBondedLigands || this.surfaceExcludeFreeLigands) {
+            if (!this.parentMolecule.ligandBonding) await this.parentMolecule.updateLigands();
+            const covalent = new Map((this.parentMolecule.ligandBonding ?? []).map(ligand => [ligand.cid, ligand.covalent]));
+            chosen = chosen.filter(atom => {
+                const bound = covalent.get(`/${atom.mol_name}/${atom.chain_id}/${atom.res_no}(${atom.res_name})`);
+                if (bound === undefined) return true;
+                return bound ? !this.surfaceExcludeBondedLigands : !this.surfaceExcludeFreeLigands;
+            });
+        }
+        return {
+            atoms: chosen.map(atom => ({ x: atom.x, y: atom.y, z: atom.z, r: surfaceAtomRadius(atom.name, atom.res_name, atom.element) })),
+            records: chosen,
+        };
     }
 
     /**
@@ -2377,6 +2728,16 @@ export class MoleculeRepresentation {
         const objects = [{...gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false),pick_info:{}}];
 
         return objects;
+    }
+
+    /**
+     * Whether Coot needs this representation's colour rules only if it makes the mesh: the surfaces,
+     * which are smooth surfaces coloured here from the atoms unless smooth surfaces are off, the
+     * colouring is electrostatics, or the smooth surface fails - and then the rules go to Coot just
+     * before it is asked (getM2TRepresentationBuffers), not with every draw.
+     */
+    get colourRulesOnDemand(): boolean {
+        return M2T_SURFACE_REPRESENTATIONS.includes(this.style);
     }
 
     /**

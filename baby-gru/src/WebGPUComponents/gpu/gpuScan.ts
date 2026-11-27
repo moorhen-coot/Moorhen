@@ -193,8 +193,9 @@ export class GpuScan {
     private level(level: number, blocks: number) {
         const existing = this.levels[level];
         if (existing && existing.capacity >= blocks) return existing;
-        existing?.sums.destroy();
-        existing?.scanned.destroy();
+        // Not destroyed now: a scan recorded earlier on the same encoder may still use them. They go
+        // with this scan's other transient buffers, once its commands have been submitted.
+        if (existing) this.transient.push(existing.sums, existing.scanned);
         const capacity = Math.max(blocks, 64);
         const make = (label: string) => this.device.createBuffer({ label, size: capacity * 4, usage: STORAGE | COPY_DST });
         this.levels[level] = { sums: make(`scan sums ${level}`), scanned: make(`scan scanned ${level}`), capacity };

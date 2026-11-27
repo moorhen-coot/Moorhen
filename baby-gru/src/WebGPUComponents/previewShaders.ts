@@ -26,6 +26,8 @@
  * Frame must match the packing in previewScene.ts (frameUniforms, FRAME_FLOATS).
  */
 
+import { ATOM_COLOUR_WGSL, ATOM_SHARE_WGSL, FIELD_GRADIENT_WGSL } from "./smoothSurface/surfaceField";
+
 /** The per-frame uniforms, at group 0, shared by every pipeline the renderer draws a frame with. */
 export const FRAME_WGSL = /* wgsl */ `
 struct Frame {
@@ -47,7 +49,8 @@ struct Frame {
     shadowMatrix: mat4x4f, // model space to the shadow map: x, y in 0..1 (rows down), z the depth
     shadowParams: vec4f, // the map's texel size (x, y), the depth bias, the soft filter's radius in texels (0 hard)
     fog: vec4f,          // x: 1 to fade into nothing with distance rather than into fogColour (a
-                         // transparent snapshot: the picture is premultiplied, on nothing)
+                         // transparent snapshot: the picture is premultiplied, on nothing);
+                         // y: 1 to draw N.L as contour stripes (shadingDebug, temporary)
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -102,8 +105,11 @@ fn ambientLight() -> vec4f {
 // worth of that slope on top of the bias, since each texel holds one depth for all its area and a
 // soft map's texels are big.
 fn shadowLookup(p: vec4f, slope: vec2f) -> f32 {
+    return shadowLookupBiased(p, slope, frame.shadowParams.z);
+}
+
+fn shadowLookupBiased(p: vec4f, slope: vec2f, bias: f32) -> f32 {
     let texel = frame.shadowParams.xy;
-    let bias = frame.shadowParams.z;
     let depth = p.z - bias - min(dot(abs(slope), texel), 2.0 * bias);
     let radius = frame.shadowParams.w;
     if (radius <= 0.0) {
@@ -152,11 +158,15 @@ fn shadowAt(p: vec4f) -> f32 {
 // its 3 x 3 part maps directions). Exact, where screen derivatives of a curved surface would vary
 // with how pixels pair in their quads - which differs between a snapshot's tiles and the whole.
 fn shadowAtNormal(p: vec4f, n: vec3f) -> f32 {
+    return shadowAtNormalBiased(p, n, frame.shadowParams.z);
+}
+
+fn shadowAtNormalBiased(p: vec4f, n: vec3f, bias: f32) -> f32 {
     if (frame.effects.z < 0.5) { return 1.0; }
     let a = normalize(cross(n, select(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0), abs(n.x) > 0.9)));
     let b = cross(n, a);
     let m = mat3x3f(frame.shadowMatrix[0].xyz, frame.shadowMatrix[1].xyz, frame.shadowMatrix[2].xyz);
-    return shadowLookup(p, planeSlope(m * a, m * b));
+    return shadowLookupBiased(p, planeSlope(m * a, m * b), bias);
 }
 
 // WebGL's use of it: the light dimmed by up to a half and the highlight taken away, both
@@ -356,6 +366,8 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
+    // BANDING TEST 3 (temporary): N.L as contour stripes, 20 per unit.
+    if (frame.fog.y > 0.5) { return vec4f(vec3f(step(0.5, fract(dot(n, normalize(L)) * 20.0))), 1.0); }
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
@@ -398,17 +410,14 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     return out;
 }
 
-// The hover highlight on a finished colour, as the end of triangle-fragment-shader.js has it: a
-// green ring where a smooth mesh's share of the hovered point crosses 0.45; above 1, lightened
-// halfway to white (an instance or a section lit); below 1, that much of the alpha (the smooth
+// The hover highlight on a finished colour, as the end of triangle-fragment-shader.js has it:
+// above 1, lightened halfway to white (an instance or a section lit); below 1, that much of the alpha (the smooth
 // mesh overlay fading away from the hovered point). At exactly 1, nothing changes. Where the
 // colour is premultiplied (an opaque pipeline in a transparent snapshot: fogged), so is the change.
 fn withHighlight(colour: vec4f, h: f32) -> vec4f {
     let premultiplied = frame.fog.x > 0.5 && draw.output.x > 0.5;
     let scale = select(1.0, colour.a, premultiplied);
-    let ring = smoothstep(0.4, 0.45, h) - smoothstep(0.45, 0.5, h);
-    var rgb = colour.rgb + ring * vec3f(0.4, 1.0, 0.0) * scale;
-    rgb = mix(rgb, vec3f(scale), 0.5 * clamp(h - 1.0, 0.0, 1.0));
+    let rgb = mix(colour.rgb, vec3f(scale), 0.5 * clamp(h - 1.0, 0.0, 1.0));
     let fade = min(h, 1.0);
     return vec4f(select(rgb, rgb * fade, premultiplied), colour.a * fade);
 }
@@ -445,12 +454,14 @@ fn fs_main_peel(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location
 // when its owner code equals the hovered one under the mask: all ones for one point; a surface
 // masks off the residue half to light a chain, or everything to light the molecule. A vertex in
 // the groove between two residues of one chain belongs to both, so the matches are summed, not the
-// first taken. whole: every vertex fully (a cavity, which has no lists).
+// first taken. whole: every vertex fully (a cavity, which has no lists). pixelShare: a surface shaded
+// per pixel from its field, whose atoms and their owner codes are bound too (fs_hover_overlay_field),
+// lit by each pixel's own share rather than its vertices' blended.
 struct Hover {
     point: u32,
     mask: u32,
     whole: u32,
-    unused: u32,
+    pixelShare: u32,
 };
 
 @group(2) @binding(12) var<uniform> hover: Hover;
@@ -583,6 +594,8 @@ fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metall
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
+    // BANDING TEST 3 (temporary): N.L as contour stripes, 20 per unit.
+    if (frame.fog.y > 0.5) { return vec4f(vec3f(step(0.5, fract(dot(n, normalize(L)) * 20.0))), 1.0); }
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
@@ -651,6 +664,165 @@ fn fs_textured_peel(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -
     let colour = texturedColour(in, frontFacing);
     if (!peelKeep(in.position, in.position.z)) { discard; }
     return colour;
+}
+
+// Smooth surfaces shaded per pixel from their field (smoothSurface/surfaceField.ts): each fragment's
+// normal is the field's B-spline gradient where the fragment is, in the mesh's own frame, turned by
+// the copy's operator as finish() turns vertex normals. Everything else as fs_main. The vertex normal
+// stays the fallback, where the gradient vanishes (deep inside or far out, never on the surface).
+@group(2) @binding(16) var<uniform> fieldGrid: FieldGrid;
+@group(2) @binding(17) var<storage, read> fieldValues: array<f32>;
+${FIELD_GRADIENT_WGSL}
+// And coloured per pixel from its atoms, when they are attached (fieldGrid.binDims.w).
+@group(2) @binding(18) var<storage, read> colourAtoms: array<vec4f>;
+@group(2) @binding(19) var<storage, read> atomColours: array<vec4f>;
+@group(2) @binding(20) var<storage, read> colourBinStart: array<u32>;
+@group(2) @binding(21) var<storage, read> colourBinMembers: array<u32>;
+${ATOM_COLOUR_WGSL}
+
+struct FieldOut {
+    // Invariant, as VOut's: the hover overlay draws the mesh again with vs_hover_overlay.
+    @builtin(position) @invariant position: vec4f,
+    @location(0) colour: vec4f,
+    @location(1) normal: vec3f,
+    @location(2) eyeDistance: f32,
+    // Where the fragment is in the mesh's own frame - the field's.
+    @location(3) local: vec3f,
+    @location(5) shadowPos: vec4f,
+    @location(6) highlight: f32,
+};
+
+fn fielded(position: vec3f, normal: vec3f, colour: vec4f) -> FieldOut {
+    let v = finish(vec4f(position, 1.0), normal, colour);
+    var out: FieldOut;
+    out.position = v.position;
+    out.colour = v.colour;
+    out.normal = v.normal;
+    out.eyeDistance = v.eyeDistance;
+    out.local = position;
+    out.shadowPos = v.shadowPos;
+    out.highlight = v.highlight;
+    return out;
+}
+
+@vertex
+fn vs_mesh_vertex_colour_field(@location(0) position: vec3f, @location(1) normal: vec3f,
+                               @location(2) colour: vec4f) -> FieldOut {
+    return fielded(position, normal, colour);
+}
+
+@vertex
+fn vs_mesh_uniform_colour_field(@location(0) position: vec3f, @location(1) normal: vec3f) -> FieldOut {
+    return fielded(position, normal, draw.colour);
+}
+
+fn fieldNormal(in: FieldOut) -> vec3f {
+    let g = fieldGradient(in.local);
+    let len = length(g);
+    if (len < 1e-12) { return in.normal; }
+    return (draw.model * vec4f(g / len, 0.0)).xyz;
+}
+
+// The fragment's own colour from the atoms, where it has them - not for a grey symmetry copy, which
+// is coloured as a whole (finish). The alpha stays the vertex colour's: the representation's opacity
+// is written there (setNonCustomOpacity), never into the atoms' colours.
+fn fieldBase(in: FieldOut) -> vec4f {
+    if (draw.params.z > 0.5) { return in.colour; }
+    return vec4f(atomColourAt(in.local, in.colour).rgb, in.colour.a);
+}
+
+// The shadow with the field's normal rather than the triangle's, both where it is looked up and the
+// plane its bias follows: the lookup a texel and a half out along the normal from this fragment, as
+// finish() does from the vertices; the receiver plane the smooth surface's tangent plane, as
+// shadowAtNormal gives a sphere its own. From the triangle (shadowAt), each facet's slope to the
+// light set its own bias, and at a grazing angle neighbouring facets' slopes differ enough that
+// whole triangles fell in and out of shadow.
+//
+// And a bias in Å, not the scene's: that is a share of the light's whole depth range (shadowMap.ts),
+// about an Å on a large structure and up to three with the slope's share, sized to hide facets
+// shadowing themselves - so a shadow began that far from what cast it, a lit line along its edge.
+// Followed along the smooth tangent plane, the surface needs only what its triangles stray from the
+// smooth surface by, a few hundredths of an Å. The scene's bias stays the most.
+const FIELD_SHADOW_BIAS = 0.1;
+
+fn fieldShadow(in: FieldOut, n: vec3f) -> f32 {
+    if (frame.effects.z < 0.5) { return 1.0; }
+    let world = draw.model * vec4f(in.local, 1.0);
+    let perUnit = length(vec3f(frame.shadowMatrix[0].x, frame.shadowMatrix[1].x, frame.shadowMatrix[2].x));
+    let along = select(vec3f(0.0), n * (1.5 * frame.shadowParams.x / perUnit), perUnit > 0.0);
+    // Map depth per Å: the shadow matrix's depth row (an orthographic light).
+    let depthPerUnit = length(vec3f(frame.shadowMatrix[0].z, frame.shadowMatrix[1].z, frame.shadowMatrix[2].z));
+    let bias = min(frame.shadowParams.z, FIELD_SHADOW_BIAS * depthPerUnit);
+    return shadowAtNormalBiased(frame.shadowMatrix * (world + vec4f(along, 0.0)), n, bias);
+}
+
+fn fieldColour(in: FieldOut, frontFacing: bool) -> vec4f {
+    return withHighlight(fieldColourOf(in, fieldBase(in), frontFacing), in.highlight);
+}
+
+// A surface shaded per pixel, in colour base: its own (fieldColour), or the hover's orange.
+fn fieldColourOf(in: FieldOut, base: vec4f, frontFacing: bool) -> vec4f {
+    let n = normalize(fieldNormal(in));
+    let shadow = fieldShadow(in, n);
+    let colour = select(base * backShade(shadow), lit(base, n, occlusionAt(in.position), shadow), frontFacing);
+    return fogged(colour * edgeAt(in.position), base.a, in.eyeDistance);
+}
+
+@fragment
+fn fs_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    return fieldColour(in, frontFacing);
+}
+
+// Unlike fs_main_peel, the peel test first: nothing in fieldColour takes derivatives (its shadow
+// plane is the field normal's, its lookups are explicit-level), so a fragment that is not in this
+// layer - most of them, in every layer - is thrown away before its normal and colour are worked out,
+// not after.
+@fragment
+fn fs_field_peel(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return fieldColour(in, frontFacing);
+}
+
+// The hover overlay (vs_hover_overlay) on a surface shaded per pixel from its field: lit as the surface
+// under it is, by the field's normal at each pixel rather than the vertices' across the triangle - so
+// the orange shows no triangles the surface does not. And, where the surface is coloured per pixel from
+// its atoms, each pixel as opaque as the hovered residue's own share of it (atomShareAt, by the colour
+// blend's weights, so the hover's edge is the colour's), not the vertices' shares blended across the
+// triangle - which stepped along the triangles. The vertices' shares still decide where that is needed:
+// none at any corner, nothing lit; all of all three, all of it.
+@group(2) @binding(22) var<storage, read> atomOwnerCodes: array<u32>;
+${ATOM_SHARE_WGSL}
+
+@vertex
+fn vs_hover_overlay_field(@location(0) position: vec3f, @location(1) normal: vec3f,
+                          @builtin(vertex_index) vertex: u32) -> FieldOut {
+    var out = fielded(position, normal, vec4f(0.9, 0.5, 0.0, 1.0));
+    out.highlight = hoverWeight(u32(i32(vertex) + draw.highlight.w));
+    return out;
+}
+
+@fragment
+fn fs_hover_overlay_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    var h = in.highlight;
+    if (h <= 0.0) { discard; }
+    if (hover.pixelShare != 0u && hover.whole == 0u && h < 0.999) {
+        let share = atomShareAt(in.local, hover.point, hover.mask);
+        if (share >= 0.0) { h = share; }
+        if (h <= 0.0) { discard; }
+    }
+    return withHighlight(fieldColourOf(in, in.colour, frontFacing), min(h, 1.0));
+}
+
+// The depth pre-pass (previewRenderer.ts, Prepass): depth alone, its colour writes masked off.
+@fragment
+fn fs_depth_only() -> @location(0) vec4f {
+    return vec4f(0.0);
+}
+
+// The g-buffer with the same normals the picture is lit with, so ambient occlusion and edges agree.
+@fragment
+fn fs_field_gbuffer(in: FieldOut) -> @location(0) vec4f {
+    return vec4f(normalize((frame.view * vec4f(fieldNormal(in), 0.0)).xyz), 1.0);
 }
 
 // Thick lines, drawn from a mesh's own vertex buffers and a list of its edges as pairs of vertex

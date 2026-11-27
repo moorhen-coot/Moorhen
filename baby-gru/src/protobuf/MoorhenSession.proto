@@ -131,6 +131,14 @@ message Representation {
      * out, and the symptom is a setting that survives a JSON backup and not a .pb session.
      */
     optional bool viewDependentTransparency = 18;
+    /** Surfaces: each chain's smooth surface from its own atoms. Absent in older sessions: false. */
+    bool surfaceChainsSeparate = 19;
+    /**
+     * Surfaces: leave out the ligands covalently bound to the polymer / the other ligands. Absent:
+     * false - a session saved before these existed surfaced every ligand, and still does.
+     */
+    bool surfaceExcludeBondedLigands = 20;
+    bool surfaceExcludeFreeLigands = 21;
 }
 
 message MoleculeSessionData {

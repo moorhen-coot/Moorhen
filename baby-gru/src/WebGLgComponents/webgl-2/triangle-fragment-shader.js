@@ -472,12 +472,9 @@ ${discards ? clipAndPeelDiscards : ""}
       // decided - a movie fading a surface out must still reach nothing, however edge-on it is.
       fragColor.a = viewDependentAlpha(vColor.a, norm, E);
 
-      float ring = smoothstep(0.4, 0.45, vHighlight) - smoothstep(0.45, 0.5, vHighlight);
-
-      fragColor.rgb += ring * vec3(0.4, 1.0, 0.0);
-
       // vHighlight in 0..1 is a smooth mesh influence weight: it fades everything away from the
-      // hovered point and the ring above picks out the isoline. Above 1 it means "this whole
+      // hovered point. (There used to be a green ring on the 0.45 isoline; the weight is
+      // per-vertex, so on a coarse surface the ring came out jagged.) Above 1 it means "this whole
       // instance is the highlighted one", which the instanced shapes use - they share one mesh
       // between instances, so there is no per-vertex weight field to fade, and a shape that is
       // the only instance in its buffer would have nothing to fade against anyway.

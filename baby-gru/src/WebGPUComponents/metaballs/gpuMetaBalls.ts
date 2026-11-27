@@ -327,6 +327,176 @@ export class GpuMetaBalls {
     }
 
     /**
+     * Marching cubes alone, on a field made elsewhere: the count, scan and emit kernels that
+     * generate uses, without the MetaBalls field or the per-vertex pass. Used by the smooth
+     * molecular surface (utils/smoothSurface.ts), which makes its own field and normals.
+     *
+     * `field` is nx * ny * nz values, x fastest, negative inside, contoured at 0 - as the kernels'
+     * inside() has it. Returns positions, triangles as MC.h winds them, and each vertex's grid
+     * edge, ((z * ny + y) * nx + x) * 3 + axis. Rejects on a WebGPU error, so the caller can fall
+     * back to the CPU.
+     *
+     * Slab by slab like generate, each slab's planes uploaded from `field` - or copied from it, if it
+     * is a buffer already on the GPU (with COPY_SRC); one slab in flight at
+     * a time, which is one wait for any molecule whose grid fits a slab (16M points by default).
+     * Output room is a guess from the slab's size, and the whole contour is made again with more
+     * if a slab outgrows it.
+     */
+    async contourField(field: Float32Array | GPUBuffer, n: readonly [number, number, number], min: readonly [number, number, number],
+                       cell: number, options: { maxSlabPoints?: number; room?: number } = {}):
+        Promise<{ positions: Float32Array; indices: Uint32Array; keys: Uint32Array; slabs: number; retries: number }> {
+        let room = options.room ?? 1;
+        for (let retries = 0; ; retries++) {
+            const attempt = await this.contourOnce(field, n, min, cell, room, options.maxSlabPoints);
+            if (!attempt.overflow) return { ...attempt.mesh, retries };
+            if (retries >= MAX_RETRIES) throw new Error("GPU contour: slabs kept outgrowing their estimated room");
+            room *= Math.max(attempt.overflow * 1.25, 1.5);
+        }
+    }
+
+    private async contourOnce(field: Float32Array | GPUBuffer, n: readonly [number, number, number], min: readonly [number, number, number],
+                              cell: number, room: number, maxSlabPoints?: number):
+        Promise<{ mesh?: { positions: Float32Array; indices: Uint32Array; keys: Uint32Array; slabs: number }; overflow?: number }> {
+        const [nx, ny, nz] = n;
+        const plane = nx * ny;
+        const cellPlane = (nx - 1) * (ny - 1);
+        const largestBuffer = Math.min(this.device.limits.maxStorageBufferBindingSize, this.device.limits.maxBufferSize);
+        const budget = Math.min(maxSlabPoints ?? 16_000_000, Math.floor(largestBuffer / 4));
+        const depth = Math.max(1, Math.min(nz, Math.floor(budget / plane) - 2));
+        const slabPlanes = depth + 2;
+
+        this.device.pushErrorScope("out-of-memory");
+        this.device.pushErrorScope("validation");
+        let scopes: Promise<GPUError | null> | null = null;
+        const closeScopes = (): Promise<GPUError | null> => {
+            if (!scopes) {
+                const validation = this.device.popErrorScope();
+                const memory = this.device.popErrorScope();
+                scopes = Promise.all([validation, memory]).then(([v, m]) => v ?? m);
+            }
+            return scopes;
+        };
+
+        const owned: GPUBuffer[] = [];
+        const keep = (b: GPUBuffer) => { owned.push(b); return b; };
+        const fieldBuffer = keep(this.storage("contour field", slabPlanes * plane * 4, COPY_DST));
+        const edgeMask = keep(this.storage("edge mask", slabPlanes * plane * 4));
+        const vertexCount = keep(this.storage("vertex count", slabPlanes * plane * 4));
+        const vertexOffset = keep(this.storage("vertex offset", slabPlanes * plane * 4));
+        const triangleCount = keep(this.storage("triangle count", depth * cellPlane * 4));
+        const triangleOffset = keep(this.storage("triangle offset", depth * cellPlane * 4));
+        const counts = keep(this.storage("counts", 32, COPY_SRC | COPY_DST));
+        this.device.queue.writeBuffer(counts, 0, new Uint32Array(8));
+        const params = keep(this.device.createBuffer({ label: "contour params", size: 36 * 4, usage: UNIFORM | COPY_DST }));
+
+        const positionParts: Float32Array[] = [];
+        const indexParts: Uint32Array[] = [];
+        const keyParts: Uint32Array[] = [];
+        let slabs = 0;
+        let overflow = 0;
+        try {
+            for (let zs = 0; zs < nz && overflow === 0; zs += depth) {
+                slabs++;
+                const ze = Math.min(zs + depth, nz);
+                const fieldPlanes = Math.min(ze + 1, nz - 1) - zs + 1;
+                const countPlanes = Math.min(ze, nz - 1) - zs + 1;
+                const cellPlanes = Math.max(0, Math.min(ze, nz - 1) - zs);
+                const ownedPlanes = ze - zs;
+                // A molecular surface crosses a few per cent of a slab's grid edges.
+                const capVertices = Math.ceil((0.08 * ownedPlanes * plane + 4096) * room);
+                const capTriangles = 2 * capVertices;
+
+                const buf = new ArrayBuffer(36 * 4);
+                const fl = new Float32Array(buf);
+                const u = new Uint32Array(buf);
+                fl.set([min[0], min[1], min[2], cell], 0);
+                u.set([nx, ny, nz], 4);
+                u.set([zs, fieldPlanes, countPlanes, cellPlanes, ownedPlanes, capTriangles, capVertices, 0], 16);
+                this.device.queue.writeBuffer(params, 0, buf);
+                // The field from the CPU, or copied from a buffer already on the GPU (needs COPY_SRC).
+                if (field instanceof Float32Array) {
+                    this.device.queue.writeBuffer(fieldBuffer, 0, field.buffer, field.byteOffset + zs * plane * 4, fieldPlanes * plane * 4);
+                }
+
+                const slabBuffers: GPUBuffer[] = [];
+                const slabBuffer = (label: string, bytes: number) => {
+                    const b = this.storage(label, Math.max(4, bytes), COPY_SRC);
+                    slabBuffers.push(b);
+                    return b;
+                };
+                const positions = slabBuffer("positions", capVertices * 12);
+                const keys = slabBuffer("keys", capVertices * 4);
+                const indices = slabBuffer("indices", capTriangles * 12);
+
+                const encoder = this.device.createCommandEncoder({ label: "contour slab" });
+                if (!(field instanceof Float32Array)) encoder.copyBufferToBuffer(field, zs * plane * 4, fieldBuffer, 0, fieldPlanes * plane * 4);
+                this.dispatch(encoder, "countVertices", params, [fieldBuffer, edgeMask, vertexCount], countPlanes * plane);
+                if (cellPlanes > 0) {
+                    this.dispatch(encoder, "countTriangles", params, [fieldBuffer, this.table, triangleCount], cellPlanes * cellPlane);
+                }
+                this.scan.encode(encoder, vertexCount, vertexOffset, countPlanes * plane, 0);
+                if (cellPlanes > 0) this.scan.encode(encoder, triangleCount, triangleOffset, cellPlanes * cellPlane, 0);
+                this.dispatchTotals(encoder, "totalsVT", params, {
+                    0: vertexCount, 1: vertexOffset, 2: triangleCount, 3: triangleOffset, 6: counts,
+                });
+                this.dispatch(encoder, "emitVertices", params, [fieldBuffer, edgeMask, vertexOffset, positions, keys], ownedPlanes * plane);
+                if (cellPlanes > 0) {
+                    this.dispatch(encoder, "emitTriangles", params,
+                        [fieldBuffer, this.table, edgeMask, vertexOffset, triangleOffset, indices, counts], cellPlanes * cellPlane);
+                }
+                const staged = (source: GPUBuffer, bytes: number) => {
+                    const staging = this.device.createBuffer({ size: Math.max(4, bytes), usage: MAP_READ | COPY_DST });
+                    slabBuffers.push(staging);
+                    encoder.copyBufferToBuffer(source, 0, staging, 0, Math.max(4, bytes));
+                    return staging;
+                };
+                const countsStaging = staged(counts, 16);
+                const positionsStaging = staged(positions, capVertices * 12);
+                const keysStaging = staged(keys, capVertices * 4);
+                const indicesStaging = staged(indices, capTriangles * 12);
+                this.dispatchTotals(encoder, "advance", params, { 6: counts });
+                this.device.queue.submit([encoder.finish()]);
+                if (ze >= nz) closeScopes();
+                try {
+                    await Promise.all([countsStaging, positionsStaging, keysStaging, indicesStaging].map(b => b.mapAsync(MAP_MODE_READ)));
+                    const [vertices, triangles] = new Uint32Array(countsStaging.getMappedRange(), 0, 2);
+                    const need = Math.max(vertices / capVertices, triangles / capTriangles);
+                    if (need > 1) {
+                        overflow = need;
+                    } else {
+                        positionParts.push(new Float32Array(positionsStaging.getMappedRange(0, Math.max(4, vertices * 12)).slice(0, vertices * 12)));
+                        keyParts.push(new Uint32Array(keysStaging.getMappedRange(0, Math.max(4, vertices * 4)).slice(0, vertices * 4)));
+                        indexParts.push(new Uint32Array(indicesStaging.getMappedRange(0, Math.max(4, triangles * 12)).slice(0, triangles * 12)));
+                    }
+                } finally {
+                    slabBuffers.forEach(b => b.destroy());
+                }
+            }
+        } finally {
+            closeScopes();
+            owned.forEach(b => b.destroy());
+            this.scan.releaseTransient();
+        }
+        const error = await closeScopes();
+        if (error) throw new Error(`GPU contour: ${error.message}`);
+        if (overflow > 0) return { overflow };
+        const join = <T extends Float32Array | Uint32Array>(parts: T[], make: (n: number) => T): T => {
+            const out = make(parts.reduce((total, part) => total + part.length, 0));
+            let at = 0;
+            for (const part of parts) { out.set(part, at); at += part.length; }
+            return out;
+        };
+        return {
+            mesh: {
+                positions: join(positionParts, k => new Float32Array(k)),
+                indices: join(indexParts, k => new Uint32Array(k)),
+                keys: join(keyParts, k => new Uint32Array(k)),
+                slabs,
+            },
+        };
+    }
+
+    /**
      * One go at the mesh, with `room` times the usual estimate of each slab's output. Returns how
      * many times too small the room was instead of a mesh, if a slab outgrew it.
      */

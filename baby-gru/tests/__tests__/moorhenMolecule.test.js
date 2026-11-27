@@ -245,7 +245,7 @@ describe("Testing MoorhenMolecule", () => {
         const atom_count_merged = molecules_container.get_number_of_atoms(molecule.molNo)
         expect(atom_count_merged).toBe(atom_count_1 + atom_count_2)
         expect(molecule.ligands).toHaveLength(1)
-        expect(molecule.ligands).toEqual([{"chainName": "B", "cid": "/1/B/1(LZA)", "modelName": "1", "resName": "LZA", "resNum": "1"}])
+        expect(molecule.ligands).toEqual([{"chainName": "B", "cid": "/1/B/1(LZA)", "modelName": "1", "resName": "LZA", "resNum": "1", "covalent": false}])
     })
 
     test("loadMissingMonomers", async () => {

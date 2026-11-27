@@ -17,6 +17,7 @@ import { CameraFrame, focalPlaneDepth, slabNearFar, viewProjection } from '../We
 import { isFaded, shouldDraw } from '../WebGLgComponents/objectFade';
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import { type BufferMaterial, materialTextureIds } from '../WebGLgComponents/textureRegistry';
+import type { SurfaceField } from './smoothSurface/surfaceField';
 import type { TextSource } from './textLayer';
 import type { OverlayLinesSource } from './overlayLines';
 import type { TexturedShapeSource } from './texturedShapes';
@@ -334,6 +335,11 @@ export interface PreviewDraw {
      * renderer's to find out; one that is not is drawn as if it were absent, as in WebGL.
      */
     material: BufferMaterial | null;
+    /**
+     * For a smooth surface with its field kept (DisplayBuffer.fieldShading): shaded per pixel from it
+     * (fs_field). Null otherwise, and for anything instanced or textured.
+     */
+    fieldShading: SurfaceField | null;
 }
 
 export interface PreviewPlan {
@@ -457,6 +463,7 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
                 vertexCount, indexCount, instanceCount,
                 ...copiesOf(buffer), moving, glow: moving,
                 material: materialOf(buffer, j, vertexCount),
+                fieldShading: !instanced && !materialOf(buffer, j, vertexCount) ? buffer.fieldShading?.[j] ?? null : null,
             });
             triangles += (indexCount / 3) * instanceCount * (1 + draws[draws.length - 1].copies.length);
         }
@@ -497,7 +504,7 @@ function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDra
         buffer, index: j, primitive: "spheres", instanced: true, colourSource: "instance",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: 4, indexCount: 6, instanceCount: n,
-        ...copiesOf(buffer), moving, glow: moving, material: null,
+        ...copiesOf(buffer), moving, glow: moving, material: null, fieldShading: null,
     };
 }
 
@@ -539,7 +546,7 @@ function planLines(buffer: DisplayBuffer, j: number, lit: boolean, skips: Skips)
         colourSource: hasCustom ? "uniform" : "vertex",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: useIndices ? vertexCount : vertexCount - (vertexCount % 2), indexCount, instanceCount: 1,
-        copies: [], greyCopies: false, moving, glow: false, material: null,
+        copies: [], greyCopies: false, moving, glow: false, material: null, fieldShading: null,
     };
 }
 
@@ -587,6 +594,9 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
+/** Dev-menu shading diagnostics (temporary, banding investigation): N.L drawn as contour stripes. */
+export const shadingDebug = { stripes: false };
+
 export const FRAME_FLOATS = 108;
 
 /**

@@ -466,6 +466,7 @@ ${coot_src}/coot-utils/gl-matrix.cc
 ${coot_src}/coot-utils/gl-matrix-eigensystem.cc
 glycoblocks.cc
 bloboids.cc
+smooth-surface.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../metaballs/metaballs-mmdb.cc
 ${coot_src}/cremer-pople-sphere/data_sphere.cc

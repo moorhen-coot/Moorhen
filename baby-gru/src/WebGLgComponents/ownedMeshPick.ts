@@ -34,6 +34,7 @@
 import type { Bounds } from "./rayMesh";
 import { MOORHEN_MESH_RESIDUE_TAG_KIND } from "../utils/enums";
 import { encodeOwner } from "../utils/pickLevel";
+import { SLICE_MASK, type Sliced, runNow } from "../utils/timeSlicing";
 
 /**
  * How residues are numbered into owner codes: chains in the order first seen, residues within a
@@ -122,15 +123,80 @@ export type OwnedMeshPickInfo = {
  * agree, so a caller can attach the result unconditionally and a mesh Coot knew nothing about
  * simply stays as it was. `numbering`: the table to number residues with, shared by meshes that
  * light together; a fresh one by default.
+ *
+ * `influences`, if given, says who each vertex belongs to for the hover instead of owner, other and
+ * weight: `stride` (owner index, share) pairs per vertex in a row, NO_OWNER past the last - a
+ * smooth surface's blend over its nearest atoms (atomSurfaceInfluences), so the hover fades as its
+ * colours do. Picking still reports `vertexOwners`, the dominant residue.
  */
+/**
+ * The shader's influence lists from per-vertex shares (a smooth surface's blend over its nearest
+ * atoms): for each vertex with a pick point, its (owner code, share) pairs with a share above 0,
+ * `stride` candidates per vertex, NO_OWNER past the last. Also what a recolour redoes when the
+ * blend width changes, with the owner codes the buffer already has. `shared`: how many vertices
+ * list more than one owner.
+ */
+type InfluenceLists = { index_offsets: Uint32Array<ArrayBuffer>; point_indexes: Uint32Array<ArrayBuffer>; weights: Float32Array<ArrayBuffer>; shared: number };
+
+export const influenceListsFromShares = (
+    vertexPickPoints: ArrayLike<number>,
+    influences: { stride: number; owners: Uint32Array; weights: Float32Array },
+    ownerCodes: ArrayLike<number>
+): InfluenceLists => runNow(influenceListsFromSharesSliced(vertexPickPoints, influences, ownerCodes));
+
+/** influenceListsFromShares in slices (timeSlicing.ts). */
+export function* influenceListsFromSharesSliced(
+    vertexPickPoints: ArrayLike<number>,
+    influences: { stride: number; owners: Uint32Array; weights: Float32Array },
+    ownerCodes: ArrayLike<number>
+): Sliced<InfluenceLists> {
+    const count = vertexPickPoints.length;
+    const index_offsets = new Uint32Array(count);
+    // At most `stride` per vertex: filled in place, then cut to length.
+    const points = new Uint32Array(influences.stride * count);
+    const shares = new Float32Array(influences.stride * count);
+    let listedTotal = 0;
+    let shared = 0;
+    for (let v = 0; v < count; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
+        if (vertexPickPoints[v] !== NO_OWNER) {
+            let listed = 0;
+            for (let k = 0; k < influences.stride; k++) {
+                const o = influences.owners[influences.stride * v + k];
+                const share = influences.weights[influences.stride * v + k];
+                if (o >= ownerCodes.length || share <= 0) continue;
+                points[listedTotal] = ownerCodes[o]; shares[listedTotal] = share;
+                listedTotal++;
+                listed++;
+            }
+            if (listed > 1) shared++;
+        }
+        index_offsets[v] = listedTotal;
+    }
+    return { index_offsets, point_indexes: points.slice(0, listedTotal), weights: shares.slice(0, listedTotal), shared };
+}
+
 export const ownedMeshPickInfo = (
     vertices: number[] | Float32Array,
     vertexOwners: Uint32Array | number[] | undefined,
     owners: string[] | undefined,
     vertexOwnersOther?: Uint32Array | number[],
     vertexOwnerWeights?: Float32Array | number[],
-    numbering: OwnerNumbering = newOwnerNumbering()
-): OwnedMeshPickInfo | null => {
+    numbering: OwnerNumbering = newOwnerNumbering(),
+    influences?: { stride: number; owners: Uint32Array; weights: Float32Array }
+): OwnedMeshPickInfo | null =>
+    runNow(ownedMeshPickInfoSliced(vertices, vertexOwners, owners, vertexOwnersOther, vertexOwnerWeights, numbering, influences));
+
+/** ownedMeshPickInfo in slices (timeSlicing.ts): for a mesh of millions of vertices. */
+export function* ownedMeshPickInfoSliced(
+    vertices: number[] | Float32Array,
+    vertexOwners: Uint32Array | number[] | undefined,
+    owners: string[] | undefined,
+    vertexOwnersOther?: Uint32Array | number[],
+    vertexOwnerWeights?: Float32Array | number[],
+    numbering: OwnerNumbering = newOwnerNumbering(),
+    influences?: { stride: number; owners: Uint32Array; weights: Float32Array }
+): Sliced<OwnedMeshPickInfo | null> {
     const count = Math.floor(vertices.length / 3);
     if (count === 0) return null;
     if (!vertexOwners || !owners || owners.length === 0) return null;
@@ -181,10 +247,13 @@ export const ownedMeshPickInfo = (
     const weights: number[] = [];
     const hasSecond = !!vertexOwnersOther && !!vertexOwnerWeights
         && vertexOwnersOther.length === count && vertexOwnerWeights.length === count;
+    const hasInfluences = !!influences && influences.owners.length === influences.stride * count
+        && influences.weights.length === influences.stride * count;
     let shared_vertices = 0;
 
     let running = 0;
     for (let v = 0; v < count; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
         for (let c = 0; c < 3; c++) {
             const value = vertices[3 * v + c];
             meshTotal[c] += value;
@@ -211,7 +280,9 @@ export const ownedMeshPickInfo = (
             const weight = hasSecond ? vertexOwnerWeights[v] : 1.0;
             // The shader compares encoded ids, not owner indices, so the contribution lists
             // carry the codes.
-            if (other < owners.length && other !== owner) {
+            if (hasInfluences) {
+                // Listed after the loop, by influenceListsFromShares.
+            } else if (other < owners.length && other !== owner) {
                 pointIndexes.push(owner_codes[owner]); weights.push(weight);
                 pointIndexes.push(owner_codes[other]); weights.push(1.0 - weight);
                 running += 2;
@@ -256,8 +327,16 @@ export const ownedMeshPickInfo = (
         owners.map(() => meshCentre.slice()),
     ];
 
-    const influence_point_indexes = new Uint32Array(pointIndexes);
-    const influence_weights = new Float32Array(weights);
+    let influence_point_indexes = new Uint32Array(pointIndexes);
+    let influence_weights = new Float32Array(weights);
+    let influence_index_offsets_out = influence_index_offsets;
+    if (hasInfluences) {
+        const lists = yield* influenceListsFromSharesSliced(vertex_pick_points, influences, owner_codes);
+        influence_index_offsets_out = lists.index_offsets;
+        influence_point_indexes = lists.point_indexes;
+        influence_weights = lists.weights;
+        shared_vertices = lists.shared;
+    }
 
     return {
         pick_points,
@@ -267,7 +346,7 @@ export const ownedMeshPickInfo = (
         section_level_points,
         pick_tag_kind: MOORHEN_MESH_RESIDUE_TAG_KIND,
         vertex_pick_points,
-        influence_index_offsets,
+        influence_index_offsets: influence_index_offsets_out,
         influence_point_indexes,
         influence_weights,
         pick_bounds: { low, high },
@@ -276,4 +355,4 @@ export const ownedMeshPickInfo = (
         pick_exact: true,
         shared_vertices,
     };
-};
+}

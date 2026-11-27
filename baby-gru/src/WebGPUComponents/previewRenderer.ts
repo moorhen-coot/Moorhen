@@ -38,6 +38,9 @@ import { PREVIEW_WGSL } from './previewShaders';
 import { TextLayer, textBatchesOf } from './textLayer';
 import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
+import { FieldShading } from './fieldShading';
+import type { SurfaceField } from './smoothSurface/surfaceField';
+import { smoothSurfaceSetting } from '../utils/smoothSurface';
 import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
@@ -46,7 +49,7 @@ import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
 import { type HoverHighlight, type HoverOverlay, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
 import { HoverOverlayLayer } from './hoverOverlay';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, shadingDebug, symmetryCopyGrey, viewShows,
 } from './previewScene';
 
 
@@ -142,6 +145,11 @@ interface FrameTarget {
     softShadows?: boolean;
     /** The background cleared to nothing (alpha 0), for a screenshot with a transparent background. */
     transparentBackground?: boolean;
+    /**
+     * Smooth surfaces shaded and coloured per pixel from their fields wherever they have one, whatever
+     * the settings (smoothSurfaceSetting.fieldShading, pixelColours) say for the canvas: screenshots.
+     */
+    bestSurfaces?: boolean;
 }
 
 /**
@@ -250,6 +258,31 @@ interface SubBufferResources {
  */
 type PassKind = "main" | "gbuffer" | "shadow" | "peel";
 
+/**
+ * The depth pre-pass, for what is shaded per pixel from a field (fs_field: 64 loads for the normal
+ * and a search of the atoms for the colour, each fragment): "depth" draws its depth alone, colour
+ * writes off; "after-depth" then shades it where its depth is the nearest, so each pixel is shaded
+ * once however many layers of the surface lie behind it. "none": as everything else is drawn.
+ */
+type Prepass = "none" | "depth" | "after-depth";
+
+/** A pass's outputs for a pre-pass stage: colour writes off and depth written; then equal depth passes. */
+function withPrepass(out: { targets: GPUColorTargetState[]; depthStencil: GPUDepthStencilState; multisample: GPUMultisampleState }, prepass: Prepass) {
+    if (prepass === "depth") {
+        return {
+            ...out,
+            targets: out.targets.map(target => ({ format: target.format, writeMask: 0 })),
+            depthStencil: { ...out.depthStencil, depthWriteEnabled: true, depthCompare: "less" as GPUCompareFunction },
+        };
+    }
+    if (prepass === "after-depth") {
+        // The same positions (FieldOut's is invariant), so the same depths: less-equal lets exactly
+        // the nearest through.
+        return { ...out, depthStencil: { ...out.depthStencil, depthWriteEnabled: false, depthCompare: "less-equal" as GPUCompareFunction } };
+    }
+    return out;
+}
+
 type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform" | "spheres";
 
 const pipelineKind = (instanced: boolean, colour: ColourSource): PipelineKind =>
@@ -349,10 +382,15 @@ export class WebGPUPreviewRenderer {
     private readonly surfaceTextures: SurfaceTextures;
     /** Textured meshes: the frame, the draw, and the material at group 2. */
     private readonly texturedPipelineLayout: GPUPipelineLayout;
+    /** Smooth surfaces shaded per pixel from their field (fieldShading.ts): the field at group 2. */
+    private readonly fieldShading: FieldShading;
+    private readonly fieldPipelineLayout: GPUPipelineLayout;
     /** The smooth mesh hover overlay (MetaBalls, surfaces): drawn after the scene. */
     private readonly hoverOverlay: HoverOverlayLayer;
     /** What the hover lights in the frame being drawn (hoverHighlight.ts); set by drawFrame. */
     private hover: HoverHighlight = NO_HOVER;
+    /** Whether the frame being drawn shades smooth surfaces per pixel from their fields, and colours them; set by drawFrame. */
+    private perPixel = { normals: true, colours: true };
     /** On the shared device: removed again by destroy(), which must not destroy the device. */
     private readonly errorListener: (event: GPUUncapturedErrorEvent) => void;
 
@@ -469,6 +507,10 @@ export class WebGPUPreviewRenderer {
         this.texturedPipelineLayout = device.createPipelineLayout({
             bindGroupLayouts: [this.frameLayout, this.drawLayout, this.surfaceTextures.layout],
         });
+        this.fieldShading = new FieldShading(device);
+        this.fieldPipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [this.frameLayout, this.drawLayout, this.fieldShading.layout],
+        });
         this.hoverOverlay = new HoverOverlayLayer(device, this.module, this.frameLayout, this.drawLayout,
             this.colourTargetState(true), DEPTH_FORMAT, SAMPLE_COUNT, maxBufferBytes);
     }
@@ -554,7 +596,7 @@ export class WebGPUPreviewRenderer {
      * not for every frame.
      */
     async snapshot(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[],
-                   width: number, height: number, options: { maxTile?: number; softShadows?: boolean; transparentBackground?: boolean } = {}): Promise<PreviewSnapshot> {
+                   width: number, height: number, options: { maxTile?: number; softShadows?: boolean; transparentBackground?: boolean; bestSurfaces?: boolean } = {}): Promise<PreviewSnapshot> {
         width = Math.round(width);
         height = Math.round(height);
         const settings = effectSettings(camera, width, height);
@@ -592,6 +634,7 @@ export class WebGPUPreviewRenderer {
                         width, height, tile: drawn, colour: targets.colour, depth: targets.depth, resolve: image.createView(), timed: false,
                         softShadows: options.softShadows,
                         transparentBackground: options.transparentBackground,
+                        bestSurfaces: options.bestSurfaces,
                     });
                     const encoder = this.device.createCommandEncoder({ label: "snapshot copy" });
                     encoder.copyTextureToBuffer({ texture: image, origin: [tile.x - drawn.x, tile.y - drawn.y] },
@@ -644,6 +687,12 @@ export class WebGPUPreviewRenderer {
         const uploads = this.syncResources(displayBuffers, plan.draws);
         // What the hover lights: read by writeDrawBlocks and drawHoverOverlay, in every view.
         this.hover = hoverHighlight(camera, displayBuffers);
+        // Whether smooth surfaces with a field are shaded and coloured from it in this frame: read at
+        // draw time, so switching either costs a frame, not a new surface.
+        this.perPixel = {
+            normals: !!target.bestSurfaces || smoothSurfaceSetting.fieldShading,
+            colours: !!target.bestSurfaces || smoothSurfaceSetting.pixelColours,
+        };
         // A divided canvas - three ways, stereo side by side or crossed, multiple views - is drawn
         // view by view (drawViews); the ordinary view keeps the frame below, its passes unchanged.
         const views = previewViews(camera, displayBuffers, target.width, target.height);
@@ -716,7 +765,8 @@ export class WebGPUPreviewRenderer {
                 timestampWrites: startTiming(),
             });
             gbuffer.setBindGroup(0, this.gbufferFrameBindGroup);
-            for (const item of plan.draws) this.drawOne(gbuffer, item, camera, "gbuffer");
+            this.depthPrepass(gbuffer, plan.draws, camera, "gbuffer");
+            for (const item of plan.draws) this.drawOne(gbuffer, item, camera, "gbuffer", "after-depth");
             for (const item of gpuDraws) this.drawGpu(gbuffer, item, camera.zoom, "gbuffer");
             gbuffer.end();
             maps = this.effects.encode(encoder, settings, whole.subarray(0, 16), [area.x, area.y]);
@@ -725,7 +775,7 @@ export class WebGPUPreviewRenderer {
         uniforms.set([tile.x - area.x, tile.y - area.y, 1 / area.width, 1 / area.height], 80);
         // A transparent snapshot fades with distance rather than fogging into the background's
         // colour (fogged in previewShaders.ts): over that colour, the same picture.
-        uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
+        uniforms.set([target.transparentBackground ? 1 : 0, shadingDebug.stripes ? 1 : 0, 0, 0], 104);
         this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
         let shapes = 0;
@@ -758,7 +808,8 @@ export class WebGPUPreviewRenderer {
                 depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: "clear", depthStoreOp: "store" },
             });
             opaque.setBindGroup(0, frameGroup);
-            for (const item of plan.draws) if (!item.transparent) this.drawOne(opaque, item, camera);
+            this.depthPrepass(opaque, plan.draws, camera, "main");
+            for (const item of plan.draws) if (!item.transparent) this.drawOne(opaque, item, camera, "main", "after-depth");
             for (const item of gpuDraws) if (!item.transparent) this.drawGpu(opaque, item, camera.zoom);
             // Textured shapes after the meshes, as GLrender draws them after drawTriangles; they are
             // opaque, so they hide what is behind them.
@@ -819,10 +870,11 @@ export class WebGPUPreviewRenderer {
             scene.setBindGroup(0, frameGroup);
 
             // Opaque first, then transparent over it, as the WebGL renderer orders them.
+            this.depthPrepass(scene, plan.draws, camera, "main");
             for (const transparent of [false, true]) {
                 for (const item of plan.draws) {
                     if (item.transparent !== transparent) continue;
-                    this.drawOne(scene, item, camera);
+                    this.drawOne(scene, item, camera, "main", "after-depth");
                 }
                 for (const item of gpuDraws) {
                     if (item.transparent === transparent) this.drawGpu(scene, item, camera.zoom);
@@ -865,6 +917,7 @@ export class WebGPUPreviewRenderer {
         this.device.queue.submit([encoder.finish()]);
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
+        this.fieldShading.prune();
 
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
@@ -1013,7 +1066,7 @@ export class WebGPUPreviewRenderer {
             // The effects maps cover `area` of the view; a pixel of the target is the view's pixel
             // (it - rect + part), and so the map's (that - area).
             uniforms.set([part.x - area.x - rect.x, part.y - area.y - rect.y, 1 / area.width, 1 / area.height], 80);
-            uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
+            uniforms.set([target.transparentBackground ? 1 : 0, shadingDebug.stripes ? 1 : 0, 0, 0], 104);
             this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
             const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
             const loadOp: GPULoadOp = first ? "clear" : "load";
@@ -1143,6 +1196,7 @@ export class WebGPUPreviewRenderer {
         });
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
+        this.fieldShading.prune();
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
 
@@ -1171,6 +1225,7 @@ export class WebGPUPreviewRenderer {
         this.overlayLines.destroy();
         this.texturedShapes.destroy();
         this.surfaceTextures.destroy();
+        this.fieldShading.destroy();
         this.hoverOverlay.destroy();
         this.effects.destroy();
         if (canvasOwners.get(this.context) === this) {
@@ -1300,15 +1355,22 @@ export class WebGPUPreviewRenderer {
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
 
+    /** The depth pre-pass (Prepass) of `items` into `pass`, before they are drawn "after-depth". */
+    private depthPrepass(pass: GPURenderPassEncoder, items: readonly PreviewDraw[], camera: PreviewCameraSource, mode: "main" | "gbuffer"): void {
+        for (const item of items) if (!item.transparent) this.drawOne(pass, item, camera, mode, "depth");
+    }
+
     /**
      * `mode` "gbuffer": into the g-buffer, for the effects passes: everything WebGL's g-buffer pass
      * draws - meshes (untextured), spheres and lit lines, not unlit lines - with fs_gbuffer.
      * "shadow": into the shadow map, what WebGL's shadow pass draws - the same, less anything
      * transparent or faded (shouldCastShadow).
      */
-    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource, mode: PassKind = "main"): void {
+    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource, mode: PassKind = "main", prepass: Prepass = "none"): void {
         const sub = this.resources.get(item.buffer)?.[item.index];
         if (!sub) return;
+        // Only what is shaded per pixel from a field takes the depth pre-pass: the rest, not even its uniforms.
+        if (prepass === "depth" && (item.transparent || item.primitive !== "triangles" || sub.segments || !this.fieldOf(item))) return;
         if ((mode === "gbuffer" || mode === "shadow") && item.primitive === "lines") return;
         if (mode === "shadow" && item.transparent) return;
 
@@ -1348,8 +1410,16 @@ export class WebGPUPreviewRenderer {
         // Textured only if its material has a texture that is registered; otherwise drawn as if it
         // had no material, as drawCore does.
         const material = item.material && (mode === "main" || mode === "peel") ? this.surfaceTextures.bindGroupFor(item.material) : null;
+        // Shaded per pixel from its field, in every pass that shades (the shadow map only wants depth).
+        const fieldOf = !material && mode !== "shadow" ? this.fieldOf(item) : null;
+        const field = fieldOf ? this.fieldShading.bindGroupFor(fieldOf, item.colourSource === "vertex" && this.perPixel.colours) : null;
+        // The depth pre-pass draws only what is shaded per pixel from a field, and only opaque; what
+        // it drew is then shaded where its depth equals the nearest.
+        const prepassed = !!field && !item.transparent;
+        if (prepass === "depth" && !prepassed) return;
+        const stage = prepassed ? prepass : "none";
         const kind = pipelineKind(item.instanced, item.colourSource);
-        pass.setPipeline(this.pipeline(kind, item.transparent, !!material, mode));
+        pass.setPipeline(this.pipeline(kind, item.transparent, !!material, mode, !!field, stage));
         const colourSlot = item.colourSource !== "uniform";
         if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
         let slot = colourSlot ? 3 : 2;
@@ -1361,6 +1431,7 @@ export class WebGPUPreviewRenderer {
         // The texture coordinates come after everything else (see pipeline()).
         const uvSlot = slot;
         if (material) pass.setBindGroup(2, material);
+        if (field) pass.setBindGroup(2, field);
         for (let copy = 0; copy < copies; copy++) {
             for (let c = 0; c < sub.chunks.length; c++) {
                 const chunk = sub.chunks[c];
@@ -1396,8 +1467,15 @@ export class WebGPUPreviewRenderer {
             const sub = this.resources.get(item.buffer)?.[0];
             if (!sub || sub.chunks.length === 0) continue;
             const copies = 1 + item.copies.length;
-            this.hoverOverlay.draw(pass, overlay, sub.chunks, sub.chunks.map((_, c) => sub.bindGroups[c * copies]));
+            // Lit as the mesh under it is: per pixel from its field, if it is drawn that way.
+            this.hoverOverlay.draw(pass, overlay, sub.chunks, sub.chunks.map((_, c) => sub.bindGroups[c * copies]),
+                { transparent: item.transparent, field: !item.material ? this.fieldOf(item) : null });
         }
+    }
+
+    /** The field `item` is shaded per pixel from in this frame (perPixel), or null: drawn per vertex. */
+    private fieldOf(item: PreviewDraw): SurfaceField | null {
+        return this.perPixel.normals && this.fieldShading.usable(item.fieldShading) ? item.fieldShading : null;
     }
 
     private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number, mode: PassKind = "main"): void {
@@ -1688,10 +1766,12 @@ export class WebGPUPreviewRenderer {
 
     /**
      * `textured`: with texture coordinates in the last vertex buffer slot and a material at group
-     * 2, through the *_textured entry points and fs_textured. `pass`: which pass it draws in.
+     * 2, through the *_textured entry points and fs_textured. `field`: a mesh (not instanced) shaded
+     * per pixel from its field at group 2, through the *_field entry points. `pass`: which pass it
+     * draws in.
      */
-    private pipeline(kind: PipelineKind, transparent: boolean, textured = false, pass: PassKind = "main"): GPURenderPipeline {
-        const key = `${kind}|${transparent}${textured ? "|textured" : ""}|${pass}`;
+    private pipeline(kind: PipelineKind, transparent: boolean, textured = false, pass: PassKind = "main", field = false, prepass: Prepass = "none"): GPURenderPipeline {
+        const key = `${kind}|${transparent}${textured ? "|textured" : ""}${field ? "|field" : ""}|${pass}${prepass === "none" ? "" : `|${prepass}`}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -1704,7 +1784,7 @@ export class WebGPUPreviewRenderer {
             attributes: [0, 1, 2, 3].map(i => ({ shaderLocation: 5 + i, offset: 16 * i, format: "float32x4" as GPUVertexFormat })),
         };
 
-        const out = this.outputs(transparent, pass);
+        const out = withPrepass(this.outputs(transparent, pass), prepass);
         if (kind === "spheres") {
             const pipeline = this.device.createRenderPipeline({
                 label: `preview ${key}`,
@@ -1740,15 +1820,18 @@ export class WebGPUPreviewRenderer {
             buffers.push({ arrayStride: 8, stepMode: "vertex", attributes: [{ shaderLocation: 9, offset: 0, format: "float32x2" }] });
             entryPoint += "_textured";
         }
+        if (field) entryPoint += "_field";
 
         const pipeline = this.device.createRenderPipeline({
             label: `preview ${key}`,
-            layout: textured ? this.texturedPipelineLayout : this.pipelineLayout,
+            layout: textured ? this.texturedPipelineLayout : field ? this.fieldPipelineLayout : this.pipelineLayout,
             vertex: { module: this.module, entryPoint, buffers },
             // The shadow map needs only depth: no fragment stage at all.
             fragment: pass === "shadow" ? undefined : {
                 module: this.module,
-                entryPoint: pass === "gbuffer" ? "fs_gbuffer" : textured ? (pass === "peel" ? "fs_textured_peel" : "fs_textured")
+                entryPoint: prepass === "depth" ? "fs_depth_only"
+                    : field ? (pass === "gbuffer" ? "fs_field_gbuffer" : pass === "peel" ? "fs_field_peel" : "fs_field")
+                    : pass === "gbuffer" ? "fs_gbuffer" : textured ? (pass === "peel" ? "fs_textured_peel" : "fs_textured")
                     : pass === "peel" ? "fs_main_peel" : "fs_main",
                 targets: out.targets,
             },

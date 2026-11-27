@@ -31,6 +31,7 @@ const SAVED_FIELDS = [
     "uniqueId", "cid", "style", "isCustom", "colourRules", "bondOptions", "m2tParams", "wormOptions",
     "nonCustomOpacity", "viewDependentTransparency", "resEnvOptions", "neighboursCid",
     "restrictToNeighbours", "excludeNeighbours", "hbondedToCid", "hbondedTo", "neighboursDistance",
+    "surfaceChainsSeparate",
 ] as const;
 
 describe("the representation message", () => {
@@ -50,6 +51,16 @@ describe("the representation message", () => {
 
         expect(restored.uniqueId).toBe("rep-1234");
         expect(restored.nonCustomOpacity).toBeCloseTo(0.5, 5);
+    });
+
+    it("carries surfacing each chain separately, and reads an older session's silence as off", () => {
+        const on = Representation.toObject(
+            Representation.decode(Representation.encode(Representation.create({ surfaceChainsSeparate: true })).finish()));
+        const older = Representation.toObject(
+            Representation.decode(Representation.encode(Representation.create({ style: "MolecularSurface" })).finish()),
+            { defaults: true });
+        expect(on.surfaceChainsSeparate).toBe(true);
+        expect(older.surfaceChainsSeparate).toBe(false);
     });
 
     it("carries a worm's radii through an encode and decode", () => {

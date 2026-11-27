@@ -458,6 +458,7 @@ std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 #include "bloboids.hh"
+#include "smooth-surface.hh"
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
@@ -2336,6 +2337,141 @@ inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m
 
     return uint32ArrayFromVector(uintArray);
 
+}
+
+// The smooth surface's atoms from a Float32Array packed x, y, z, van der Waals radius per atom.
+inline std::vector<smooth_surface::atom_t> smoothSurfaceAtoms(const emscripten::val &packedAtoms) {
+    auto packed = emscripten::convertJSArrayToNumberVector<float>(packedAtoms);
+    std::vector<smooth_surface::atom_t> atoms(packed.size() / 4);
+    for (size_t i = 0; i < atoms.size(); i++) atoms[i] = {packed[4 * i], packed[4 * i + 1], packed[4 * i + 2], packed[4 * i + 3]};
+    return atoms;
+}
+
+// Its options from a JS object (spacing, sigma, maxShift, openRadius, openUncapped, healBlur, refine;
+// threads); anything left out is the default.
+inline smooth_surface::options_t smoothSurfaceOptions(const emscripten::val &optionsObject) {
+    smooth_surface::options_t options;
+    auto option = [&](const char *name) { return optionsObject.isUndefined() || optionsObject.isNull() ? emscripten::val::undefined() : optionsObject[name]; };
+    if (!option("spacing").isUndefined()) options.spacing = option("spacing").as<double>();
+    if (!option("sigma").isUndefined()) options.sigma = option("sigma").as<double>();
+    if (!option("maxShift").isUndefined()) options.max_shift = option("maxShift").as<double>();  // Infinity passes as infinity
+    if (!option("openRadius").isUndefined()) options.open_radius = option("openRadius").as<double>();
+    if (!option("refine").isUndefined()) options.refine = option("refine").as<bool>();
+    if (!option("openUncapped").isUndefined()) options.open_uncapped = option("openUncapped").as<bool>();
+    if (!option("healBlur").isUndefined()) options.heal_blur = option("healBlur").as<double>();
+    if (!option("threads").isUndefined()) options.threads = option("threads").as<int>();
+    return options;
+}
+
+/*
+ * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
+ * Waals radius per atom), with an Int32Array residue index per atom, and an options object (spacing,
+ * sigma, maxShift, openRadius, openUncapped, healBlur, refine; threads) - anything left out is the default. Returns the
+ * surface (positions, normals, indices, atom, other, weight, near, nearGap, as typed arrays: the
+ * AtomSurface of baby-gru/src/utils/smoothSurface.ts) plus the grid and timings for the log; null if
+ * there is nothing to contour.
+ */
+inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms, const emscripten::val &residueOfObject,
+                                              double probe, const emscripten::val &optionsObject) {
+    auto residue_of = emscripten::convertJSArrayToNumberVector<int32_t>(residueOfObject);
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t options = smoothSurfaceOptions(optionsObject);
+    smooth_surface::surface_t s = smooth_surface::surface_from_atoms(atoms, residue_of, probe, options);
+    if (s.indices.empty()) return emscripten::val::null();
+    // A typed array of the JS type `type` holding a copy of `data`. The length goes over as a double:
+    // a size_t is a BigInt in JS in the 64-bit build, which a typed array constructor refuses.
+    auto copy = [](const char *type, const auto &data) {
+        emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
+        emscripten::val result = emscripten::val::global(type).new_(double(data.size()));
+        result.template call<void>("set", view);
+        return result;
+    };
+    auto result = emscripten::val::object();
+    result.set("positions", copy("Float32Array", s.positions));
+    result.set("normals", copy("Float32Array", s.normals));
+    result.set("indices", copy("Uint32Array", s.indices));
+    result.set("atom", copy("Int32Array", s.atom));
+    result.set("other", copy("Int32Array", s.other));
+    result.set("weight", copy("Float32Array", s.weight));
+    result.set("near", copy("Int32Array", s.near));
+    result.set("nearGap", copy("Float32Array", s.near_gap));
+    auto grid = emscripten::val::object();
+    grid.set("nx", s.nx); grid.set("ny", s.ny); grid.set("nz", s.nz); grid.set("spacing", s.spacing);
+    result.set("grid", grid);
+    auto timings = emscripten::val::object();
+    timings.set("sas", s.timings.sas); timings.set("seeds", s.timings.seeds); timings.set("transform", s.timings.transform);
+    timings.set("distance", s.timings.distance); timings.set("blur", s.timings.blur); timings.set("contour", s.timings.contour);
+    timings.set("atoms", s.timings.atoms);
+    result.set("timings", timings);
+    return result;
+}
+
+/*
+ * The smooth surface's field only, for the rest to be made on the GPU (baby-gru/src/WebGPUComponents/
+ * smoothSurface): the same atoms and options as smoothSurfaceFromAtoms; returns { input, nx, ny, nz,
+ * origin, spacing, timings } - `input` the field ready to contour (a Float32Array, x fastest:
+ * negative inside, the surface at 0, iso - field as surface_from_atoms contours it) - or null if
+ * there are no atoms.
+ */
+inline emscripten::val smoothSurfaceFieldFromAtoms(const emscripten::val &packedAtoms, double probe, const emscripten::val &optionsObject) {
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t o = smoothSurfaceOptions(optionsObject);
+    smooth_surface::grid_t grid = smooth_surface::ses_field(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius, o.threads,
+                                                            o.open_uncapped, o.heal_blur);
+    if (grid.field.empty()) return emscripten::val::null();
+    for (auto &v : grid.field) v = float(grid.iso - v);
+    emscripten::val view{ emscripten::typed_memory_view(grid.field.size(), grid.field.data()) };
+    emscripten::val input = emscripten::val::global("Float32Array").new_(double(grid.field.size()));
+    input.call<void>("set", view);
+    auto result = emscripten::val::object();
+    result.set("input", input);
+    result.set("nx", grid.nx); result.set("ny", grid.ny); result.set("nz", grid.nz);
+    auto origin = emscripten::val::array();
+    for (int k = 0; k < 3; k++) origin.call<void>("push", grid.origin[k]);
+    result.set("origin", origin);
+    result.set("spacing", grid.spacing);
+    auto timings = emscripten::val::object();
+    timings.set("sas", grid.timings.sas); timings.set("seeds", grid.timings.seeds); timings.set("transform", grid.timings.transform);
+    timings.set("distance", grid.timings.distance); timings.set("blur", grid.timings.blur);
+    result.set("timings", timings);
+    return result;
+}
+
+/*
+ * The smooth surface's field up to the opening, unblurred, for the blur and everything after to be made
+ * on the GPU (baby-gru/src/WebGPUComponents/smoothSurface, stage 2): the same atoms and options as
+ * smoothSurfaceFromAtoms; returns { field, changed, interior, clamp, nx, ny, nz, origin, spacing,
+ * timings } - `field` a Float32Array (x fastest, positive inside), `changed` a Uint8Array (255 where the
+ * opening changed the field) or null when neither openUncapped nor healBlur wants it, `interior` the
+ * points inside (the volume the level keeps) - or null if there are no atoms.
+ */
+inline emscripten::val smoothSurfaceUnblurredFieldFromAtoms(const emscripten::val &packedAtoms, double probe, const emscripten::val &optionsObject) {
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t o = smoothSurfaceOptions(optionsObject);
+    smooth_surface::grid_t grid = smooth_surface::ses_field_unblurred(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius, o.threads,
+                                                                      o.open_uncapped, o.heal_blur);
+    if (grid.field.empty()) return emscripten::val::null();
+    auto copy = [](const char *type, const auto &data) {
+        emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
+        emscripten::val result = emscripten::val::global(type).new_(double(data.size()));
+        result.template call<void>("set", view);
+        return result;
+    };
+    auto result = emscripten::val::object();
+    result.set("field", copy("Float32Array", grid.field));
+    result.set("changed", grid.changed.empty() ? emscripten::val::null() : copy("Uint8Array", grid.changed));
+    result.set("interior", double(grid.interior));
+    result.set("clamp", grid.clamp);
+    result.set("nx", grid.nx); result.set("ny", grid.ny); result.set("nz", grid.nz);
+    auto origin = emscripten::val::array();
+    for (int k = 0; k < 3; k++) origin.call<void>("push", grid.origin[k]);
+    result.set("origin", origin);
+    result.set("spacing", grid.spacing);
+    auto timings = emscripten::val::object();
+    timings.set("sas", grid.timings.sas); timings.set("seeds", grid.timings.seeds); timings.set("transform", grid.timings.transform);
+    timings.set("distance", grid.timings.distance);
+    result.set("timings", timings);
+    return result;
 }
 
 inline emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
