@@ -28,6 +28,7 @@ import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
 import userScenesReducer from "./userScenesSlice";
 import vectorsReducer from "./vectorsSlice";
+import annotationsReducer from "./annotationsSlice";
 import movieReducer from "./movieSlice";
 
 export const reducers = {
@@ -57,6 +58,7 @@ export const reducers = {
     globalUI: globalUISliceReducer,
     bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
+    annotations: annotationsReducer,
     snackBars: snackBarsReducer,
     userScenes: userScenesReducer,
     movie: movieReducer,

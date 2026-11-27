@@ -22,6 +22,32 @@ projects `chromium-webgpu` and `firefox-webgpu`).
   than Chrome's), so check in a real Firefox when you change WGSL: load a structure (WebGPU draws
   the main view there by default), or run a case page by hand.
 
+## When the browsers will not start
+
+Both projects are preceded by nothing except `gpu-firefox-probe`, a single test asking whether
+Firefox starts at all. The Firefox project depends on it, so a browser that cannot launch costs
+one failure rather than one per test — Playwright retries a failed launch *per test*, not per
+worker, which with thirty-odd tests at a thirty second launch timeout is a quarter of an hour of
+the same message. If the probe fails, nothing about the Firefox tests themselves is being said.
+
+**On macOS, give your terminal Full Disk Access** (System Settings → Privacy & Security), then
+restart it. Playwright launches Firefox with a throwaway profile under `$TMPDIR`; without that
+permission Firefox cannot read the profile, puts up a modal saying so, and never connects. What
+you see is a launch timeout, and the browser's own log blames graphics —
+
+```
+sandbox_extension_issue_file_to_process failed for …/plugin-container.app: 1 (Operation not permitted)
+Crash Annotation GraphicsCriticalError: RenderCompositorSWGL failed mapping default framebuffer
+```
+
+— which is a red herring: the compositor is failing because the browser is already failing. The
+giveaway is `--headed`, where the real dialog is visible ("Your Firefox profile cannot be
+loaded"). Chromium is unaffected, so a run where only Firefox fails to launch points here.
+
+The launch timeout is `MOORHEN_GPU_LAUNCH_TIMEOUT` (30s), the per-test timeout `MOORHEN_GPU_TIMEOUT`
+(30s locally, 180s on CI, where a software GPU is tens of times slower), and the whole run is
+bounded by `MOORHEN_GPU_GLOBAL_TIMEOUT`.
+
 ## Layout
 
 ```

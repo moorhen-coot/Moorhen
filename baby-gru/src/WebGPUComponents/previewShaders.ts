@@ -68,7 +68,8 @@ struct Draw {
                          // (or, while it is dragged, its drag)
     ambient: vec4f,      // w = 1: this ambient light instead of the frame's (the drag's pulse)
     output: vec4f,       // x: 1 where the pipeline writes its colour as it is (opaque), 0 where it
-                         // blends it over what is there (transparent, or into a peel layer)
+                         // blends it over what is there (transparent, or into a peel layer);
+                         // y: 1 where a transparent surface thickens edge-on (viewDependentAlpha)
     highlight: vec4i,    // the hover (hoverHighlight.ts), for instanced meshes: x the instance lit
                          // whole, y and z the mesh vertices [y, z) lit (a section), -1 for none;
                          // w the mesh vertex this chunk's vertex 0 is (see MeshChunk)
@@ -370,6 +371,23 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
+// Beer-Lambert through a shell, then the fifth power that keeps the bulk glassy while the rim
+// stays solid: a transparent surface thickens where it is seen edge-on. Coot's curve, matched
+// line for line with triangle-fragment-shader.js and WebGLgComponents/viewDependentTransparency.ts
+// so that the same scene drawn by either renderer comes out the same.
+//
+// frame.eyeDir is in model space, as WebGL's screenZFrag is, and so is the interpolated normal -
+// the model matrix is applied to it in finish() - so this is the same dot product there and here.
+fn viewDependentAlpha(base: f32, normal: vec3f) -> f32 {
+    if (draw.output.y < 0.5) { return base; }
+    let transmitted = 1.0 - clamp(base, 0.0, 1.0);
+    if (transmitted <= 0.0) { return 1.0; }
+    if (transmitted >= 1.0) { return 0.0; }
+    let facing = max(abs(dot(normalize(normal), normalize(frame.eyeDir.xyz))), 0.01);
+    let shell = 1.0 - pow(transmitted, 1.0 / facing);
+    return shell * shell * shell * shell * shell;
+}
+
 // Fogged as triangle-fragment-shader.js: mixed towards the fog colour with distance. For a
 // transparent snapshot (frame.fog.x), faded into nothing instead - the colour kept, the alpha
 // taken down by the same amount - so that over the fog colour it is the same picture, and over
@@ -409,7 +427,10 @@ fn meshColour(in: VOut, frontFacing: bool) -> vec4f {
     // Back faces are drawn flat in their own colour, as in WebGL.
     let shadow = shadowAt(in.shadowPos);
     let colour = select(in.colour * backShade(shadow), lit(in.colour, in.normal, occlusionAt(in.position), shadow), frontFacing);
-    return withHighlight(fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance), in.highlight);
+    return withHighlight(
+        fogged(colour * edgeAt(in.position),
+               viewDependentAlpha(in.colour.a, in.normal), in.eyeDistance),
+        in.highlight);
 }
 
 @fragment
@@ -624,7 +645,13 @@ fn texturedColour(in: TexturedOut, frontFacing: bool) -> vec4f {
     let shadow = shadowAt(in.shadowPos);
     let surface = select(colour * backShade(shadow),
         litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position), shadow), frontFacing);
-    return withHighlight(fogged(surface * edgeAt(in.position), in.colour.a, in.eyeDistance), in.highlight);
+    // n, not in.normal: where there is a normal map the shell follows the mapped normal, as
+    // triangle-fragment-shader.js does - it takes the alpha from norm, after mappedNormal has had
+    // it. A bumped surface should thicken along the bumps.
+    return withHighlight(
+        fogged(surface * edgeAt(in.position),
+               viewDependentAlpha(in.colour.a, n), in.eyeDistance),
+        in.highlight);
 }
 
 @fragment
@@ -905,7 +932,12 @@ fn fs_line_peel(in: VOut) -> @location(0) vec4f {
 // Lit lines are drawn with the triangle shader in WebGL, so occlusion and edges darken them too.
 fn litLineColour(in: VOut) -> vec4f {
     // Not shadowed: WebGL never tells the lines program about shadows. They do cast them.
-    return fogged(lit(in.colour, in.normal, occlusionAt(in.position), 1.0) * edgeAt(in.position), in.colour.a, in.eyeDistance);
+    //
+    // Edge-dense too, because in WebGL lit lines are drawn by the triangle program and so share
+    // its uniform - see the note above litLineColour's WebGL counterpart. Plain lines are not:
+    // they have their own fragment shader there, which knows nothing about this.
+    return fogged(lit(in.colour, in.normal, occlusionAt(in.position), 1.0) * edgeAt(in.position),
+                  viewDependentAlpha(in.colour.a, in.normal), in.eyeDistance);
 }
 
 @fragment

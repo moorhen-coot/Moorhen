@@ -14,6 +14,19 @@ import { devices, type PlaywrightTestOptions, type PlaywrightWorkerOptions } fro
  */
 type Use = Partial<PlaywrightTestOptions & PlaywrightWorkerOptions>;
 
+/**
+ * How long to wait for a browser to start, in milliseconds.
+ *
+ * Given explicitly because without it the launch inherits the *test* timeout, which is minutes:
+ * a browser that is never going to start then costs the whole of it before anything says so. A
+ * browser that starts at all starts in a few seconds, so there is nothing to be gained by waiting
+ * longer - and the browser most likely to hang here is the one whose tests mostly skip anyway.
+ *
+ * The cost of being wrong is a spurious failure on a very slow machine, so it is generous against
+ * a few seconds rather than tight, and MOORHEN_GPU_LAUNCH_TIMEOUT overrides it.
+ */
+const launchTimeout = Number(process.env.MOORHEN_GPU_LAUNCH_TIMEOUT ?? 30_000);
+
 const swiftShader = process.env.MOORHEN_GPU_SWIFTSHADER !== undefined
     ? process.env.MOORHEN_GPU_SWIFTSHADER !== "0"
     : process.platform === "linux";
@@ -33,6 +46,7 @@ export const webGPUChromium: Use = {
     launchOptions: {
         args: chromiumArgs,
         executablePath: process.env.MOORHEN_GPU_CHROMIUM || undefined,
+        timeout: launchTimeout,
     },
 };
 
@@ -40,5 +54,6 @@ export const webGPUFirefox: Use = {
     ...devices["Desktop Firefox"],
     launchOptions: {
         firefoxUserPrefs: { "dom.webgpu.enabled": true, "gfx.webgpu.ignore-blocklist": true },
+        timeout: launchTimeout,
     },
 };

@@ -44,6 +44,7 @@ import {
     setUseGemmi,
     setUseSmoothSurface,
 } from "../../store/generalStatesSlice";
+import { defaultValidationGradient, setValidationGradient } from "../../store/bottomPanelsSlice";
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import {
@@ -304,6 +305,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         defaultValue: sceneSettingsInitialState.anaglyphColours,
     },
     58: {
+        label: "validationGradient",
+        valueSetter: setValidationGradient,
+        selector: (state: RootState) => state.bottomPanels.validationGradient,
+        defaultValue: defaultValidationGradient,
+    },
+    59: {
         label: "useSmoothSurface",
         valueSetter: setUseSmoothSurface,
         selector: (state: RootState) => state.generalStates.useSmoothSurface,

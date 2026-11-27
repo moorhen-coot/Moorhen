@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect } from "@/components/inputs";
+import { MoorhenGradientPickerButton, MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect } from "@/components/inputs";
 import { MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
-import { RootState, setShownBottomPanel, setValidationOption } from "@/store";
+import { RootState, setShownBottomPanel, setValidationGradient, setValidationOption } from "@/store";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
 import { validationDoc } from "./ValidationDoc";
 
@@ -17,6 +17,7 @@ const presets = {
 export const ValidationTab = () => {
     const isActiveTab = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
     const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+    const validationGradient = useSelector((state: RootState) => state.bottomPanels.validationGradient);
     const [preset, setPreset] = useState<string>("Default");
     const dispatch = useDispatch();
 
@@ -108,6 +109,14 @@ export const ValidationTab = () => {
                 value={validationOption.columnWidth}
                 setValue={handleColumnWidthChange}
                 width="4rem"
+            />
+            <MoorhenGradientPickerButton
+                label="Colours"
+                colourTable={validationGradient}
+                setColourTable={colourTable => dispatch(setValidationGradient(colourTable))}
+                menu="validation-tab"
+                showValues={false}
+                popoverPlacement="top"
             />
         </MoorhenStack>
 

@@ -15,6 +15,14 @@ const initialState: {
     mapRadii: { molNo: number; radius: number }[];
     mapFastRadii: { molNo: number; radius: number | null }[];
     mapAlpha: { molNo: number; alpha: number }[];
+    /**
+     * The maps drawn so that they thicken where they are seen edge-on, by molNo.
+     *
+     * A list of the ones that are, rather than a flag per map, because it is off for almost every
+     * map almost always and the absent case is the ordinary one - as with visibleMaps. It does
+     * nothing to a map at full opacity; see viewDependentTransparency.ts.
+     */
+    mapViewDependentTransparency: number[];
     mapStyles: { molNo: number; style: MapStyle }[];
     /**
      * Each map's 2D slice, where it was last put: kept when the map is drawn another way, so that
@@ -43,6 +51,7 @@ const initialState: {
     mapSliceNodalLines: [],
     mapSliceContourSpacings: [],
     mapAlpha: [],
+    mapViewDependentTransparency: [],
     mapColours: [],
     negativeMapColours: [],
     positiveMapColours: [],
@@ -89,6 +98,15 @@ const mapContourSettingsSlice = createSlice({
         // API
         setMapAlpha: (state, action: PayloadAction<{ molNo: number; alpha: number }>) => {
             state.mapAlpha = [...state.mapAlpha.filter(item => item.molNo !== action.payload.molNo), action.payload];
+        },
+        // API
+        /* Whether this map thickens where it is seen edge-on. Nothing happens while it is solid. */
+        setMapViewDependentTransparency: (state, action: PayloadAction<{ molNo: number; enabled: boolean }>) => {
+            const others = state.mapViewDependentTransparency.filter(
+                molNo => molNo !== action.payload.molNo);
+            state.mapViewDependentTransparency = action.payload.enabled
+                ? [...others, action.payload.molNo]
+                : others;
         },
         // API
         setMapStyle: (state, action: PayloadAction<{ molNo: number; style: MapStyle }>) => {
@@ -171,6 +189,7 @@ export const {
     setMapRadius,
     setMapFastRadius,
     setMapAlpha,
+    setMapViewDependentTransparency,
     setMapStyle,
     setMapSlice,
     setMapSliceNodalLines,

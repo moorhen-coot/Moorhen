@@ -75,6 +75,11 @@ export const AddCustomRepresentationCard = memo(
         const [surfaceBondedLigands, setSurfaceBondedLigands] = useState<boolean>(!(existingParams?.surfaceExcludeBondedLigands ?? false));
         const [surfaceFreeLigands, setSurfaceFreeLigands] = useState<boolean>(!(existingParams?.surfaceExcludeFreeLigands ?? true));
         const useSmoothSurface = useSelector((state: RootState) => state.generalStates.useSmoothSurface);
+        // From the build parameters, as the opacity beside it is, falling back to the live
+        // representation for one built before the params carried it.
+        const [viewDependentTransparency, setViewDependentTransparency] = useState<boolean>(
+            existingParams?.viewDependentTransparency
+            ?? props.representation?.viewDependentTransparency ?? false);
         const [colour, setColour] = useState<string>(
             existingParams && !existingParams.useDefaultColours && existingParams.colour !== ""
                 ? existingParams.colour
@@ -187,6 +192,7 @@ export const AddCustomRepresentationCard = memo(
                                 ? { ...representationRef.current.wormOptions }
                                 : null,
                         nonCustomOpacity: nonCustomAlpha,
+                        viewDependentTransparency,
                         hbondedTo,
                         surfaceChainsSeparate,
                         surfaceExcludeBondedLigands: !surfaceBondedLigands,
@@ -238,6 +244,7 @@ export const AddCustomRepresentationCard = memo(
                                 ? { ...representationRef.current.wormOptions }
                                 : null,
                         nonCustomOpacity: nonCustomAlpha,
+                        viewDependentTransparency,
                         hbondedTo,
                         surfaceChainsSeparate,
                         surfaceExcludeBondedLigands: !surfaceBondedLigands,
@@ -412,6 +419,8 @@ export const AddCustomRepresentationCard = memo(
                     setColour={setColour}
                     nonCustomOpacity={nonCustomOpacity}
                     setNonCustomOpacity={setNonCustomOpacity}
+                    viewDependentTransparency={viewDependentTransparency}
+                    setViewDependentTransparency={setViewDependentTransparency}
                     representationStyle={representationStyle}
                     mode={mode}
                     molecule={props.molecule}

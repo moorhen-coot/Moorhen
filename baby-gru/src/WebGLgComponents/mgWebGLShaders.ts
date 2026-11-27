@@ -48,6 +48,19 @@ const locateAlphaMultiplier = (program, gl) => {
         gl.useProgram(program);
         gl.uniform1f(program.alphaMultiplier, 1.0);
     }
+    // Located here rather than in a second helper, so that anything built from the triangle
+    // fragment shader cannot get one of the two and not the other - which is the exact shape of
+    // the lit-lines bug described above.
+    //
+    // False is the safe start, and for once the unwritten value agrees: an unset bool uniform is
+    // false, and false is this effect's identity. A program nobody tells about it draws exactly
+    // what it drew before the uniform existed.
+    program.viewDependentTransparency =
+        gl.getUniformLocation(program, "viewDependentTransparency");
+    if (program.viewDependentTransparency != null) {
+        gl.useProgram(program);
+        gl.uniform1i(program.viewDependentTransparency, 0);
+    }
 };
 
 export function getShader(gl, str, type) {

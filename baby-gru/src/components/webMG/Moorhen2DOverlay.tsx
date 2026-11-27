@@ -7,7 +7,11 @@ import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
-import { getMathJaxSVG } from '../../utils/mathJaxUtils';
+import { contrastingTextColour, latexToImage } from '../../utils/textStyle';
+import type { Overlay2DTextFrac } from '../../store/overlaysSlice';
+import { fracPathPairs } from '../../store/overlaysSlice';
+import { textBoxFromMetrics } from '../../utils/overlay2DGeometry';
+import { drawShape, rotateAbout } from '../../utils/overlay2DDraw';
 import {  RootState } from '../../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { MoorhenStack } from "../interface-base";
@@ -20,6 +24,31 @@ interface ImageFrac2D {
     height: number
     img: HTMLImageElement
     zIndex: number;
+    /** Pixels from the top of the image to its baseline, which is what sits at y. 0 puts the top at y. */
+    ascent?: number;
+    /** Clockwise turn in degrees, about the middle of the image. */
+    rotation?: number;
+}
+
+/**
+ * The LaTeX text overlays, typeset as images to draw beside the image overlays.
+ *
+ * Placed by their baseline, as plain text is, so switching a string between text and LaTeX leaves
+ * it where it was.
+ *
+ * @param resolution - Device pixels per CSS pixel the images will be drawn at.
+ */
+export const latexOverlayImages = async (textOverlays: Overlay2DTextFrac[], backgroundColor: number[], resolution: number): Promise<ImageFrac2D[]> => {
+    const images: ImageFrac2D[] = []
+    for (const t of textOverlays) {
+        if (!t.latex) continue
+        const colour = t.fillStyle || t.strokeStyle || contrastingTextColour(backgroundColor)
+        const latex = await latexToImage(t.text, t.fontPixelSize, colour, resolution)
+        if (latex) {
+            images.push({ x: t.x, y: t.y, img: latex.img, width: latex.width, height: latex.height, ascent: latex.ascent, zIndex: t.zIndex, rotation: t.rotation })
+        }
+    }
+    return images
 }
 
 const stereoQuats = []
@@ -176,11 +205,18 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     })
 
     textOverlays.forEach(t => {
+        // LaTeX arrives typeset, among the images.
+        if(t.latex) return
         if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth * scale
         canvas2D_ctx.font = Math.floor(t.fontPixelSize*scale) +"px "+t.fontFamily
+        if(t.rotation){
+            // About the middle of the text, as the handles turn it.
+            const [minX, minY, maxX, maxY] = textBoxFromMetrics(canvas2D_ctx.measureText(t.text))
+            rotateAbout(canvas2D_ctx, t.x*width + (minX+maxX)/2, t.y*height + (minY+maxY)/2, t.rotation)
+        }
         if(t.drawStyle==="stroke"){
             if(t.strokeStyle){
                 canvas2D_ctx.strokeStyle = t.strokeStyle
@@ -212,6 +248,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     svgPathOverlays.forEach(t => {
         if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
+        if(t.offset) canvas2D_ctx.translate(t.offset[0], t.offset[1])
         const p = new Path2D(t.path)
         if(t.lineWidth) canvas2D_ctx.lineWidth = t.lineWidth
         else canvas2D_ctx.lineWidth = 1.0
@@ -256,7 +293,12 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         if((!img.zIndex&&zIndex===0)||(img.zIndex===zIndex)){
             if(img.img){
                 try {
-                    canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+                    const left = width*img.x
+                    const top = height*img.y-(img.ascent ?? 0)*scale
+                    canvas2D_ctx.save()
+                    rotateAbout(canvas2D_ctx, left + img.width*scale/2, top + img.height*scale/2, img.rotation)
+                    canvas2D_ctx.drawImage(img.img,left,top,img.width*scale,img.height*scale)
+                    canvas2D_ctx.restore()
                 } catch(e) {
                     console.log("Failed to draw image")
                 }
@@ -301,16 +343,23 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
                     canvas2D_ctx.fillStyle = "black"
             }
         }
-        canvas2D_ctx.moveTo(width*t.path[0][0],height*t.path[0][1])
-        for(let i=0;i<t.path.length;i++){
-            canvas2D_ctx.lineTo(width*t.path[i][0],height*t.path[i][1])
-        }
+        // Flat or as pairs: see fracPathPairs.
+        const points = fracPathPairs(t.path)
+        points.forEach(([x, y], i) => i === 0 ? canvas2D_ctx.moveTo(width*x, height*y) : canvas2D_ctx.lineTo(width*x, height*y))
         if(t.drawStyle==="stroke"){
             canvas2D_ctx.stroke()
         } else {
             canvas2D_ctx.fill()
         }
         canvas2D_ctx.restore()
+        }
+    })
+
+    const shapeOverlays = store.getState().overlays.shapeOverlayList
+    const defaultShapeColour = bright_y < 0.5 ? "white" : "black"
+    shapeOverlays.forEach(shape => {
+        if((!shape.zIndex&&zIndex===0)||(shape.zIndex===zIndex)){
+            drawShape(canvas2D_ctx, shape, width, height, scale, defaultShapeColour)
         }
     })
 
@@ -656,10 +705,10 @@ export const Moorhen2DOverlay = ((props) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
-    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList)
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
+    const shapeOverlays = useSelector((state: moorhen.State) => state.overlays.shapeOverlayList)
     const callbacks = useSelector((state: moorhen.State) => state.overlays.callBacks)
 
     const helpText = useSelector((state: moorhen.State) => state.glRef.shortCutHelp)
@@ -706,24 +755,6 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         const new_images = []
-        const buildLatexImages = async() => {
-            for(let ilo=0;ilo<latexOverlays.length;ilo++){
-                const mathJaxInfo = await getMathJaxSVG(latexOverlays[ilo].text)
-                if(mathJaxInfo.whratio>0){
-                    const img = new window.Image()
-                    const wh_ratio = mathJaxInfo.whratio
-                    const svg_height = latexOverlays[ilo].height
-                    const svg = mathJaxInfo.svg
-                    const blob = new Blob([svg], {type: 'image/svg+xml'})
-                    const blobUrl = URL.createObjectURL(blob)
-                    img.src = blobUrl
-                    img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexOverlays[ilo].zIndex}
-                    new_images.push(img_frac)
-                }
-            }
-        }
-        buildLatexImages()
         imageOverlays.forEach(imgSrc => {
             const img = new window.Image()
             if(imgSrc.src.length>0){
@@ -733,26 +764,33 @@ export const Moorhen2DOverlay = ((props) => {
                     const blobUrl = URL.createObjectURL(blob)
                     img.src = blobUrl
                     img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex,rotation:imgSrc.rotation}
                     new_images.push(img_frac)
                 } else if(imgSrc.src.startsWith("data:image")){
                     if(imgSrc.src.indexOf(";")>10){
                         const mimeType = imgSrc.src.substring(5,imgSrc.src.indexOf(";"))
                         img.src = imgSrc.src
                         img.crossOrigin = "Anonymous"
-                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                        const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex,rotation:imgSrc.rotation}
                         new_images.push(img_frac)
                     }
                 } else {
                     img.src = imgSrc.src
                     img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex}
+                    const img_frac:ImageFrac2D = {x:imgSrc.x,y:imgSrc.y,img,width:imgSrc.width,height:imgSrc.height,zIndex:imgSrc.zIndex,rotation:imgSrc.rotation}
                     new_images.push(img_frac)
                 }
             }
         })
-        setImages(new_images)
-    }, [latexOverlays,imageOverlays])
+        // The LaTeX is typeset before anything is shown, so that it and the images arrive together
+        // (it used to be pushed into the array after it had been handed to React, and so only
+        // appeared at whatever redraw happened next).
+        let superseded = false
+        latexOverlayImages(textOverlays, backgroundColor, ratio).then(latexImages => {
+            if (!superseded) setImages([...new_images, ...latexImages])
+        })
+        return () => { superseded = true }
+    }, [textOverlays, imageOverlays, backgroundColor, ratio])
 
     const getContexts = useCallback(() => {
         const contexts = []
@@ -834,6 +872,7 @@ export const Moorhen2DOverlay = ((props) => {
             if(textOverlays.some(t => onLayer(t.zIndex))) return true
             if(svgPathOverlays.some(t => onLayer(t.zIndex))) return true
             if(fracPathOverlays.some(t => onLayer(t.zIndex))) return true
+            if(shapeOverlays.some(t => onLayer(t.zIndex))) return true
             return images.some(img => onLayer(img.zIndex))
         }
         const layerHasContent = (i: number) => hasOverlayContent(i) || (i === 4 && chromeOnTop)
@@ -904,7 +943,7 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         draw2D()
-    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,props.drawQuat])
+    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,shapeOverlays,callbacks,props.drawQuat])
 
     return  <>
            <canvas style={{zIndex:0, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef0} height={width} width={height} />

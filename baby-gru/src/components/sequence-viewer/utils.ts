@@ -8,7 +8,6 @@ import { RootState } from "../../store/MoorhenReduxStore";
 import { type ResidueSelection, setResidueSelection } from "../../store/generalStatesSlice";
 import type { MoorhenMolecule, Sequence } from "../../utils/MoorhenMolecule";
 import { cidToSpec, sequenceIsValid } from "../../utils/utils";
-import { GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import type { HoveredResidue, HoveredResidueSubscription, ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 
 export const stringToSeqViewer = (
@@ -104,7 +103,6 @@ export const addValidationDataToSeqViewerSequences = (
     sequences: SeqElement[],
     validationData: ValidationData,
     category: string,
-    gradientPresets?: GradientPreset,
     reverseGradient?: boolean,
     scoreTransform?: (value: number) => number,
 ): SeqElement[] => {
@@ -145,14 +143,12 @@ export const addValidationDataToSeqViewerSequences = (
                             if (scoreTransform) {
                                 residue.validationData[key] = {
                                     value: [scoreTransform(value), value],
-                                    gradientPreset: gradientPresets ? gradientPresets[key] : null,
                                     reverseGradient: reverseGradient ?? false,
                                     category: key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category,
                                 };
                             } else {
                                 residue.validationData[key] = {
                                     value: value,
-                                    gradientPreset: gradientPresets ? gradientPresets[key] : null,
                                     reverseGradient: reverseGradient ?? false,
                                     category: category,
                                 };

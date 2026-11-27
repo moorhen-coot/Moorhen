@@ -143,6 +143,10 @@ export class GpuMapLayer {
                     lineWidth: settings.mapLineWidth ?? 1,
                     colour: [colour.r, colour.g, colour.b, mapAlpha],
                     transparent: mapAlpha < 0.99,
+                    // Read here rather than from the map, because a GPU-contoured map has no Coot
+                    // buffers to carry it: these draws are built from the store every frame.
+                    viewDependentTransparency:
+                        settings.mapViewDependentTransparency?.includes(map.molNo) ?? false,
                 });
             }
             const box = entry.surfaces.get(`${map.molNo}:1`)?.lastBox;

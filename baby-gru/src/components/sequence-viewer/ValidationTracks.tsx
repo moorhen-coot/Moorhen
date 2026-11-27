@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from "react";
 import { getColorFromGradient } from "../inputs";
-import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
+import type { GradientColourTable, GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPopover, MoorhenStack } from "../interface-base";
 import { Residue, SeqElement } from "./MoorhenSeqViewTypes";
 import { useSelector } from "react-redux";
@@ -12,11 +12,19 @@ interface ValidationTracksProps {
     columnWidth?: number;
     handleResidueMouseUp?: (evt: React.MouseEvent<HTMLDivElement>) => void;
     validationTracks?: string[];
+    /** The colour gradient of the tracks: 0 is the good end, 1 the poor one */
+    gradient?: GradientPreset | GradientColourTable;
     popoverRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const ValidationTracks = memo((props: ValidationTracksProps) => {
-    const { sequence, residue, columnWidth, validationTracks = ["Overall RMSZ", "Density Correlation"] } = props;
+    const {
+        sequence,
+        residue,
+        columnWidth,
+        validationTracks = ["Overall RMSZ", "Density Correlation"],
+        gradient = "Pool Party",
+    } = props;
     const glHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight)
     const [isPopoverShown, setIsPopoverShown] = React.useState<boolean>(false);
 
@@ -34,7 +42,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                 style={
                     {
                         "--column-width": `${columnWidth}rem`,
-                        "--bar-color": `${getColorFromGradient(data.gradientPreset ?? "Pool Party", value, reverseGradient, true)}`,
+                        "--bar-color": `${getColorFromGradient(gradient, value, reverseGradient, true)}`,
                         "--bar-height": `${value * 100}%`,
                     } as React.CSSProperties
                 }
@@ -71,7 +79,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                                     label={key}
                                     value={data.value}
                                     reverseColour={data.reverseGradient}
-                                    gradientPreset={data.gradientPreset ?? "Pool Party"}
+                                    gradient={gradient}
                                 />
                             ))}
                     </MoorhenStack>
@@ -133,7 +141,7 @@ const PopoverDisplayValue = (props: {
     label: string;
     value: number | [number, number];
     reverseColour?: boolean;
-    gradientPreset?: keyof typeof gradientPresets;
+    gradient: GradientPreset | GradientColourTable;
 }) => {
     const score = Array.isArray(props.value) ? props.value[0] : props.value;
     const label = Array.isArray(props.value) ? props.value[1] : props.value;
@@ -147,7 +155,7 @@ const PopoverDisplayValue = (props: {
                     style={
                         {
                             "--bar-length": `${score * 100}%`,
-                            "--bar-color": `${getColorFromGradient(props.gradientPreset ?? "Pool Party", score, reverseColour, true)}`,
+                            "--bar-color": `${getColorFromGradient(props.gradient, score, reverseColour, true)}`,
                         } as React.CSSProperties
                     }
                 />

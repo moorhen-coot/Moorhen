@@ -224,19 +224,23 @@ export interface TextSource {
     measureTextCanvasTexture?: TextAtlasSource;
     labelsTextCanvasTexture?: TextAtlasSource;
     measureText2DCanvasTexture?: TextAtlasSource;
+    annotationsInSceneTextCanvasTexture?: TextAtlasSource;
+    annotationsOnTopTextCanvasTexture?: TextAtlasSource;
     atomLabelDepthMode?: boolean;
 }
 
 /**
  * The WebGL renderer's text, in the order it draws it: measurements and atom labels, then label
- * buffers (both on top, or in the scene with atomLabelDepthMode), then the 2D overlays, always on
- * top.
+ * buffers (both on top, or in the scene with atomLabelDepthMode), then the annotations (in the
+ * scene, then on top: each annotation chooses), then the 2D overlays, always on top.
  */
 export function textBatchesOf(source: TextSource): TextBatch[] {
     const batches: TextBatch[] = [];
     const inScene = !!source.atomLabelDepthMode;
     if (source.measureTextCanvasTexture) batches.push({ atlas: source.measureTextCanvasTexture, onTop: !inScene });
     if (source.labelsTextCanvasTexture) batches.push({ atlas: source.labelsTextCanvasTexture, onTop: !inScene });
+    if (source.annotationsInSceneTextCanvasTexture) batches.push({ atlas: source.annotationsInSceneTextCanvasTexture, onTop: false });
+    if (source.annotationsOnTopTextCanvasTexture) batches.push({ atlas: source.annotationsOnTopTextCanvasTexture, onTop: true });
     if (source.measureText2DCanvasTexture) batches.push({ atlas: source.measureText2DCanvasTexture, onTop: true });
     return batches;
 }

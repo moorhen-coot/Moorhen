@@ -643,6 +643,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showPanel",
                 panel: "3DObjects",
             },
+            {
+                id: "annotations",
+                label: "Annotations...",
+                type: "showPanel",
+                panel: "annotations",
+            },
         ],
     },
     ligand: {

@@ -86,6 +86,11 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     // from DisplayBuffer.alphaMultiplier, so a movie can fade an object in or out without touching
     // a single vertex. Defaults to 1.0 for the many draws that never set it.
     uniform float alphaMultiplier;
+
+    // Whether a transparent surface thickens where it is seen edge-on. See
+    // WebGLgComponents/viewDependentTransparency.ts, which holds the same arithmetic and the
+    // reasoning. False - what every draw that does not set it gets - leaves the alpha alone.
+    uniform bool viewDependentTransparency;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
@@ -200,6 +205,19 @@ ${anaglyph_colour_snippet}
     // How this surface's depth in the shadow map changes per unit of shadow-map uv, worked out once
     // per fragment at the top of main. See lookup.
     highp vec2 shadowDepthSlope;
+
+    // Beer-Lambert through a shell, then the fifth power that keeps the bulk glassy while the rim
+    // stays solid. Coot's curve, from meshes.shader, matched deliberately so that the same figure
+    // made in either program comes out the same - see viewDependentTransparency.ts.
+    float viewDependentAlpha(float base, vec3 n, vec3 viewDir) {
+        if(!viewDependentTransparency) return base;
+        float transmitted = 1.0 - clamp(base, 0.0, 1.0);
+        if(transmitted <= 0.0) return 1.0;
+        if(transmitted >= 1.0) return 0.0;
+        float facing = max(abs(dot(normalize(n), normalize(viewDir))), 0.01);
+        float shell = 1.0 - pow(transmitted, 1.0 / facing);
+        return shell * shell * shell * shell * shell;
+    }
 
     // The receiver plane: solve the screen-space derivatives of ShadowCoord for dz/du and dz/dv.
     // Called at the top of main(), ahead of the clip and peel tests that can drop a fragment,
@@ -450,7 +468,9 @@ ${discards ? clipAndPeelDiscards : ""}
       color.a = vColor.a;
 
       fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
-      fragColor.a = vColor.a;
+      // Before the hover fade and the object fade below, so that both still scale whatever this
+      // decided - a movie fading a surface out must still reach nothing, however edge-on it is.
+      fragColor.a = viewDependentAlpha(vColor.a, norm, E);
 
       // vHighlight in 0..1 is a smooth mesh influence weight: it fades everything away from the
       // hovered point. (There used to be a green ring on the 0.45 isoline; the weight is

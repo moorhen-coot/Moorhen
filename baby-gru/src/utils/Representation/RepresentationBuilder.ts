@@ -370,6 +370,12 @@ export interface CreateRepresentationParams {
      */
     wormOptions?: Partial<wormOptions> | null;
     nonCustomOpacity?: number | null;
+    /**
+     * Whether the surface thickens where it is seen edge-on. The companion to nonCustomOpacity
+     * and carried beside it for the same reason: a scene rebuilds its representations from
+     * these params, so anything missing here is dropped when a scene is shown.
+     */
+    viewDependentTransparency?: boolean;
     hbondedTo?: boolean;
     /** Surfaces: build each chain's smooth surface from its own atoms (MoleculeRepresentation.surfaceChainsSeparate). */
     surfaceChainsSeparate?: boolean;
@@ -426,6 +432,8 @@ export interface RepresentationBackup {
     surfaceChainsSeparate: boolean;
     surfaceExcludeBondedLigands: boolean;
     surfaceExcludeFreeLigands: boolean;
+    /** Whether the surface thickens where it is seen edge-on. */
+    viewDependentTransparency: boolean;
     uniqueId: string;
     isCustom: boolean;
     visible: boolean;
@@ -513,6 +521,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         surfaceChainsSeparate: representation.surfaceChainsSeparate,
         surfaceExcludeBondedLigands: representation.surfaceExcludeBondedLigands,
         surfaceExcludeFreeLigands: representation.surfaceExcludeFreeLigands,
+        viewDependentTransparency: representation.viewDependentTransparency,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,
         visible: representation.visible,
@@ -571,6 +580,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         residueEnvironmentOptions = existingParams?.residueEnvironmentOptions ?? undefined,
         wormOptions = existingParams?.wormOptions ?? undefined,
         nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
+        viewDependentTransparency = existingParams?.viewDependentTransparency ?? false,
         hbondedTo = existingParams?.hbondedTo ?? false,
         surfaceChainsSeparate = existingParams?.surfaceChainsSeparate ?? false,
         surfaceExcludeBondedLigands = existingParams?.surfaceExcludeBondedLigands ?? false,
@@ -689,6 +699,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.surfaceChainsSeparate = surfaceChainsSeparate;
     representation.surfaceExcludeBondedLigands = surfaceExcludeBondedLigands;
     representation.surfaceExcludeFreeLigands = surfaceExcludeFreeLigands;
+    representation.setViewDependentTransparency(!!viewDependentTransparency);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = params.interfaceVisible ?? true;
     // Snapshot the params that would be lossy to reconstruct later, so edit mode

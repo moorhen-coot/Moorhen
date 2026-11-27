@@ -22,7 +22,9 @@ import {
     setMapColours,
     setMapRadius,
     setMapStyle,
+    setCameraSnap,
     setMapSlice,
+    setMapViewDependentTransparency,
     setMapSliceNodalLines,
     setMapSliceContourSpacing,
     setNegativeMapColours,
@@ -54,14 +56,19 @@ import {
 } from "../store";
 import { newMovie } from "../store/movieSlice";
 
+import { addShapeOverlay, shapesFromSession } from "../store/overlaysSlice";
 import type {
+    Overlay2DCircle,
+    Overlay2DLine,
+    Overlay2DPolygon,
     Overlay2DFracPath,
     Overlay2DImageSrcFrac,
     Overlay2DLatexSrcFrac,
     Overlay2DSvgPath,
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
-import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { MoorhenVector, addVector, emptyVectors, migrateVectorLatexLabel } from "../store/vectorsSlice";
+import { MoorhenAnnotation, addAnnotations, emptyAnnotations, newAnnotation } from "../store/annotationsSlice";
 import { type LoadedDictionary, emptyDictionaries } from "../store/dictionariesSlice";
 import { isReadForEveryMolecule, readDictionary } from "./dictionaries";
 import { whileRestoringSession } from "../InstanceManager/StoreSync";
@@ -118,6 +125,11 @@ export type moleculeSessionData = {
         /** Surfaces: leave out bonded / other ligands. Absent in older sessions: everything surfaced. */
         surfaceExcludeBondedLigands?: boolean;
         surfaceExcludeFreeLigands?: boolean;
+        /**
+         * Whether the surface thickens where it is seen edge-on. Absent in sessions written
+         * before it existed, which read as off.
+         */
+        viewDependentTransparency?: boolean;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
         restrictToNeighbours: boolean;
@@ -166,6 +178,11 @@ export type mapDataSession = {
      * never had one, and in sessions written before slices.
      */
     slice?: { origin: number[]; orientation: number[]; nodalLines?: boolean; contourSpacing?: string } | null;
+    /**
+     * Whether the surface thickens where it is seen edge-on. Absent in sessions written before it
+     * existed, which read as off.
+     */
+    viewDependentTransparency?: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -218,6 +235,7 @@ export type backupSession = {
     activeMapIndex: number;
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
+    annotationData?: MoorhenAnnotation[];
     overlay2dData?: Overlay2DSessionData;
     threeDObjectData?: ThreeDObject[];
     /**
@@ -236,8 +254,12 @@ export type Overlay2DSessionData = {
     fracPath2D: Overlay2DFracPath[];
     svgPath2D: Overlay2DSvgPath[];
     textFracPath2D: Overlay2DTextFrac[];
-    latexFracPath2D: Overlay2DLatexSrcFrac[];
+    /** Only in sessions saved before LaTeX became text with `latex` set; no longer written. */
+    latexFracPath2D?: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
+    circle2D?: Overlay2DCircle[];
+    polygon2D?: Overlay2DPolygon[];
+    line2D?: Overlay2DLine[];
 };
 
 export type Moorhen3DObjectSessionData = {
@@ -519,6 +541,7 @@ export class MoorhenTimeCapsule {
                             surfaceChainsSeparate: item.surfaceChainsSeparate,
                             surfaceExcludeBondedLigands: item.surfaceExcludeBondedLigands,
                             surfaceExcludeFreeLigands: item.surfaceExcludeFreeLigands,
+                            viewDependentTransparency: item.viewDependentTransparency,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
@@ -561,6 +584,8 @@ export class MoorhenTimeCapsule {
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
+                viewDependentTransparency:
+                    state.mapContourSettings.mapViewDependentTransparency.includes(map.molNo),
                 slice: (() => {
                     const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
                     return slice ? {
@@ -658,8 +683,10 @@ export class MoorhenTimeCapsule {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
             svgPath2D: this.store.getState().overlays.svgPathOverlayList,
             textFracPath2D: this.store.getState().overlays.textOverlayList,
-            latexFracPath2D: this.store.getState().overlays.latexOverlayList,
             imageFracPath2D: this.store.getState().overlays.imageOverlayList,
+            circle2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DCircle => s.type === "Circle"),
+            polygon2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DPolygon => s.type === "Polygon"),
+            line2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DLine => s.type === "Line"),
         };
 
         const session: backupSession = {
@@ -672,6 +699,7 @@ export class MoorhenTimeCapsule {
             dataIsEmbedded: embedData,
             overlay2dData: overlay2dData,
             vectorData: vectorData,
+            annotationData: this.store.getState().annotations.annotationsList,
             threeDObjectData: threeDObjectData,
             dictionaries: Object.values(this.store.getState().dictionaries?.loaded ?? {}),
         };
@@ -1131,6 +1159,13 @@ export class MoorhenTimeCapsule {
                     );
                     representationIdsTaken.add(representation.uniqueId);
 
+                    // After the representation exists rather than through addRepresentation,
+                    // which takes its arguments positionally and is long enough already. It is a
+                    // uniform, so setting it afterwards costs nothing: the buffers are drawn and
+                    // the next frame reads it. Coerced because it is absent in older sessions.
+                    representation.setViewDependentTransparency(
+                        Boolean(item.viewDependentTransparency));
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
@@ -1217,6 +1252,14 @@ export class MoorhenTimeCapsule {
                         alpha: storedMapData.rgba.a,
                     })
                 );
+                // Coerced rather than assigned: absent in any session written before the switch
+                // existed, and those maps are not edge-dense.
+                dispatch(
+                    setMapViewDependentTransparency({
+                        molNo: map.molNo,
+                        enabled: Boolean(storedMapData.viewDependentTransparency),
+                    })
+                );
                 // Before the style, so that a map saved as a slice is drawn where it was rather than
                 // through the centre of the view.
                 if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
@@ -1269,8 +1312,18 @@ export class MoorhenTimeCapsule {
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
             withMigratedTags(sessionData.vectorData, knownMoleculeIds).forEach(d => {
-                dispatch(addVector(d));
+                // A label written $...$ before there was a LaTeX switch gets the switch instead.
+                dispatch(addVector(migrateVectorLatexLabel(d)));
             });
+        }
+
+        // Load annotations
+        dispatch(emptyAnnotations());
+        if (sessionData.annotationData) {
+            // Through the factory, so that fields protobuf leaves out (a coordinate of 0, say) get
+            // their defaults rather than coming back undefined. Text is the exception: protobuf
+            // leaves out an empty string too, and that must stay empty, not become the default.
+            dispatch(addAnnotations(sessionData.annotationData.map(d => newAnnotation({ text: "", ...d }))));
         }
 
         // Load 2D canvas overlays
@@ -1296,6 +1349,7 @@ export class MoorhenTimeCapsule {
                     dispatch(addLatexOverlay(d));
                 });
             }
+            shapesFromSession(sessionData.overlay2dData).forEach(shape => dispatch(addShapeOverlay(shape)));
             if (sessionData.overlay2dData.imageFracPath2D) {
                 sessionData.overlay2dData.imageFracPath2D.forEach(d => {
                     dispatch(addImageOverlay(d));
@@ -1348,6 +1402,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
         guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
+        // After the three it applies to, so that one render carries both the view and the
+        // instruction to take it up at once. A restored view should not be animated to - and the
+        // quarter second an ease takes is a window in which it can be interrupted and the view
+        // left part of the way there, which is what used to happen. See glRefSlice.cameraSnap.
+        dispatch(setCameraSnap(true));
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
         guardedDispatch(setEdgeDetectDepthThreshold, sessionData.viewData.edgeDetection.depthThreshold);
