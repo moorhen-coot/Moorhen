@@ -299,6 +299,8 @@ export class MoorhenInstance extends StoreExtension {
     /**
      * The screen recorder attached to this instance.
      *
+     * **Internal use only.**
+     * @private
      */
     public getVideoRecorder(): ScreenRecorder {
         return this.videoRecorder;
@@ -307,6 +309,8 @@ export class MoorhenInstance extends StoreExtension {
     /**
      * Get the React ref holding the screen recorder.
      *
+     * **Internal use only.**
+     * @private
      * @returns The screen recorder React ref.
      */
     public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
