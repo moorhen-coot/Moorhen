@@ -47,8 +47,8 @@ describe("map representation presets", () => {
         expect(new Set(records.map(record => record.id)).size).toBe(2);
     });
 
-    test("cascade: three transparent surfaces at 1, 2 and 4 times the load level, blue, yellow and red, denser at their edges", () => {
-        const records = presetRecords(preset("cascade"), base, { isDifference: false }, UNIT);
+    test("density layers: three transparent surfaces at 1, 2 and 4 times the load level, blue, yellow and red, denser at their edges", () => {
+        const records = presetRecords(preset("density-layers"), base, { isDifference: false }, UNIT);
         expect(summary(records)).toEqual([
             ["solid", 0.3, 0.75],
             ["solid", 0.6, 0.75],
@@ -63,7 +63,7 @@ describe("map representation presets", () => {
     });
 
     test("a difference map keeps its own colours", () => {
-        const records = presetRecords(preset("cascade"), base, { isDifference: true }, UNIT);
+        const records = presetRecords(preset("density-layers"), base, { isDifference: true }, UNIT);
         records.forEach(record => {
             expect(record.colour).toEqual(base.colour);
             expect(record.positiveColour).toEqual(base.positiveColour);

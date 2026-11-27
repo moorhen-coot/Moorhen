@@ -7,7 +7,7 @@ const SURFACE = { style: "solid" as const, alpha: 0.75, viewDependentTransparenc
  * rms for an X-ray map, the histogram's suggestion for an EM map, where multiples of the rms suit poorly), the same
  * whatever the levels were moved to since, so a preset gives the same set every time; the card's level then moves the
  * whole set together. The new records keep the base record's radius, draw mode (origin lock) and colours, but on a
- * difference map its own colours (the cascade's apply to ordinary maps).
+ * difference map its own colours (the density layers' apply to ordinary maps).
  */
 import { guid } from "../utils";
 import type { MapColour, MapRepresentationData, MapStyle } from "./mapRepresentationData";
@@ -34,8 +34,8 @@ export const MAP_REPRESENTATION_PRESETS: MapRepresentationPreset[] = [
         ],
     },
     {
-        id: "cascade",
-        name: "Cascade",
+        id: "density-layers",
+        name: "Density layers",
         description: "Three transparent surfaces: the default level in blue, twice it in yellow, four times it in red",
         layers: [
             { ...SURFACE, times: 1, colour: { r: 0.2, g: 0.4, b: 1 } },

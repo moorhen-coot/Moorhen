@@ -152,11 +152,11 @@ describe("a map's representations in its card", () => {
     test("a wizard preset replaces the map's representations, at multiples of the map's load level (1 rms here)", async () => {
         const { user, records } = await renderCard(record("mesh", { contourLevel: 0.4 }), record("surface", { style: "solid", contourLevel: 0.2 }));
         await user.click(wizardButton());
-        await user.click(await screen.findByRole("button", { name: "Wizard: Cascade" }));
-        const cascade = MAP_REPRESENTATION_PRESETS.find(preset => preset.id === "cascade");
+        await user.click(await screen.findByRole("button", { name: "Wizard: Density layers" }));
+        const densityLayers = MAP_REPRESENTATION_PRESETS.find(preset => preset.id === "density-layers");
         expect(records().map(item => [item.style, Number(item.contourLevel.toFixed(4))])).toEqual(
             // Not the levels the representations were moved to (0.4, 0.2): the map's load level, 1 rms (0.25)
-            cascade.layers.map(layer => ["solid", Number((0.25 * layer.times).toFixed(4))])
+            densityLayers.layers.map(layer => ["solid", Number((0.25 * layer.times).toFixed(4))])
         );
         expect(records().some(item => item.id === "mesh" || item.id === "surface")).toBe(false);
     });
