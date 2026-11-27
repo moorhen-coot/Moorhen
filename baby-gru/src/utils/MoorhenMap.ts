@@ -32,6 +32,7 @@ import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
 import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
+import { maskedStatistics } from "./maskedMap";
 import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
@@ -129,6 +130,9 @@ export class MoorhenMap {
     associatedReflectionFileName: string;
     uniqueId: string;
     mapRmsd: number;
+    /** A masked map (useMaskedRmsd): `mapRmsd` is its rms inside the mask, Coot's over the whole box is here */
+    isMasked: boolean = false;
+    wholeMapRmsd: number | null = null;
     mapMean: number;
     suggestedMapWeight: number;
     mapWeight: number;
@@ -1067,6 +1071,8 @@ export class MoorhenMap {
         "suggestedRadius",
         "suggestedMapWeight",
         "mapRmsd",
+        "isMasked",
+        "wholeMapRmsd",
         "selectedColumns",
         "hasReflectionData",
         "associatedReflectionFileName",
@@ -1147,6 +1153,26 @@ export class MoorhenMap {
         }
 
         return result.data.result.result;
+    }
+
+    /**
+     * A masked map (most of its box exactly zero: maskedMap.ts) is measured by its rms inside the mask, not over the
+     * whole box: `mapRmsd` becomes that, so its load level (1σ), the map wizard, the σ shown and difference-map levels
+     * are in useful units. Coot's whole-map figure is kept in `wholeMapRmsd`. The refinement map weight, estimated
+     * before, is unchanged.
+     */
+    async useMaskedRmsd(): Promise<void> {
+        try {
+            const histogram = await this.getHistogram(2000, 1);
+            const masked = maskedStatistics(histogram);
+            if (masked) {
+                this.wholeMapRmsd = this.mapRmsd;
+                this.mapRmsd = masked.rmsd;
+                this.isMasked = true;
+            }
+        } catch (err) {
+            console.warn(`Map ${this.molNo}: could not tell whether it is masked`, err);
+        }
     }
 
     async guessMapRangeAndLevel(): Promise<[number, number, number]> {
@@ -1300,6 +1326,8 @@ export class MoorhenMap {
         ]);
 
         await this.estimateMapWeight()
+        // After the weight, which stays Coot's (refinement): from here on σ is the rms inside the mask
+        await this.useMaskedRmsd();
 
         if (this.isEM) {
 
