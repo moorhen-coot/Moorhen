@@ -16,7 +16,7 @@ import { beforeAll, describe, expect, it } from "@jest/globals";
 import { parseCubeFile } from "../../src/utils/cubeFile";
 import { cubeFieldToMrc } from "../../src/utils/cubeToMap";
 
-const createCootModule = require("../../public/MoorhenAssets/wasm/moorhen");
+const { createCootModule } = require("../wasmModules.cjs");
 
 jest.setTimeout(120000);
 

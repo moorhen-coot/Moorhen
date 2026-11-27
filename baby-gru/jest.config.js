@@ -7,7 +7,7 @@ module.exports = {
             testMatch: ["<rootDir>/tests/__tests__/**/*.test.js", "<rootDir>/tests/__tests__/**/*.test.ts"],
             setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             transform: {
-                "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/moorhen(?:64)?(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
                 "^.+/public/MoorhenAssets/wasm/CootWorker(?:\\.js)?$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
                 "^.+\\.(ts|tsx)?$": "babel-jest",
                 "^.+\\.(js|jsx)$": "babel-jest",
@@ -25,7 +25,7 @@ module.exports = {
             testEnvironment: "jsdom",
             preset: "ts-jest",
             transform: {
-                "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
+                "^.+/public/MoorhenAssets/wasm/moorhen(?:64)?(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
                 "^.+/public/MoorhenAssets/wasm/CootWorker(?:\\.js)?$": "<rootDir>/tests/__mocks__/cootWorkerTransformer.cjs",
                 "^.+\\.(ts|tsx)?$": "ts-jest",
                 "^.+\\.(js|jsx)$": "babel-jest",

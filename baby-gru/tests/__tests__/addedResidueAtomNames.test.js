@@ -11,7 +11,7 @@ jest.setTimeout(120000)
 const fs = require('fs')
 const path = require('path')
 const { ungzip } = require('node-gzip')
-const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+const { createCootModule } = require('../wasmModules.cjs')
 
 const AMINO_ACIDS = new Set(
     'ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL MSE'.split(' ')

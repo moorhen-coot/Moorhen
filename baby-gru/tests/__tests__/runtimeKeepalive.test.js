@@ -13,7 +13,7 @@
  * cancelled, so no call to it is expected here.
  */
 const { Worker } = require('node:worker_threads')
-const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+const { createCootModule } = require('../wasmModules.cjs')
 
 jest.setTimeout(60000)
 
