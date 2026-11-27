@@ -3,7 +3,7 @@
  * to be Coot's (CIsoSurface::GenerateTriangles_from_Xmap) for the two contours to agree.
  */
 import { describe, expect, it } from "@jest/globals";
-import { cellLengths, contourBox, inverse3, rint } from "../../src/WebGPUComponents/mapContour/mapContourBox";
+import { cellLengths, contourBox, emRangeFromMrcHeader, formatBytes, inverse3, largestRadiusWithin, rint, roomFor } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 import type { MapUnitCellGrid } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 
 /** clipper's orthogonalising matrix for a cell: a along x, b in the xy plane. */
@@ -56,5 +56,101 @@ describe("contourBox", () => {
 
     it("has nothing to contour for no radius", () => {
         expect(contourBox(gridFor([10, 10, 10], orthFor(10, 10, 10, 90, 90, 90)), [0, 0, 0], 0)).toBeNull();
+    });
+
+    it("stops an EM map's box a cell past each face of the map", () => {
+        const em = { ...gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90)), isEM: true };
+        // A radius far larger than the map: the box would be thousands of points a side.
+        expect(contourBox(em, [25, 30, 35], 1000)).toEqual({ min: [-1, -1, -1], size: [103, 123, 143] });
+        // Inside the map, unchanged.
+        expect(contourBox(em, [10, 20, 30], 5)).toEqual({ min: [10, 30, 50], size: [21, 21, 21] });
+        // Across one face: cut there only.
+        expect(contourBox(em, [1, 30, 35], 5)).toEqual({ min: [-1, 50, 60], size: [14, 21, 21] });
+        // Wholly outside the map: nothing to contour.
+        expect(contourBox(em, [200, 30, 35], 5)).toBeNull();
+        // A crystallographic map's box is not cut: it wraps round the cell.
+        expect(contourBox(gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90)), [25, 30, 35], 1000).size[0]).toBe(4001);
+    });
+});
+
+describe("roomFor", () => {
+    it("makes room with slack, but never more than a buffer holds, and refuses what cannot fit", () => {
+        expect(roomFor(100, 4, 1000, 1.25)).toBe(125);
+        expect(roomFor(240, 4, 1000, 1.25)).toBe(250);
+        expect(roomFor(250, 4, 1000, 1.25)).toBe(250);
+        expect(roomFor(251, 4, 1000, 1.25)).toBeNull();
+        // The bug's box: 1.05G points, with slack a 5.27 GB field buffer, over a 4 GB limit. Without
+        // the slack it fits; a little more and it does not.
+        expect(roomFor(1_054_977_832, 4, 4294967292, 1.25)).toBe(1_073_741_823);
+        expect(roomFor(1_100_000_000, 4, 4294967292, 1.25)).toBeNull();
+    });
+});
+
+describe("largestRadiusWithin", () => {
+    const grid = gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90));
+    const points = (r: number) => {
+        const box = contourBox(grid, [10, 20, 30], r);
+        return box ? box.size[0] * box.size[1] * box.size[2] : 0;
+    };
+
+    it("keeps a radius whose box fits", () => {
+        expect(largestRadiusWithin(grid, [10, 20, 30], 5, 21 ** 3)).toBe(5);
+    });
+
+    it("finds the largest radius whose box fits, and no larger", () => {
+        const r = largestRadiusWithin(grid, [10, 20, 30], 100, 1e6);
+        expect(r).toBeLessThan(100);
+        expect(points(r)).toBeLessThanOrEqual(1e6);
+        expect(points(r + 0.01)).toBeGreaterThan(1e6);
+    });
+
+    it("gives an EM map at a huge radius the whole map when the map fits", () => {
+        const em = { ...grid, isEM: true };
+        expect(largestRadiusWithin(em, [25, 30, 35], 1000, 103 * 123 * 143)).toBe(1000);
+    });
+});
+
+describe("formatBytes", () => {
+    it("keeps a decimal place for small sizes, so a limit and what passes it never read the same", () => {
+        expect([1_451_520, 1_000_000, 5_000_000, 35_000_000, 5_274_889_160].map(formatBytes))
+            .toEqual(["1.5 MB", "1 MB", "5 MB", "35 MB", "5.3 GB"]);
+    });
+});
+
+describe("an EM map's data range", () => {
+    const grid = { ...gridFor([600, 600, 30], orthFor(9280, 9280, 464, 90, 90, 90)), isEM: true };
+    // EMD-1001's header: 600 x 600 x 30, sections from -15.
+    const header = {
+        dimensions: { nx: 600, ny: 600, nz: 30 },
+        start: { nxstart: 0, nystart: 0, nzstart: -15 },
+        sampling: { mx: 600, my: 600, mz: 30 },
+        axisMapping: { mapc: 1, mapr: 2, maps: 3 },
+    };
+
+    it("comes from the header's starts and counts", () => {
+        expect(emRangeFromMrcHeader(header, grid)).toEqual({ min: [0, 0, -15], max: [600, 600, 15] });
+    });
+
+    it("follows the header's axes: columns, rows and sections along MAPC, MAPR, MAPS", () => {
+        const g = { ...gridFor([40, 50, 60], orthFor(40, 50, 60, 90, 90, 90)), isEM: true };
+        const permuted = {
+            dimensions: { nx: 60, ny: 40, nz: 50 }, start: { nxstart: -30, nystart: 1, nzstart: 2 },
+            sampling: { mx: 40, my: 50, mz: 60 }, axisMapping: { mapc: 3, mapr: 1, maps: 2 },
+        };
+        expect(emRangeFromMrcHeader(permuted, g)).toEqual({ min: [1, 2, -30], max: [41, 52, 30] });
+    });
+
+    it("is not taken from a header that does not describe the grid", () => {
+        expect(emRangeFromMrcHeader({ ...header, sampling: { mx: 600, my: 600, mz: 60 } }, grid)).toBeNull();
+        expect(emRangeFromMrcHeader({ ...header, axisMapping: { mapc: 1, mapr: 1, maps: 3 } }, grid)).toBeNull();
+    });
+
+    it("places the box on the data, not on the cell from 0", () => {
+        const withRange = { ...grid, emRange: { min: [0, 0, -15] as [number, number, number], max: [600, 600, 15] as [number, number, number] } };
+        // A radius past the whole map: sections -16 to 16 (a cell past each face of the data), not -1 to 31.
+        const box = contourBox(withRange, [4640, 4640, 0], 10000);
+        expect(box.min).toEqual([-1, -1, -16]);
+        expect(box.size).toEqual([603, 603, 33]);
+        expect(contourBox(grid, [4640, 4640, 0], 10000).min[2]).toBe(-1);
     });
 });

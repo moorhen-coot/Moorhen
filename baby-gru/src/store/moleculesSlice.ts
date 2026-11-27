@@ -2,13 +2,40 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMolecule } from "@/utils";
 
+/** A ligand of a molecule, as gemmi lists it (get_ligand_info_for_structure) */
+export type MoleculeLigandRecord = {
+    resName: string;
+    chainName: string;
+    resNum: string;
+    modelName: string;
+    /** e.g. /1/A/301(ATP) */
+    cid: string;
+};
+
+/**
+ * What the UI groups and labels molecules by, as a plain record keyed by the molecule's uniqueId:
+ * the first step of .roadmaps/serialisable-store.md. Written only by the molecule itself
+ * (MoorhenMolecule.refreshRecord), from its central methods, and only when a field changes; a
+ * component never computes these. Fields are added when the UI filters, sorts or groups on them.
+ */
+export type MoleculeRecord = {
+    uniqueId: string;
+    /** MoorhenMolecule.isLigandOnly(): listed in the Ligands panel, not given a card in the Models panel */
+    isLigandOnly: boolean;
+    ligands: MoleculeLigandRecord[];
+    /** The residue types (ligands or not) Coot has no dictionary for, sorted */
+    missingDictionaries: string[];
+};
+
 const initialState: {
     visibleMolecules: number[];
+    moleculeRecords: Record<string, MoleculeRecord>;
     moleculeList: MoorhenMolecule[];
     customRepresentations: moorhen.MoleculeRepresentation[];
     generalRepresentations: moorhen.MoleculeRepresentation[];
 } = {
     visibleMolecules: [],
+    moleculeRecords: {},
     customRepresentations: [],
     generalRepresentations: [],
     moleculeList: [],
@@ -33,9 +60,19 @@ const moleculesSlice = createSlice({
             );
             state.visibleMolecules = state.visibleMolecules.filter(item => item !== action.payload.molNo);
             state.moleculeList = state.moleculeList.filter(item => item.molNo !== action.payload.molNo);
+            delete state.moleculeRecords[action.payload.uniqueId];
         },
         emptyMolecules: () => {
             return initialState;
+        },
+        /** Set molecule records (several at once: a batch of ligands refreshes many) */
+        setMoleculeRecords: (state, action: PayloadAction<MoleculeRecord[]>) => {
+            action.payload.forEach(record => {
+                state.moleculeRecords[record.uniqueId] = record;
+            });
+        },
+        removeMoleculeRecord: (state, action: PayloadAction<string>) => {
+            delete state.moleculeRecords[action.payload];
         },
         addMoleculeList: (state, action: PayloadAction<MoorhenMolecule[]>) => {
             state.moleculeList.push(...(action.payload as unknown as typeof state.moleculeList));
@@ -44,6 +81,23 @@ const moleculesSlice = createSlice({
                     state.visibleMolecules.push(molecule.molNo);
                 }
             });
+        },
+        /**
+         * Show or hide many molecules in one dispatch (by molNo): each dispatch runs every selector,
+         * and in development walks the whole store, so per-molecule dispatches make group actions
+         * over a thousand ligands crawl.
+         */
+        setMoleculesVisible: (state, action: PayloadAction<{ molNos: number[]; visible: boolean }>) => {
+            const { molNos, visible } = action.payload;
+            if (visible) {
+                const shown = new Set(state.visibleMolecules);
+                molNos.forEach(molNo => {
+                    if (!shown.has(molNo)) state.visibleMolecules.push(molNo);
+                });
+            } else {
+                const hidden = new Set(molNos);
+                state.visibleMolecules = state.visibleMolecules.filter(molNo => !hidden.has(molNo));
+            }
         },
         showMolecule: (state, action: PayloadAction<MoorhenMolecule>) => {
             if (!state.visibleMolecules.includes(action.payload.molNo)) {
@@ -56,6 +110,10 @@ const moleculesSlice = createSlice({
         addCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
             state.customRepresentations.push(action.payload as unknown as typeof state.customRepresentations[number]);
         },
+        /** Several at once, in one dispatch (a batch of ligands adds one per ligand) */
+        addCustomRepresentationList: (state, action: PayloadAction<moorhen.MoleculeRepresentation[]>) => {
+            state.customRepresentations.push(...(action.payload as unknown as typeof state.customRepresentations));
+        },
         removeCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
             state.customRepresentations = state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
@@ -65,6 +123,8 @@ const moleculesSlice = createSlice({
                 (action.payload.style === "CAs" ||
                     action.payload.style === "CBs" ||
                     action.payload.style === "CRs" ||
+                    action.payload.style === "Worm" ||
+                    action.payload.style === "Tubes" ||
                     action.payload.style === "MolecularSurface" ||
                     action.payload.style === "VdWSurface" ||
                     action.payload.style === "AccessibleSurface" ||
@@ -97,6 +157,8 @@ const moleculesSlice = createSlice({
                 action.payload.style === "CAs" ||
                 action.payload.style === "CBs" ||
                 action.payload.style === "CRs" ||
+                action.payload.style === "Worm" ||
+                action.payload.style === "Tubes" ||
                 action.payload.style === "MolecularSurface" ||
                 action.payload.style === "VdWSurface" ||
                 action.payload.style === "AccessibleSurface" ||
@@ -118,10 +180,14 @@ export const {
     removeMolecule,
     emptyMolecules,
     addMoleculeList,
+    setMoleculeRecords,
+    removeMoleculeRecord,
     addGeneralRepresentation,
+    setMoleculesVisible,
     showMolecule,
     hideMolecule,
     addCustomRepresentation,
+    addCustomRepresentationList,
     removeCustomRepresentation,
     removeGeneralRepresentation,
 } = moleculesSlice.actions;

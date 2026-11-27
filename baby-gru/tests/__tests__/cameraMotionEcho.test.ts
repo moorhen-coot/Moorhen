@@ -187,6 +187,141 @@ describe("the policy is the movie's to borrow", () => {
     });
 });
 
+/**
+ * Whether a notification means "the camera is where it was asked to be".
+ *
+ * The store is where the view *should* be, and the camera echoes into it. A move that is cut short
+ * leaves the camera at a point nobody chose; echoing that would overwrite the destination, and the
+ * reconciling effect - seeing the two agree - would then have no reason to try again. A session
+ * restore stranded the view 0.13% of the way to the saved ligand exactly like this.
+ */
+describe("arrival, as listeners are told about it", () => {
+    const listening = () => {
+        const controller = new CameraController(startingAt());
+        const heard: { origin: number[]; arrived: boolean }[] = [];
+        controller.subscribe((state, arrived) => heard.push({ origin: [...state.origin], arrived }));
+        return { controller, heard };
+    };
+
+    it("says so when a move reaches its target", () => {
+        const { controller, heard } = listening();
+        const driver = controller.acquire("centring");
+        driver.moveTo({ origin: [10, 0, 0] }, { kind: "ease", seconds: 1 });
+        controller.tick(0);
+        controller.tick(1);
+        expect(heard.at(-1)!.arrived).toBe(true);
+        expect(heard.at(-1)!.origin[0]).toBeCloseTo(10, 5);
+    });
+
+    it("says so for a set, which is a destination by definition", () => {
+        const { controller, heard } = listening();
+        controller.acquire("api").set({ origin: [3, 4, 5] });
+        expect(heard.at(-1)).toMatchObject({ arrived: true });
+    });
+
+    it("does not, when a release cuts a move short", () => {
+        // The bug. Partway to the target, the camera is told to let go; what it reports must not
+        // be mistaken for where the view belongs.
+        const { controller, heard } = listening();
+        const driver = controller.acquire("centring");
+        driver.moveTo({ origin: [100, 0, 0] }, { kind: "ease", seconds: 10 });
+        controller.tick(0);
+        controller.tick(0.01);
+        driver.release();
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(false);
+        expect(last.origin[0]).toBeGreaterThan(0);
+        expect(last.origin[0]).toBeLessThan(100);
+    });
+
+    it("still says so when a release ends a movie that was not mid-move", () => {
+        // A driven sequence has no move to abandon, so letting go of it is an arrival: the camera
+        // is where the movie left it, deliberately, and the store should learn that.
+        const { controller, heard } = listening();
+        const driver = controller.acquire("movie");
+        driver.drive(() => ({ origin: [7, 0, 0] }));
+        controller.tick(0);
+        driver.release();
+        expect(heard.at(-1)).toMatchObject({ arrived: true });
+    });
+
+    it("does not, for a zoom or slab write that lands mid-move", () => {
+        // The subtler half. writeLive is a deliberate change and would announce itself as an
+        // arrival - but while a move is running, the origin it carries is a point the camera is
+        // passing through, and a listener that wrote it down would overwrite the destination just
+        // as a cut-short move does.
+        const { controller, heard } = listening();
+        const driver = controller.acquire("centring");
+        driver.moveTo({ origin: [100, 0, 0] }, { kind: "ease", seconds: 10 });
+        controller.tick(0);
+        controller.tick(0.01);
+        controller.writeLive({ zoom: 2 });
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(false);
+        expect(last.origin[0]).toBeLessThan(100);
+    });
+
+    it("does, for a zoom with nothing in flight", () => {
+        const { controller, heard } = listening();
+        controller.writeLive({ zoom: 2 });
+        expect(heard.at(-1)).toMatchObject({ arrived: true });
+    });
+
+    it("reports a travelling movie as a destination, because the movie chose it", () => {
+        // The motion echo exists so that what follows the view centre can keep up. Those are
+        // positions somebody asked for, frame by frame, so they are arrivals.
+        const { heard } = playing(travelling, { distance: 10 },
+            Array.from({ length: 101 }, (_, i) => i / 10));
+        expect(heard.length).toBeGreaterThan(0);
+    });
+});
+
+/**
+ * Raised in review: that stopping a movie partway would leave the store holding the pre-movie view,
+ * because `arrived` is false for a cut-short move and the view echo is now gated on it.
+ *
+ * It does not, and the reason is worth writing down rather than rediscovering. A movie *drives* the
+ * camera - a sampler, asked where to be on each tick - and has no in-flight move to abandon. So
+ * letting go of it is an arrival by the rule in `driverRelease`, and the store is told where the
+ * camera was left. The gate only closes on a `moveTo` released before it lands, which is a
+ * destination nobody reached.
+ *
+ * Both endings are tested because they differ in *which* view is the right one, not in whether the
+ * store hears about it.
+ */
+describe("a movie stopped partway", () => {
+    const stoppedAfter = (seconds: number, restoreView: boolean) => {
+        const controller = new CameraController(startingAt());
+        const heard: { origin: number[]; arrived: boolean }[] = [];
+        controller.subscribe((state, arrived) => heard.push({ origin: [...state.origin], arrived }));
+        // No echo policy: this is about the release, not about what the journey announced.
+        const hold = holdCameraForMovie({ cameraController: controller }, restoreView, null);
+        hold.play(travelling);
+        controller.tick(0);
+        controller.tick(seconds);
+        hold.release();
+        return { controller, heard };
+    };
+
+    it("tells the store where it left the camera, when the view is not restored", () => {
+        const { controller, heard } = stoppedAfter(3, false);
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(true);
+        // Partway: neither the start nor the end of the journey.
+        expect(last.origin[0]).toBeGreaterThan(0);
+        expect(last.origin[0]).toBeLessThan(100);
+        expect(last.origin[0]).toBeCloseTo(controller.state.origin[0], 10);
+    });
+
+    it("tells the store the view it put back, when it restores", () => {
+        const { controller, heard } = stoppedAfter(3, true);
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(true);
+        expect(last.origin[0]).toBeCloseTo(0, 10);
+        expect(controller.state.origin[0]).toBeCloseTo(0, 10);
+    });
+});
+
 describe("an eased move, which is not a movie", () => {
     it("echoes on the way when a policy is set, and settles as it always did", () => {
         // moveTo runs through the same tick. Nothing sets a policy for it today, but if anything

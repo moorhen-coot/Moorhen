@@ -50,6 +50,7 @@
 #include "Eigen/Dense"
 
 #include "conkit/conkit_validate.h"
+#include "selection-contacts.h"
 #include "json/json.h"
 
 #include <math.h>
@@ -460,6 +461,9 @@ coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string 
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
+    private:
+        // See save_and_clear_residue_secondary_structure.
+        std::map<int, std::vector<std::pair<mmdb::Residue *, int> > > saved_residue_sse;
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
         }
@@ -517,6 +521,45 @@ class molecules_container_js : public molecules_container_t {
                 emscripten::val view{ emscripten::typed_memory_view(plane.size(), plane.data()) };
                 out.call<void>("set", view, double(size_t(w) * plane.size()));
             }
+        }
+
+        // Each residue's secondary structure (SSE) belongs to the molecule and stays between M2T
+        // draws. CALC_SECONDARY_STRUCTURE recalculates it (CalcSecStructure resets every residue
+        // first), but USE_HEADER_INFO only adds the header's helices and strands to what is there
+        // and DONT_USE leaves it as it is - so after a calculated ribbon, both drew the calculated
+        // secondary structure (and Coot's worm, a DONT_USE Ribbon, the ribbon's helices). These
+        // clear every residue's secondary structure, keeping it, and put it back. Moorhen's worker
+        // calls them either side of an M2T draw with USE_HEADER_INFO or DONT_USE, within one
+        // command, so nothing else sees it cleared (withM2tMoleculeState in CootWorker.ts).
+        void save_and_clear_residue_secondary_structure(int imol) {
+            std::vector<std::pair<mmdb::Residue *, int> > &saved = saved_residue_sse[imol];
+            saved.clear();
+            mmdb::Manager *mol = get_mol(imol);
+            if (!mol) return;
+            for (int imod = 1; imod <= mol->GetNumberOfModels(); imod++) {
+                mmdb::Model *model_p = mol->GetModel(imod);
+                if (!model_p) continue;
+                for (int ichain = 0; ichain < model_p->GetNumberOfChains(); ichain++) {
+                    mmdb::Chain *chain_p = model_p->GetChain(ichain);
+                    if (!chain_p) continue;
+                    for (int ires = 0; ires < chain_p->GetNumberOfResidues(); ires++) {
+                        mmdb::Residue *residue_p = chain_p->GetResidue(ires);
+                        if (!residue_p) continue;
+                        saved.push_back(std::make_pair(residue_p, int(residue_p->SSE)));
+                        residue_p->SSE = mmdb::SSE_None;
+                    }
+                }
+            }
+        }
+
+        void restore_residue_secondary_structure(int imol) {
+            auto it = saved_residue_sse.find(imol);
+            if (it == saved_residue_sse.end()) return;
+            // The molecule has not changed since it was saved (the same worker command), so the
+            // residues are the same ones.
+            for (const auto &residue_and_sse : it->second)
+                residue_and_sse.first->SSE = residue_and_sse.second;
+            saved_residue_sse.erase(it);
         }
 
         std::string get_validation(int imol){
@@ -1360,6 +1403,131 @@ class molecules_container_js : public molecules_container_t {
         int add(int ic) {
             return ic + 1;
         }
+        // A temporary molecule holding the atoms of cid_1 in imol_1 and of cid_2 in imol_2, so that the
+        // single-molecule analyses (get_h_bonds_between_json, get_salt_bridges_json, XPID, FLEV...) can
+        // look across two molecules. The first selection keeps its chain ids; a chain of the second
+        // gets a new id if the first already uses its own. Residue numbers are kept. Dictionaries that
+        // only the source molecules have are made available to the new one. Delete it with
+        // delete_merged_molecule. Returns
+        //   {"imol": n, "chains": [{"chainId": "A", "imol": imol_1 or imol_2, "sourceChainId": "A"}]}
+        // or {"error": "..."}.
+        std::string make_merged_molecule_json(int imol_1, const std::string &cid_1, int imol_2, const std::string &cid_2) {
+            auto error = [] (const std::string &message) { return "{\"error\":\"" + message + "\"}"; };
+            if (!is_valid_model_molecule(imol_1) || !is_valid_model_molecule(imol_2)) return error("invalid molecule");
+            const int imol = copy_fragment_using_cid(imol_1, cid_1);
+            if (imol < 0) return error("could not copy the first selection");
+            // Named so that delete_merged_molecule knows its slot (and others') from a user's molecule
+            (*this)[imol].set_molecule_name(MERGED_MOLECULE_NAME);
+            // copy_fragment_using_cid makes a molecule even of an empty selection
+            if ((*this)[imol].atom_sel.n_selected_atoms == 0) {
+                delete_merged_molecule(imol);
+                return error("nothing selected by the first cid");
+            }
+            mmdb::Manager *mol = get_mol(imol);
+            // Its first model only: the second selection is added to that one, and every other model
+            // would give the same contacts again
+            for (int model = mol->GetNumberOfModels(); model > 1; model--) mol->DeleteModel(model);
+            mol->FinishStructEdit();
+
+            Json::Value chains(Json::arrayValue);
+            auto add_chain = [&chains] (const std::string &id, int source_imol, const std::string &source_id) {
+                Json::Value chain;
+                chain["chainId"] = id;
+                chain["imol"] = source_imol;
+                chain["sourceChainId"] = source_id;
+                chains.append(chain);
+            };
+            if (mmdb::Model *model = mol->GetModel(1))
+                for (int ic = 0; ic < model->GetNumberOfChains(); ic++)
+                    add_chain(model->GetChain(ic)->GetChainID(), imol_1, model->GetChain(ic)->GetChainID());
+            const auto added = moorhen::append_selection(mol, get_mol(imol_2), cid_2);
+            if (added.empty()) {
+                delete_merged_molecule(imol);
+                return error("nothing selected by the second cid");
+            }
+            for (const auto &[id, source_id] : added) add_chain(id, imol_2, source_id);
+            (*this)[imol].atom_sel = make_asc(mol);
+
+            // Dictionaries read for imol_1 or imol_2 only (not for every molecule), each residue type taken
+            // from the molecule its atoms came from (imol_1 first if both have it): a lookup in the other
+            // one would find the global dictionary and copy it instead of the source's own.
+            // Coot never removes the dictionaries of a closed molecule, and this index may have been used
+            // before (an earlier merged molecule, a molecule since deleted): what is still filed under it
+            // is forgotten first, else it would be used instead of the copies.
+            coot::protein_geometry &geom = get_geometry();
+            std::set<std::string> second_chains;
+            for (const auto &[id, source_id] : added) second_chains.insert(id);
+            std::map<std::string, std::pair<bool, bool>> types; // type -> (in imol_1's atoms, in imol_2's)
+            for (int i = 0; i < (*this)[imol].atom_sel.n_selected_atoms; i++) {
+                mmdb::Atom *atom = (*this)[imol].atom_sel.atom_selection[i];
+                auto &from = types[atom->GetResName()];
+                (second_chains.count(atom->GetChainID()) ? from.second : from.first) = true;
+            }
+            std::set<std::string> type_names;
+            for (const auto &[type, from] : types) type_names.insert(type);
+            forget_dictionaries_of(imol, type_names);
+            for (const auto &[type, from] : types)
+                if (!(from.first && geom.copy_monomer_restraints(type, imol_1, imol)) && from.second)
+                    geom.copy_monomer_restraints(type, imol_2, imol);
+            merged_molecule_types[imol] = type_names;
+
+            Json::Value root;
+            root["imol"] = imol;
+            root["chains"] = chains;
+            Json::StreamWriterBuilder builder;
+            builder["indentation"] = "";
+            return Json::writeString(builder, root);
+        }
+
+        // Delete a molecule made by make_merged_molecule_json, with the dictionaries copied for it. Its
+        // index is freed for reuse when it is the last one (and so are those of other merged molecules
+        // deleted before it, now last). Only merged molecules, told apart by their name (a closed
+        // molecule keeps it): the index of a molecule the user deleted stays taken, as elsewhere, so
+        // that a new molecule does not take its number. By name rather than a list of indices, which
+        // other code popping closed molecules (end_delete_closed_molecules) would leave stale.
+        int delete_merged_molecule(int imol) {
+            const int status = close_molecule(imol);
+            const auto types = merged_molecule_types.find(imol);
+            if (types != merged_molecule_types.end()) {
+                forget_dictionaries_of(imol, types->second);
+                merged_molecule_types.erase(types);
+            }
+            while (get_number_of_molecules() > 0) {
+                const int last = static_cast<int>(get_number_of_molecules()) - 1;
+                if (!(*this)[last].is_closed() || (*this)[last].get_name() != MERGED_MOLECULE_NAME) break;
+                pop_back();
+            }
+            return status;
+        }
+
+    private:
+        static constexpr const char *MERGED_MOLECULE_NAME = "moorhen-merged-molecule";
+        // The residue types whose dictionaries were copied for each merged molecule
+        std::map<int, std::set<std::string>> merged_molecule_types;
+
+        // Remove the dictionaries filed under this molecule index only (not the global ones)
+        void forget_dictionaries_of(int imol, const std::set<std::string> &types) {
+            coot::protein_geometry &geom = get_geometry();
+            for (const auto &type : types)
+                while (geom.delete_mon_lib(type, imol)) {}
+        }
+
+    public:
+
+        // Hydrogen bonds between two selections of a molecule (the second without the atoms of the
+        // first). JSON, see selection-contacts.h.
+        std::string get_h_bonds_between_json(int imol, const std::string &cid_1, const std::string &cid_2,
+                                             bool mcdonald_and_thornton) {
+            if (!is_valid_model_molecule(imol)) return "{\"error\":\"invalid molecule\"}";
+            return moorhen::h_bonds_between_json(get_mol(imol), cid_1, cid_2, get_geometry(), imol, mcdonald_and_thornton);
+        }
+
+        // Salt bridges between two selections of a molecule. JSON, see selection-contacts.h.
+        std::string get_salt_bridges_json(int imol, const std::string &cid_1, const std::string &cid_2, float max_distance) {
+            if (!is_valid_model_molecule(imol)) return "{\"error\":\"invalid molecule\"}";
+            return moorhen::salt_bridges_json(get_mol(imol), cid_1, cid_2, get_geometry(), imol, max_distance);
+        }
+
         std::string rotamer_analysis_json(int imol_model) {
             coot::validation_information_t info = rotamer_analysis(imol_model);
             return moorhen::validation_information_t_to_json(info);

@@ -235,6 +235,27 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         );
     }, [map]);
 
+    /**
+     * The same arrangement as the alpha listener above, and for the same reason: the store is
+     * where the setting lives, so anything that dispatches it - the map card's switch, a session
+     * restore, a script - has to reach the buffers. Without this only the switch did, and the
+     * other two changed a number nobody read until the map was next contoured.
+     *
+     * A boolean from the selector, not the array: a dispatch about some other map must not redraw
+     * this one.
+     */
+    const viewDependentTransparencyListener = useMemo(() => {
+        return (
+            <SelectorEffect
+                selector={(state: RootState) =>
+                    state.mapContourSettings.mapViewDependentTransparency.includes(map.molNo)}
+                effect={() => {
+                    map.applyViewDependentTransparency();
+                }}
+            />
+        );
+    }, [map]);
+
     if (!map) {
         return null;
     }
@@ -247,6 +268,8 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
 
             {mapIsVisible && alphaListener}
+
+            {mapIsVisible && viewDependentTransparencyListener}
         </>
     );
 });

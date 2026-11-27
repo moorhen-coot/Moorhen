@@ -669,6 +669,8 @@ export class MoorhenMap {
         mapColour: { r: number; g: number; b: number };
         positiveMapColour: { r: number; g: number; b: number };
         negativeMapColour: { r: number; g: number; b: number };
+        /** Whether the surface thickens where it is seen edge-on. */
+        viewDependentTransparency: boolean;
     } {
         const state = this.store.getState();
         const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius;
@@ -690,6 +692,8 @@ export class MoorhenMap {
             positiveMapColour: positiveMapColour
                 ? { r: positiveMapColour.r / 255, g: positiveMapColour.g / 255, b: positiveMapColour.b / 255 }
                 : this.defaultPositiveMapColour,
+            viewDependentTransparency:
+                state.mapContourSettings.mapViewDependentTransparency?.includes(this.molNo) ?? false,
         };
     }
 
@@ -863,7 +867,9 @@ export class MoorhenMap {
 
     setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
         const displayBuffers = this.store.getState().glRef.displayBuffers;
-        const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
+        const {
+            mapAlpha, mapColour, positiveMapColour, negativeMapColour, viewDependentTransparency,
+        } = this.getMapContourParams();
         const print_timing = false;
         const t1 = performance.now();
         const oldBuffers = this.clearBuffersOfStyle("Coot", displayBuffers);
@@ -1010,6 +1016,10 @@ export class MoorhenMap {
         // Labelled here rather than in each of the three branches above, which is the one point
         // they all converge on. Descriptive only - see DisplayBuffer.statsLabel.
         newBuffers.forEach(buf => { buf.statsLabel = this.isDifference ? "map (difference)" : "map"; });
+        // Here for the same reason as the label above: the one point the three branches converge
+        // on, so a buffer cannot be built down one of them and miss it. The shader ignores it
+        // unless the surface is actually transparent.
+        newBuffers.forEach(buf => { buf.viewDependentTransparency = viewDependentTransparency; });
         this.store.dispatch(setDisplayBuffers([...oldBuffers, ...newBuffers]));
     }
 
@@ -1184,6 +1194,21 @@ export class MoorhenMap {
     /**
      * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
      */
+    /**
+     * Apply the view-dependent transparency setting to the buffers that are already drawn.
+     *
+     * A uniform, so there is nothing to rebuild: the contours stay exactly as they are and the
+     * next frame reads the new value. Recontouring to turn a switch on would be a round trip to
+     * Coot for a picture that is not changing shape.
+     */
+    applyViewDependentTransparency(): void {
+        const { viewDependentTransparency } = this.getMapContourParams();
+        this.displayObjects["Coot"].forEach(buffer => {
+            buffer.viewDependentTransparency = viewDependentTransparency;
+        });
+        this.store.dispatch(setRequestDrawScene(true));
+    }
+
     async fetchMapAlphaAndRedraw(): Promise<void> {
         const { mapAlpha, mapColour } = this.getMapContourParams();
         this.displayObjects["Coot"].forEach(buffer => {

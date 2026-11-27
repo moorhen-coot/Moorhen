@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import {
     IDENTITY_MATRIX,
@@ -35,11 +35,13 @@ import * as vec3 from 'gl-matrix/vec3';
 import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
 import { setOrigin } from "../../store/sceneSettingsSlice";
+import type { RootState } from "../../store/MoorhenReduxStore";
 import { setSelectedThreeDObject } from "../../store/generalStatesSlice";
 import {
     DEFAULT_WIREFRAME_RADIUS,
     addObject,
     centreOfObject,
+    withOriginAt,
     isWireframeableType,
     removeObjectById,
     updateObject
@@ -79,7 +81,7 @@ import type {
 import { moorhen } from "../../types/moorhen";
 import { MOORHEN_ATOM_TAG_KIND, moorhenAtomTagKey, modalKeys } from "../../utils/enums";
 import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, parseAtomInfoLabel, rgbToHex } from "../../utils/utils";
-import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenCoordinateInput, MoorhenMoleculeSelect, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { smoothPath } from "../../WebGLgComponents/shapeGeometry";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -390,6 +392,40 @@ export const Moorhen3DObjects = () => {
         dispatch(setOrigin([-centre[0], -centre[1], -centre[2]]));
     };
 
+    const store = useStore<RootState>();
+
+    /**
+     * The other way round: put this object's origin at the centre of the view. A cylinder's end or
+     * a cone's top moves with it, keeping the shape (see withOriginAt).
+     *
+     * An existing object updates in the scene at once, through the live sync below; a new one
+     * waits for Apply, as any other edit to it does.
+     */
+    const moveToCurrentOrigin = () => {
+        const sceneOrigin = store.getState().sceneSettings.origin;
+        const next = withOriginAt(theObject, [-sceneOrigin[0], -sceneOrigin[1], -sceneOrigin[2]]);
+        setObject(next);
+        setPositionText(next.origin.map(v => v.toFixed(3)).join(","));
+        if (next.type === "cone") setEndPositionText(next.top.map(v => v.toFixed(3)).join(","));
+        if (next.type === "cylinder") setEndPositionText(next.end.map(v => v.toFixed(3)).join(","));
+    };
+
+    // The coordinate boxes edit the object directly. The matching texts are kept in step because
+    // Apply is still gated on positionText, and a later type change seeds from them.
+    const setObjectOrigin = ([x, y, z]: number[]) => {
+        setPositionText([x, y, z].join(","));
+        updateTheObject({ x, y, z }, theObject.type);
+    };
+    const setObjectSecondPoint = ([x2, y2, z2]: number[]) => {
+        setEndPositionText([x2, y2, z2].join(","));
+        updateTheObject({ x2, y2, z2 }, theObject.type);
+    };
+    const setObjectScales = ([xscale, yscale, zscale]: number[]) => {
+        setScaleXYZText([xscale, yscale, zscale].join(","));
+        setPlaneSizeText([xscale, yscale].join(","));
+        updateTheObject({ xscale, yscale, zscale }, theObject.type);
+    };
+
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
         setObjectNew(true);
@@ -494,21 +530,6 @@ export const Moorhen3DObjects = () => {
         return isOk;
     }
 
-    const checkPlaneSizeText = () => {
-        let isOk: boolean = false;
-        if(planeSizeText.split(",").length!==2) return isOk
-        try {
-            const [_new_x, _new_y] = planeSizeText.split(",").map(a => parseFloat(a));
-            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !(_new_x === undefined) && !(_new_y === undefined)) {
-                isOk = true;
-            } else {
-                console.log("Not a valid number pair in plane size text.", planeSizeText);
-            }
-        } catch (e) {
-            console.log("Not a valid number pair in plane size text.");
-        }
-        return isOk;
-    };
 
     const checkSweepAngleText = () => {
         let isOk: boolean = false;
@@ -577,42 +598,17 @@ export const Moorhen3DObjects = () => {
         return isOk;
     }
 
-    const checkPosition2Text = () => {
-        let isOk: boolean = false;
-        if(endPositionText.split(",").length!==3) return isOk
-        try {
-            const [_new_x, _new_y, _new_z] = endPositionText.split(",").map(a => parseFloat(a));
-            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
-                isOk = true;
-            } else {
-                console.log("Not a valid number triplet in end position text.", endPositionText);
-            }
-        } catch (e) {
-            console.log("Not a valid number triplet in end position text.");
-        }
-        return isOk;
-    };
-    const checkXYZScaleText = () => {
-        let isOk: boolean = false;
-        if(scaleXYZText.split(",").length!==3) return isOk
-        try {
-            const [_new_x, _new_y, _new_z] = scaleXYZText.split(",").map(a => parseFloat(a));
-            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
-                isOk = true;
-            } else {
-                console.log("Not a valid number triplet in scale text.", scaleXYZText);
-            }
-        } catch (e) {
-            console.log("Not a valid number triplet in scale text.");
-        }
-        return isOk;
-    };
 
     const handleApply = () => {
         if (vectorSelectRef.current.value !== "new") {
             handleDelete();
         }
         dispatch(addObject(theObject))
+        // What is now in the store came from here, so the "take on changes made elsewhere" effect
+        // must not mistake it for one. Without this the first edit after Apply was undone: the
+        // stored copy differed from the edited one and was not the last published, so it was
+        // copied back over the edit before the live sync could send it.
+        lastPublishedRef.current = theObject;
         setSelectedOption(theObject.uniqueId);
         setObjectNew(false)
     };
@@ -1130,7 +1126,7 @@ export const Moorhen3DObjects = () => {
 
     return (
         <>
-            <MoorhenStack direction="column" inputGrid style={{ padding: "1rem" }}>
+            <MoorhenStack card inputGrid>
                 {headerContent}
                 <MoorhenSelect
                     label="Type"
@@ -1168,38 +1164,46 @@ export const Moorhen3DObjects = () => {
                     <option value="path">Path</option>
 
                 </MoorhenSelect>
+            </MoorhenStack>
+            <MoorhenCoordinateInput
+                title={drawMode === "cylinder" ? "Start" : drawMode === "cone" ? "Base" : "Position"}
+                value={theObject.origin}
+                onChange={setObjectOrigin}
+            >
+                <MoorhenButton
+                    size="sm"
+                    onClick={moveToCurrentOrigin}
+                    disabled={!objectNew && !!theObject.locked}
+                    tooltip="Move this object to the centre of the view. A cylinder's end or a cone's top moves with it, keeping its length and direction"
+                >
+                    Current origin
+                </MoorhenButton>
+            </MoorhenCoordinateInput>
+            {theObject.type === "cylinder" && (
+                <MoorhenCoordinateInput title="End" value={theObject.end} onChange={setObjectSecondPoint} />
+            )}
+            {theObject.type === "cone" && (
+                <MoorhenCoordinateInput title="Top" value={theObject.top} onChange={setObjectSecondPoint} />
+            )}
+            {theObject.type === "plane" && (
+                <MoorhenCoordinateInput
+                    title="Size"
+                    labels={["x", "y"]}
+                    allowNegativeValues={false}
+                    value={theObject.scalexyz.slice(0, 2)}
+                    onChange={([xscale, yscale]) => setObjectScales([xscale, yscale, 1])}
+                />
+            )}
+            {(theObject.type === "cuboid" || theObject.type === "ellipsoid") && (
+                <MoorhenCoordinateInput
+                    title="Scales"
+                    allowNegativeValues={false}
+                    value={theObject.scalexyz}
+                    onChange={setObjectScales}
+                />
+            )}
+            <MoorhenStack card inputGrid>
 
-                {(drawMode === "sphere" || drawMode === "cube" || drawMode === "cuboid"
-                || drawMode === "tetrahedron" || drawMode === "octahedron"
-                || drawMode === "dodecahedron" || drawMode === "icosahedron"
-                || drawMode === "football" || drawMode === "torus"
-                || drawMode === "truncatedoctahedron" || drawMode === "cuboctahedron"
-                || drawMode === "rhombicdodecahedron"
-                || drawMode === "ellipsoid" || drawMode === "plane" || drawMode === "disc"
-                || drawMode === "annulus" || drawMode === "arc"
-                || drawMode === "capsule" || drawMode === "helix"
-                || drawMode === "frustum" || drawMode === "flatfrustum"
-                || drawMode === "prism" || drawMode === "pyramid"
-                || drawMode === "path"
-                ) &&
-                    <>
-                        <MoorhenTextInput
-                            label="Position"
-                            text={positionText}
-                            onChange={evt => {
-                                setPositionText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const x = evt.target.value.split(",")[0]
-                                    const y = evt.target.value.split(",")[1]
-                                    const z = evt.target.value.split(",")[2]
-                                    updateTheObject({x,y,z},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPositionText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
                 {(drawMode === "path")  &&
                     <>
                         <MoorhenMoleculeSelect
@@ -1291,120 +1295,6 @@ export const Moorhen3DObjects = () => {
                             />
                         </MoorhenStack>
                         <span/>
-                    </>
-                }
-                {(drawMode === "cylinder")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="Start"
-                            text={positionText}
-                            onChange={evt => {
-                                setPositionText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const x = evt.target.value.split(",")[0]
-                                    const y = evt.target.value.split(",")[1]
-                                    const z = evt.target.value.split(",")[2]
-                                    updateTheObject({x,y,z},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPositionText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
-                {(drawMode === "cone")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="Base position"
-                            text={positionText}
-                            onChange={evt => {
-                                setPositionText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const x = evt.target.value.split(",")[0]
-                                    const y = evt.target.value.split(",")[1]
-                                    const z = evt.target.value.split(",")[2]
-                                    updateTheObject({x,y,z},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPositionText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
-                {(drawMode === "cylinder")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="End"
-                            text={endPositionText}
-                            onChange={evt => {
-                                setEndPositionText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const x2 = evt.target.value.split(",")[0]
-                                    const y2 = evt.target.value.split(",")[1]
-                                    const z2 = evt.target.value.split(",")[2]
-                                    updateTheObject({x2,y2,z2},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPosition2Text()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
-                {(drawMode === "cone")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="Top position"
-                            text={endPositionText}
-                            onChange={evt => {
-                                setEndPositionText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const x2 = evt.target.value.split(",")[0]
-                                    const y2 = evt.target.value.split(",")[1]
-                                    const z2 = evt.target.value.split(",")[2]
-                                    updateTheObject({x2,y2,z2},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPosition2Text()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
-                {(drawMode === "plane")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="Size (X,Y)"
-                            text={planeSizeText}
-                            onChange={evt => {
-                                setPlaneSizeText(evt.target.value);
-                                if(evt.target.value.split(",").length===2){
-                                    const xscale = evt.target.value.split(",")[0]
-                                    const yscale = evt.target.value.split(",")[1]
-                                    // a plane has no thickness, so z is pinned rather than asked for
-                                    updateTheObject({xscale,yscale,zscale:1},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkPlaneSizeText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                    </>
-                }
-                {(drawMode === "cuboid" || drawMode === "ellipsoid")  &&
-                    <>
-                        <MoorhenTextInput
-                            label="Scales (XYZ)"
-                            text={scaleXYZText}
-                            onChange={evt => {
-                                setScaleXYZText(evt.target.value);
-                                if(evt.target.value.split(",").length===3){
-                                    const xscale = evt.target.value.split(",")[0]
-                                    const yscale = evt.target.value.split(",")[1]
-                                    const zscale = evt.target.value.split(",")[2]
-                                    updateTheObject({xscale,yscale,zscale},theObject.type)
-                                }
-                            }}
-                            isInvalid={!checkXYZScaleText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
                     </>
                 }
                 {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus"||drawMode === "capsule"||drawMode === "path")  &&

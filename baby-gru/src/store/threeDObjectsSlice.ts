@@ -546,6 +546,23 @@ export const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
 };
 
 /**
+ * The object moved so that its origin is at `origin`, keeping its shape.
+ *
+ * Only the cylinder's end and the cone's top are separate positions in the scene; every other
+ * shape, a path's points and a mesh's vertices included, is placed relative to its origin and so
+ * moves with it already. Those two are shifted by the same amount, so a cylinder keeps its
+ * length and direction rather than stretching back to where its end was.
+ */
+export const withOriginAt = <T extends ThreeDObject>(obj: T, origin: Position3D): T => {
+    const shift = [0, 1, 2].map(i => origin[i] - obj.origin[i]);
+    const moved = (p: Position3D): Position3D => [p[0] + shift[0], p[1] + shift[1], p[2] + shift[2]];
+    const next = { ...obj, origin: [...origin] as Position3D };
+    if (next.type === "cylinder") next.end = moved(next.end);
+    if (next.type === "cone") next.top = moved(next.top);
+    return next;
+};
+
+/**
  * Roughly how far an object reaches from its centre.
  *
  * Only ever used to keep something else clear of it - the manipulation handles - so it errs

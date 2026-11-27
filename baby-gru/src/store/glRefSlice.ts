@@ -12,7 +12,27 @@ const initialState: {
     quat: any[];
     cursorPosition: [number, number];
     shortCutHelp: string[];
-    requestDrawScene: { switch: boolean };
+    /**
+     * Bumped by setRequestDrawScene. A counter, not a toggle: two requests in the same tick would
+     * flip a switch back to the value React last rendered and the redraw would be lost.
+     */
+    requestDrawScene: { count: number };
+    /**
+     * Bumped to say the next view the store asks for is to be taken up at once, not eased into.
+     *
+     * A counter for the same reason as the one above, and for one more: the reconciling effect in
+     * MoorhenWebMG cannot tell "the user asked to centre here" from "the store and the camera have
+     * drifted apart", so it eases everything. A restored session is neither. Nobody wants to watch
+     * the camera fly across the molecule on opening a file, and the quarter second it takes is a
+     * window in which the move can be interrupted - which is how a restore came to strand the view
+     * a fraction of the way to where it was saved.
+     */
+    cameraSnap: { count: number };
+    /**
+     * How many tasks ask for store-triggered redraws to be throttled (see MGWebGL.requestDrawScene),
+     * e.g. a batch of ligands loading, which would otherwise redraw a growing scene every frame.
+     */
+    drawsThrottled: number;
     envUpdate: { switch: boolean };
     clearLabels: { switch: boolean };
     hoverSize: number;
@@ -28,7 +48,9 @@ const initialState: {
     draggableMolecule: null,
     envUpdate: { switch: false },
     clearLabels: { switch: false },
-    requestDrawScene: { switch: false },
+    requestDrawScene: { count: 0 },
+    cameraSnap: { count: 0 },
+    drawsThrottled: 0,
     displayBuffers: [],
     texturedShapes: [],
     labelBuffers: [],
@@ -95,13 +117,30 @@ const glRefSlice = createSlice({
             state.clearLabels.switch = !state.clearLabels.switch;
         },
         setRequestDrawScene: (state, action: PayloadAction<boolean>) => {
-            state.requestDrawScene.switch = !state.requestDrawScene.switch;
+            state.requestDrawScene.count += 1;
+        },
+        /**
+         * Take up the view the store is asking for at once, without easing to it.
+         *
+         * Dispatch it *after* the origin, quat and zoom it applies to, so that one render carries
+         * both the destination and the instruction not to animate to it.
+         */
+        setCameraSnap: (state, action: PayloadAction<boolean>) => {
+            state.cameraSnap.count += 1;
+        },
+        /** true: one more task asks for throttled redraws; false: one fewer. Pair them (try / finally). */
+        setDrawsThrottled: (state, action: PayloadAction<boolean>) => {
+            state.drawsThrottled = Math.max(0, state.drawsThrottled + (action.payload ? 1 : -1));
+            // The last frame drawn may be up to a throttle interval old: draw what is there now
+            if (state.drawsThrottled === 0) state.requestDrawScene.count += 1;
         },
     },
 });
 
 export const {
     setRequestDrawScene,
+    setCameraSnap,
+    setDrawsThrottled,
     setIsWebGL2,
     setActiveMolecule,
     setQuat,

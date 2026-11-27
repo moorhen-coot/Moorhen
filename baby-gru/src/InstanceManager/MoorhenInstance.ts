@@ -23,6 +23,15 @@ import {
     removeVectorsByTag,
     MoorhenVector
 } from "@/store/vectorsSlice";
+import {
+    addAnnotation,
+    emptyAnnotations,
+    newAnnotation,
+    removeAnnotationById,
+    removeAnnotationsByTag,
+    updateAnnotation,
+    MoorhenAnnotation
+} from "@/store/annotationsSlice";
 import { matchesTags, Tags } from "@/utils/tags";
 import { newVector } from "@/utils/vectorFactories";
 import {
@@ -34,6 +43,8 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
+import { batchLoadLigands } from "@/utils/BatchLigandLoading";
+import type { BatchLigandSource, BatchLoadLigandsOptions, BatchLoadLigandsResult } from "@/utils/BatchLigandLoading";
 import { loadMtzMaps } from "@/utils/MtzLoading";
 import type { MtzMapRequest } from "@/utils/MtzLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
@@ -569,6 +580,60 @@ export class MoorhenInstance extends StoreExtension {
                     callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
                 }
                 return createdObjects as LoadFilesResult;
+            },
+
+            /**
+             * Load many ligand coordinate files at once (hundreds to thousands, e.g. docking poses).
+             *
+             * This is a dedicated path for that purpose, not the normal way to load a ligand: use
+             * `loadFiles` for a few files. Each file becomes one molecule drawn as bonds, as with
+             * `loadFiles`, but the work is grouped so that the time per ligand stays flat as the
+             * number of molecules grows:
+             * - the worker is sent a few messages per chunk of files instead of about twelve per file;
+             * - a missing dictionary is fetched once per residue type for the whole batch, in parallel;
+             * - the scene and molecule list are updated once per chunk.
+             *
+             * The batch is a single step: it is not recorded in the undo history and does not trigger
+             * backups. It does not move the camera unless `centre` is set, does not change the
+             * sequence viewer, and shows one summary message if some files fail instead of one each.
+             * In the Models panel, these ligands are listed by name with the other ligand-only molecules,
+             * instead of a full card per molecule.
+             *
+             * @param sources - PDB, mmCIF or small-molecule CIF (COD, CSD) files, one ligand each: `File`s,
+             * URLs, or `{ url, filename }`.
+             * A source may come with `metadata` (`{ url, filename, metadata }` or `{ file, metadata }`):
+             * facts about that ligand as strings by name, such as a docking score. They are set on the
+             * molecule (`MoorhenMolecule.metadata`), shown on its ligand card and saved in sessions.
+             * @param options.dictionaries - Restraint dictionaries known up front; the residue types they
+             * define are not looked up.
+             * @param options.centre - Centre the view on the last loaded ligand at the end (default false).
+             * @param options.chunkSize - Ligands per chunk (default 20; larger chunks are no faster, only longer pauses).
+             * @param options.onProgress - Called with (done, total) after each chunk is added.
+             * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns `loaded`, one entry per loaded file in input order (as `loadFiles` returns), and
+             * `failed`, the files that could not be loaded with the reason.
+             * @example
+             * const { loaded, failed } = await instance.files.batchLoadLigands(poseUrls, {
+             *     onProgress: (done, total) => console.log(`${done}/${total}`),
+             * });
+             * @example
+             * // Each pose with its score
+             * await instance.files.batchLoadLigands(
+             *     poses.map(pose => ({ url: pose.url, filename: pose.name, metadata: { Score: pose.score.toFixed(2) } }))
+             * );
+             */
+            async batchLoadLigands(
+                sources: BatchLigandSource[],
+                options?: BatchLoadLigandsOptions,
+                origin?: string
+            ): Promise<BatchLoadLigandsResult> {
+                const result = await execWhenReady(() => batchLoadLigands(moorhenInstance, sources, options));
+                if (result.loaded.length > 0) {
+                    for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                        callbacks.callback(result.loaded, origin ?? "unknown");
+                    }
+                }
+                return result;
             },
 
             /**
@@ -1109,6 +1174,115 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
+     * Annotation API for this instance.
+     *
+     * Annotations are text labels placed in the 3D scene, at a point or on atoms, as CCP4MG's
+     * annotations are. The text stays the same size on screen (fontPixelSize, in CSS pixels)
+     * at any zoom. Set `latex: true` to typeset it with MathJax, and `alwaysOnTop: true` to
+     * draw it over everything rather than hidden behind what is in front of it.
+     *
+     * Laid out as the 3D object and vector APIs are: create returns a handle, edit is partial,
+     * and list and clear take a tag filter.
+     *
+     * @example
+     * const uid = instance.annotations.create({ text: "Active site", positionMode: "atom", molUniqueId: mol.uniqueId, cid: "//A/57/OG" });
+     * instance.annotations.edit(uid, { colour: "#ff0000ff", fontPixelSize: 32 });
+     * instance.annotations.create({ text: "\\Delta G", latex: true, x: 10, y: 5, z: 0, tags: { source: "myApp" } });
+     * instance.annotations.clear({ source: "myApp" });
+     */
+    public get annotations() {
+        const moorhenInstance = this;
+        return {
+            /**
+             * Get an annotation by its unique ID.
+             * @param uniqueId - The unique identifier of the annotation.
+             * @returns The matching annotation, or null if there is none.
+             */
+            get(uniqueId: string): MoorhenAnnotation | null {
+                const state = moorhenInstance.store.getState();
+                return state.annotations.annotationsList.find(a => a.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the annotations currently in the scene, in the order they were added.
+             * @param tags - Optional filter; an annotation must carry all the pairs given.
+             * @returns The matching annotations, to be treated as read-only.
+             */
+            list(tags?: Tags): MoorhenAnnotation[] {
+                const all = moorhenInstance.store.getState().annotations.annotationsList;
+                return tags ? all.filter(a => matchesTags(a, tags)) : all;
+            },
+
+            /**
+             * Create an annotation and draw it.
+             *
+             * Every field is optional: what is left out takes its default. Any `uniqueId` passed
+             * is ignored and a fresh one minted.
+             *
+             * @param params - Fields to set, in place of their defaults.
+             * @returns The unique ID of the new annotation, its handle for get, edit and delete.
+             */
+            create<P extends Partial<Omit<MoorhenAnnotation, "uniqueId">>>(
+                params: P & { [K in Exclude<keyof P, keyof MoorhenAnnotation>]: never } = {} as never
+            ): string {
+                const annotation = { ...newAnnotation(params as Partial<MoorhenAnnotation>), uniqueId: uuidv4() };
+                moorhenInstance.dispatch(addAnnotation(annotation));
+                return annotation.uniqueId;
+            },
+
+            /**
+             * Edit an existing annotation in place. Fields left out keep their current value;
+             * `uniqueId` cannot be changed, and a locked annotation is not edited at all.
+             *
+             * @param uniqueId - Unique ID of the annotation to edit.
+             * @param params - The fields to change.
+             * @returns True if the annotation was found and updated, otherwise false.
+             */
+            edit(uniqueId: string, params: Partial<Omit<MoorhenAnnotation, "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing || existing.locked) {
+                    return false;
+                }
+                moorhenInstance.dispatch(updateAnnotation({ uniqueId, changes: params }));
+                return true;
+            },
+
+            /**
+             * Delete an annotation.
+             * @param uniqueId - Unique ID of the annotation to delete.
+             * @returns True if the annotation was found and deleted, otherwise false.
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeAnnotationById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete annotations in bulk.
+             * @param tags - Optional filter, as in list. Omit it to clear everything; `{}` clears
+             * nothing rather than everything.
+             * @returns The number of annotations removed.
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyAnnotations());
+                    return count;
+                }
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeAnnotationsByTag(tags));
+                return count;
+            }
+        };
+    }
+
+    /**
      * Representation API for this instance.
      *
      * Lets you get, create, edit, delete and style the molecular representations
@@ -1167,7 +1341,7 @@ export class MoorhenInstance extends StoreExtension {
              * described below.
              * @param params.representationStyle - The visual style of the representation.
              * Public styles are: VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds,
-             * CRs, MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell,
+             * CRs, Worm, Tubes, MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell,
              * ligand_environment, contact_dots, restraints, MetaBalls, StickBases,
              * residue_environment, NEFRestraints and RMSD. Internal-only styles (hover,
              * environment, residueSelection, transformation, rama, rotamer,
@@ -1206,6 +1380,11 @@ export class MoorhenInstance extends StoreExtension {
              * internal representations set this to false.
              * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
              * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.wormOptions - For a "Worm" (Coot's worm: a ribbon trace whose
+             * radius varies by residue), where its radii come from: `radiusSource` "b-factor"
+             * (default; `bFactorScale` A per A^2, 0.05), "uniform" (`uniformRadius` A, 1.0) or
+             * "custom" (`residueRadii`: `[{ chainId, resNo, insCode?, radius }]` in A, or
+             * `radiusAniso: [x, y, z]` in place of `radius`).
              * @param params.residueEnvironmentOptions - Options for residue-environment
              * (neighbourhood) rendering.
              * @param params.nonCustomOpacity - Opacity applied when a non-custom (multi-colour)
@@ -1292,7 +1471,7 @@ export class MoorhenInstance extends StoreExtension {
              * @param params - The fields to change. `representationStyle` is required; all
              * other fields are optional and keep the representation's existing value when omitted.
              * @param params.representationStyle - The new visual style. Must be one of the
-             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs,
+             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs, Worm, Tubes,
              * MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell, ligand_environment,
              * contact_dots, restraints, MetaBalls, StickBases, residue_environment,
              * NEFRestraints, RMSD). Internal-only styles (hover, environment,
@@ -1324,6 +1503,11 @@ export class MoorhenInstance extends StoreExtension {
              * @param params.isCustom - Whether the representation is marked as custom.
              * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
              * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.wormOptions - For a "Worm" (Coot's worm: a ribbon trace whose
+             * radius varies by residue), where its radii come from: `radiusSource` "b-factor"
+             * (default; `bFactorScale` A per A^2, 0.05), "uniform" (`uniformRadius` A, 1.0) or
+             * "custom" (`residueRadii`: `[{ chainId, resNo, insCode?, radius }]` in A, or
+             * `radiusAniso: [x, y, z]` in place of `radius`).
              * @param params.residueEnvironmentOptions - Options for residue-environment
              * (neighbourhood) rendering.
              * @param params.nonCustomOpacity - Opacity used with non-custom colour modes.
@@ -1716,17 +1900,25 @@ export class MoorhenInstance extends StoreExtension {
                 onCootInitialized: () => {
                     this.dispatch(setCootInitialized(true));
                 },
+                // Only for the long job notification, which shows a task's progress instead while one
+                // reports it: a batch of a thousand ligands would otherwise toggle these 8000 times.
                 onCommandExit: () => {
-                    this.dispatch(toggleCootCommandExit());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandExit());
                 },
                 onCommandStart: () => {
-                    this.dispatch(toggleCootCommandStart());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandStart());
                 },
                 // onMoleculeChanged: (cootMolNo: number) => {
                 //     this.triggerMoleculeChanged(cootMolNo);
                 // },
             });
-            newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
+            // Only when it changes: called twice per command, and each dispatch notifies every subscriber.
+            // Kept on while a task shows its progress: its worker queue empties for a moment between
+            // messages, and each of those would restart the spinner's delay (a blinking spinner).
+            newCommandCentre.onActiveMessagesChanged = newActiveMessages => {
+                const busy = newActiveMessages.length !== 0 || !!this.store.getState().generalStates.jobProgress;
+                if (this.store.getState().globalUI.busy !== busy) this.dispatch(setBusy(busy));
+            };
             this.setCommandCentre(newCommandCentre);
             if (externalCommandCentreRef) {
                 externalCommandCentreRef.current = this.commandCentre;

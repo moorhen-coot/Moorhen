@@ -916,7 +916,48 @@ const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: numb
 
 }
 
-const export_molecular_representation_as_mesh_file = (imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number, fileType: string) => {
+/**
+ * Run `fn`, an M2T representation drawn with secondary structure usage `ssUsageScheme`, with the
+ * molecule as that usage means it.
+ *
+ * Each residue's secondary structure (MMDB's residue SSE) belongs to the molecule and stays there
+ * between draws. CALC_SECONDARY_STRUCTURE (2) recalculates it every time, MMDB resetting every
+ * residue first. But USE_HEADER (0) only adds the header's helices and strands to what is there,
+ * and DONT_USE (1) leaves it all - so after a calculated ribbon, either drew the calculated
+ * secondary structure, and changing the setting seemed to do nothing. For those two it is cleared
+ * first (and put back after): "Use header" is then the header's, and "Do not use header" none.
+ *
+ * And a worm's radii (`residuePropertiesJson`: set_residue_properties' JSON, each residue's
+ * "worm-radius"), which every Ribbon drawn while they were set would use, are set and cleared.
+ *
+ * `intParameters` are M2T integer parameters for this draw only (a worm's samplings). They are not
+ * put back: every representation sets all of its own before it draws (applyM2tParams).
+ *
+ * All within one worker command, which nothing else can run in the middle of.
+ */
+const withM2tMoleculeState = <T>(
+    imol: number,
+    ssUsageScheme: number,
+    residuePropertiesJson: string | null | undefined,
+    intParameters: Record<string, number> | null | undefined,
+    fn: () => T
+): T => {
+    Object.entries(intParameters ?? {}).forEach(([name, value]) => molecules_container.M2T_updateIntParameter(imol, name, value))
+    const clearSecondaryStructure = ssUsageScheme !== 2
+    if (clearSecondaryStructure) molecules_container.save_and_clear_residue_secondary_structure(imol)
+    if (residuePropertiesJson) molecules_container.set_residue_properties(imol, residuePropertiesJson)
+    try {
+        return fn()
+    } finally {
+        if (residuePropertiesJson) molecules_container.clear_residue_properties(imol)
+        if (clearSecondaryStructure) molecules_container.restore_residue_secondary_structure(imol)
+    }
+}
+
+const export_molecular_representation_as_mesh_file = (
+    imol: number, cid: string, colourScheme: string, style: string, ssUsageScheme: number, fileType: string,
+    residuePropertiesJson?: string | null, intParameters?: Record<string, number> | null
+) => {
     let fn
     let fileName
     if(fileType==="gltf"){
@@ -934,7 +975,7 @@ const export_molecular_representation_as_mesh_file = (imol: number, cid: string,
         return null
     }
 
-    molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
+    withM2tMoleculeState(imol, ssUsageScheme, residuePropertiesJson, intParameters, () => molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName))
     return readExportedMeshFile(fileName)
 }
 
@@ -1971,8 +2012,17 @@ const doCootCommand = (messageData: {
                 cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, boolean, number, boolean, string])
                 break
             case 'shim_export_molecular_representation_as_mesh_file':
-                cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string])
+                cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string, string?, Record<string, number>?])
                 break
+            case 'shim_get_molecular_representation_mesh': {
+                // get_molecular_representation_mesh's arguments, then a worm's residue properties' JSON
+                // and M2T integer parameters (or nulls)
+                const [imol, cid, colourScheme, style, ssUsageScheme, residuePropertiesJson, intParameters] =
+                    commandArgs as [number, string, string, string, number, string | null, Record<string, number> | null]
+                cootResult = withM2tMoleculeState(imol, ssUsageScheme, residuePropertiesJson, intParameters,
+                    () => molecules_container.get_molecular_representation_mesh(imol, cid, colourScheme, style, ssUsageScheme))
+                break
+            }
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
                 break
@@ -2223,9 +2273,9 @@ type LoadedCootModule = { returnedModule: libcootApi.CootModule; scriptName: str
 
 const createModuleFrom = async (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
     // Fetch the Emscripten glue once and run it from a blob: URL. Emscripten starts each of the
-    // 32 pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
+    // pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
     // from memory, instead of each requesting moorhen64.js from the server again (which showed up
-    // in the Network panel as 32 more downloads competing with the WASM). The glue still finds
+    // in the Network panel as one more download for each worker, competing with the WASM). The glue still finds
     // moorhen64.wasm next to this worker, because it locates it from self.location, not from the
     // URL it was loaded from.
     const response = await fetch(`./${scriptName}`)
@@ -2323,7 +2373,11 @@ const dispatchMessage = function (e: MessageEvent) {
                     molecules_container.set_refinement_is_verbose(false)
                     molecules_container.set_map_sampling_rate(1.7)
                     molecules_container.set_map_is_contoured_with_thread_pool(true)
-                    molecules_container.set_max_number_of_threads(8)
+                    // The pthread worker pool was sized for this limit when the module started
+                    // (wasm_src/coot_env_web.js), so don't give coot a bigger one.
+                    const threadLimit = cootModule.moorhenThreadLimit ?? 8
+                    molecules_container.set_max_number_of_threads(threadLimit)
+                    console.log(`Coot thread limit ${threadLimit}, pthread pool of ${cootModule.moorhenPthreadPoolSize ?? "?"} workers`)
                     cootModule.FS.mkdir("COOT_BACKUP")
                     // Only report success once molecules_container actually exists.
                     postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })

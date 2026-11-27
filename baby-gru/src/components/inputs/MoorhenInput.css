@@ -161,3 +161,9 @@
     margin-left: 0;
     border-radius: 0 0.5rem 0.5rem 0;
 }
+
+.moorhen__input-text-inline {
+    box-sizing: border-box;
+    all: unset;
+    min-width: 0;
+}

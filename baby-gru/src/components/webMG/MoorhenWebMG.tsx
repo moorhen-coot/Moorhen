@@ -6,6 +6,7 @@ import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
+import { getAnnotationLabels } from '../../WebGLgComponents/annotationsDraw'
 import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
 import { getGizmoBuffers } from '../../WebGLgComponents/gizmoDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
@@ -20,6 +21,7 @@ import { setQuat, setOrigin, setZoom,
          autoClipFogByZoom,  } from "../../store"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { Overlay2DHandles } from './Overlay2DHandles';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
@@ -130,6 +132,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin)
+    /** Bumped when the next view asked for is to be taken up at once (a session restore). */
+    const cameraSnap = useSelector((state: moorhen.State) => state.glRef.cameraSnap.count)
+    const lastCameraSnap = useRef(cameraSnap)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
     const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
@@ -147,7 +152,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
-    const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
+    const requestDrawSceneCount = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.count)
     const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
@@ -157,6 +162,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const annotationsList = useSelector((state: moorhen.State) => state.annotations.annotationsList)
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
     // No selector for displayBuffers: the rebuilds read it from the store at dispatch time
     // instead, so subscribing here would only re-render this component on every publish - which
@@ -228,9 +234,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         return newBuffers
     }, [store])
 
-    // Vectors rebuild only when the vector list changes. This is the expensive side: it runs gemmi
-    // atom selections and awaits MathJax for any LaTeX label, so it must not be dragged along by
-    // an unrelated 3D object edit.
+    // Vectors rebuild only when the vector list or the background changes. This is the expensive
+    // side: it runs gemmi atom selections and awaits MathJax for any LaTeX label, so it must not be
+    // dragged along by an unrelated 3D object edit. The background counts because LaTeX labels are
+    // rasterised in a colour contrasting with it (plain labels are recoloured by the atlas).
     useEffect(() => {
         if (glRef === null || typeof glRef === 'function') return
         let superseded = false
@@ -254,7 +261,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         rebuildVectors()
         return () => { superseded = true }
-    }, [vectorsList, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
+    }, [vectorsList, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
 
     // 3D objects rebuild only when they change, which is now potentially every animation frame
     // while one of them is being dragged in the editor.
@@ -733,6 +740,31 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [clipCap, glRef])
 
+    // Annotations go into atlases of their own, not through labelBuffers: they are drawn in two
+    // passes (in the scene, and on top), whichever atomLabelDepthMode says for the other labels.
+    // Molecules are a dependency because an annotation can sit on atoms, and the background
+    // because an annotation without a colour of its own takes one that stands out from it.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function' || !glRef.current) return
+        let superseded = false
+        const rebuildAnnotations = async () => {
+            const gl = glRef.current
+            if (!gl?.annotationsInSceneTextCanvasTexture || !gl.annotationsOnTopTextCanvasTexture) return
+            const { inScene, onTop } = await getAnnotationLabels(store, gl.annotationsOnTopTextCanvasTexture.canvasBig.width)
+            if (superseded) return
+            const fill = (atlas: typeof gl.annotationsOnTopTextCanvasTexture, labels: typeof inScene) => {
+                atlas.clearBigTexture()
+                labels.forEach(lab => atlas.addBigTextureTextImage(lab.label, lab.uuid))
+                atlas.recreateBigTextureBuffers()
+            }
+            fill(gl.annotationsInSceneTextCanvasTexture, inScene)
+            fill(gl.annotationsOnTopTextCanvasTexture, onTop)
+            gl.drawScene()
+        }
+        rebuildAnnotations()
+        return () => { superseded = true }
+    }, [annotationsList, molecules, backgroundColor, glRef, store])
+
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.labelsTextCanvasTexture.clearBigTexture()
@@ -740,7 +772,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
             glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
-            glRef.current.drawScene()
+            glRef.current.requestDrawScene()
         }
     }, [labelBuffers, glRef])
 
@@ -827,9 +859,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.drawScene()
+            // Once per frame, however many requests: loading many molecules asks once per molecule.
+            glRef.current.requestDrawScene()
         }
-    }, [requestDrawSceneSwitch])
+    }, [requestDrawSceneCount])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -943,10 +976,19 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 { origin: originState, quat, zoom },
                 { origin: glRef.current.origin, quat: glRef.current.myQuat, zoom: glRef.current.zoom })
             if(!isSilent(wanted)){
-                glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
+                // A session restore says so: taken up at once rather than eased into. See
+                // glRefSlice.cameraSnap - nobody wants to watch the camera cross the molecule on
+                // opening a file, and the ease is a window in which the move can be interrupted.
+                // Compared against what this effect last saw, so the snap applies to the view it
+                // arrived with and to nothing afterwards.
+                glRef.current.setOriginOrientationAndZoomAnimated(originState, quat, zoom,
+                    { instant: cameraSnap !== lastCameraSnap.current })
             }
         }
-    }, [zoom,quat,originState])
+        // Consumed whether or not the renderer was there to take it, or a snap dispatched before
+        // it mounted would wait and turn some later, unrelated centring into a jump.
+        lastCameraSnap.current = cameraSnap
+    }, [zoom,quat,originState,cameraSnap])
 
     return  <>
                 <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
@@ -972,7 +1014,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     store={store}
                     dispatch={dispatch} />
                     {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
-                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>
+                    <Overlay2DHandles />
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu

@@ -28,9 +28,9 @@ const Representation = schema.lookupType("Representation");
  * the moment to remember the .proto, which is the step that was missed twice.
  */
 const SAVED_FIELDS = [
-    "uniqueId", "cid", "style", "isCustom", "colourRules", "bondOptions", "m2tParams",
-    "nonCustomOpacity", "resEnvOptions", "neighboursCid", "restrictToNeighbours",
-    "excludeNeighbours", "hbondedToCid", "hbondedTo", "neighboursDistance",
+    "uniqueId", "cid", "style", "isCustom", "colourRules", "bondOptions", "m2tParams", "wormOptions",
+    "nonCustomOpacity", "viewDependentTransparency", "resEnvOptions", "neighboursCid",
+    "restrictToNeighbours", "excludeNeighbours", "hbondedToCid", "hbondedTo", "neighboursDistance",
 ] as const;
 
 describe("the representation message", () => {
@@ -52,6 +52,26 @@ describe("the representation message", () => {
         expect(restored.nonCustomOpacity).toBeCloseTo(0.5, 5);
     });
 
+    it("carries a worm's radii through an encode and decode", () => {
+        const wormOptions = {
+            radiusSource: "custom", bFactorScale: 0.05, uniformRadius: 1, axialSampling: 8, angularSampling: 16,
+            residueRadii: [
+                { chainId: "A", resNo: 34, insCode: "B", radius: 2.5 },
+                { chainId: "A", resNo: 35, insCode: "", radiusAniso: [1, 2, 3] },
+            ],
+        };
+        const bytes = Representation.encode(Representation.create({ style: "Worm", wormOptions })).finish();
+        const restored = Representation.toObject(Representation.decode(bytes)) as { wormOptions: typeof wormOptions };
+
+        expect(restored.wormOptions.radiusSource).toBe("custom");
+        expect(restored.wormOptions.axialSampling).toBe(8);
+        expect(restored.wormOptions.angularSampling).toBe(16);
+        expect(restored.wormOptions.bFactorScale).toBeCloseTo(0.05, 6);
+        expect(restored.wormOptions.residueRadii[0]).toMatchObject({ chainId: "A", resNo: 34, insCode: "B" });
+        expect(restored.wormOptions.residueRadii[0].radius).toBeCloseTo(2.5, 6);
+        expect(restored.wormOptions.residueRadii[1].radiusAniso).toEqual([1, 2, 3]);
+    });
+
     it("tells a fully transparent representation from one that never said", () => {
         // Why nonCustomOpacity is `optional`. Zero is a legitimate opacity, so without explicit
         // presence an absent field and a deliberate zero decode identically - and reading absent
@@ -66,6 +86,55 @@ describe("the representation message", () => {
 
         expect(transparent.nonCustomOpacity).toBe(0);
         expect(silent.nonCustomOpacity ?? null).toBeNull();
+    });
+
+    it("carries the edge-density switch through an encode and decode", () => {
+        // The companion to nonCustomOpacity and the same trap: it is saved and restored, so if it
+        // were not declared here it would survive a JSON backup and vanish from a .pb session.
+        const on = Representation.toObject(Representation.decode(
+            Representation.encode(Representation.create({ viewDependentTransparency: true })).finish()));
+        const off = Representation.toObject(Representation.decode(
+            Representation.encode(Representation.create({ viewDependentTransparency: false })).finish()),
+            { defaults: true });
+
+        expect(on.viewDependentTransparency).toBe(true);
+        expect(off.viewDependentTransparency).toBe(false);
+    });
+
+    it("reads an older session, which never mentioned it, as off", () => {
+        const silent = Representation.toObject(
+            Representation.decode(Representation.encode(Representation.create({})).finish()),
+            { defaults: true });
+        expect(Boolean(silent.viewDependentTransparency)).toBe(false);
+    });
+});
+
+describe("the map message", () => {
+    const MapData = schema.lookupType("MapDataSession");
+
+    it("declares the edge-density switch", () => {
+        expect(Object.keys(MapData.fields)).toContain("viewDependentTransparency");
+    });
+
+    it("carries it through an encode and decode, and reads an older session as off", () => {
+        const on = MapData.toObject(MapData.decode(
+            MapData.encode(MapData.create({ viewDependentTransparency: true })).finish()));
+        const silent = MapData.toObject(
+            MapData.decode(MapData.encode(MapData.create({})).finish()), { defaults: true });
+
+        expect(on.viewDependentTransparency).toBe(true);
+        expect(Boolean(silent.viewDependentTransparency)).toBe(false);
+    });
+
+    it("has not disturbed the fields around it", () => {
+        // Two tags were added here in quick succession - a map slice from main, and this. A
+        // collision would not fail to compile; it would silently decode one as the other.
+        const tags = Object.fromEntries(
+            Object.entries(MapData.fields).map(([name, field]) => [name, (field as { id: number }).id]));
+        expect(tags.isCube).toBe(15);
+        expect(tags.slice).toBe(16);
+        expect(tags.viewDependentTransparency).toBe(17);
+        expect(new Set(Object.values(tags)).size).toBe(Object.values(tags).length);
     });
 });
 

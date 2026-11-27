@@ -15,6 +15,7 @@ import menusReducer from "./menusSlice";
 import modalsReducer from "./modalsSlice";
 import moleculeMapUpdateReducer from "./moleculeMapUpdateSlice";
 import moleculesReducer from "./moleculesSlice";
+import dictionariesReducer from "./dictionariesSlice";
 import mouseSettingsReducer from "./mouseSettings";
 import mrParseSliceReducer from "./mrParseSlice";
 import overlaysSliceReducer from "./overlaysSlice";
@@ -27,10 +28,12 @@ import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
 import userScenesReducer from "./userScenesSlice";
 import vectorsReducer from "./vectorsSlice";
+import annotationsReducer from "./annotationsSlice";
 import movieReducer from "./movieSlice";
 
 export const reducers = {
     molecules: moleculesReducer,
+    dictionaries: dictionariesReducer,
     maps: mapsReducer,
     mouseSettings: mouseSettingsReducer,
     backupSettings: backupSettingsReducer,
@@ -55,6 +58,7 @@ export const reducers = {
     globalUI: globalUISliceReducer,
     bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
+    annotations: annotationsReducer,
     snackBars: snackBarsReducer,
     userScenes: userScenesReducer,
     movie: movieReducer,

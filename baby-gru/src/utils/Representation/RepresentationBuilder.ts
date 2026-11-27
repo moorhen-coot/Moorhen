@@ -3,6 +3,7 @@ import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../utils";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import type { wormOptions } from "./wormRadii";
 
 /** The supported ways a representation selection can be built. */
 export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
@@ -21,7 +22,47 @@ export interface BuildCidSelectionParams {
     neighboursDistance: number;
     sequenceResidueRange: [number, number] | null;
     cid: string;
+    /** The molecule the neighbours (neighboursCid) are in, by uniqueId; this molecule if empty */
+    neighboursMoleculeUid?: string;
 }
+
+/**
+ * The residues of `selection` in the molecule with an atom within `distance` of the atoms of
+ * `neighboursCid` (or, with `exclude`, those without), as "A/12||A/45".
+ *
+ * The neighbours are in `neighboursMoleculeUid`'s structure when it is given, else in the molecule's own:
+ * a pocket on a protein around a ligand that is a molecule of its own (a docked pose). When it is given,
+ * the neighbours' own residues are left out even if they are in the same molecule: a pocket around a
+ * ligand of the model is the residues around it, not the ligand itself.
+ */
+export const neighbourResidues = (
+    molecule: MoorhenMolecule,
+    selection: string,
+    neighboursCid: string,
+    distance: number,
+    exclude: boolean,
+    neighboursMoleculeUid?: string
+): string => {
+    if (!neighboursMoleculeUid) {
+        return window.gemmiModule.cidToNeighboursCid(molecule.gemmiStructure, selection, neighboursCid, distance, exclude);
+    }
+    const other = molecule.store.getState().molecules.moleculeList.find(item => item.uniqueId === neighboursMoleculeUid);
+    if (!other?.gemmiStructure || other.gemmiStructure.isDeleted()) return "";
+    const residues = window.gemmiModule
+        .cidToNeighboursCidAcross(molecule.gemmiStructure, selection, other.gemmiStructure, neighboursCid, distance, exclude)
+        .split("||")
+        .filter(Boolean);
+    if (other !== molecule) return residues.join("||");
+    // The neighbours' own residues ("/1/A/301(ATP)" -> "A/301"), as cidToNeighboursCid writes residues
+    const own = new Set(
+        neighboursCid
+            .split("||")
+            .map(part => /^\/[^/]*\/([^/]+)\/(-?\d+)/.exec(part.trim()))
+            .filter(Boolean)
+            .map(match => `${match[1]}/${match[2]}`)
+    );
+    return residues.filter(residue => !own.has(residue)).join("||");
+};
 
 /**
  * The model a CID selects, from its first component ("/2/A/..." -> 2), or null for all models (a
@@ -60,6 +101,7 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
         neighboursDistance,
         sequenceResidueRange,
         cid,
+        neighboursMoleculeUid,
     } = params;
 
     let cidSelection: string;
@@ -102,12 +144,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                 (representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") &&
                 restrictToNeighbours
             ) {
-                const restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    theMolecule.gemmiStructure,
+                const restrictedCid = neighbourResidues(
+                    theMolecule,
                     unRestrictedCidSelection,
                     neighboursCid,
                     neighboursDistance,
-                    excludeNeighbours
+                    excludeNeighbours,
+                    neighboursMoleculeUid
                 );
                 let extraRestrict = "";
                 if (sideChainOnly) extraRestrict += "/!O,C,N,H";
@@ -120,12 +163,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                     .map(r => r + extraRestrict)
                     .join("||");
             } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                const restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    theMolecule.gemmiStructure,
+                const restrictedCid = neighbourResidues(
+                    theMolecule,
                     unRestrictedCidSelection,
                     neighboursCid,
                     neighboursDistance,
-                    excludeNeighbours
+                    excludeNeighbours,
+                    neighboursMoleculeUid
                 );
                 cidSelection = restrictedCid;
             } else {
@@ -141,12 +185,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                     restrictToNeighbours
                 ) {
                     const waterSelection = "/*/*/(HOH)";
-                    const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(
-                        theMolecule.gemmiStructure,
+                    const restrictedWaterCid = neighbourResidues(
+                        theMolecule,
                         waterSelection,
                         neighboursCid,
                         neighboursDistance,
-                        excludeNeighbours
+                        excludeNeighbours,
+                        neighboursMoleculeUid
                     );
                     if (restrictedWaterCid.length > 2) cidSelection += "||" + restrictedWaterCid;
                 } else {
@@ -294,6 +339,8 @@ export interface CreateRepresentationParams {
     excludeNeighbours?: boolean;
     neighboursCid?: string;
     neighboursDistance?: number;
+    /** The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand */
+    neighboursMoleculeUid?: string;
     sequenceResidueRange?: [number, number] | null ;
     cid?: string;
     /** Colour-related options (default to default colours) */
@@ -314,7 +361,21 @@ export interface CreateRepresentationParams {
     m2tParams?: m2tParameters | null;
     residueEnvironmentOptions?: residueEnvironmentOptions | null;
     gaussianSurfaceSettings?: gaussianSurfSettings | null;
+    /**
+     * A "Worm"'s own options (any not given keep their defaults; null: the general ones). Where its
+     * radii come from: each residue's B-factor (the default), one radius, or a radius per residue in
+     * angstroms, e.g.
+     * `{ radiusSource: "custom", residueRadii: [{ chainId: "A", resNo: 34, radius: 2.5 }] }`
+     * (`radiusAniso: [x, y, z]` in place of `radius` for different radii along x, y and z).
+     */
+    wormOptions?: Partial<wormOptions> | null;
     nonCustomOpacity?: number | null;
+    /**
+     * Whether the surface thickens where it is seen edge-on. The companion to nonCustomOpacity
+     * and carried beside it for the same reason: a scene rebuilds its representations from
+     * these params, so anything missing here is dropped when a scene is shown.
+     */
+    viewDependentTransparency?: boolean;
     hbondedTo?: boolean;
     /**
      * Unique ID for the new representation (e.g. to restore one from MoleculeRepresentation.backup()).
@@ -346,6 +407,8 @@ export interface RepresentationBackup {
     excludeNeighbours: boolean;
     neighboursCid: string;
     neighboursDistance: number;
+    /** Absent in backups written before it existed */
+    neighboursMoleculeUid?: string;
     hbondedTo: boolean;
     useDefaultColours: boolean;
     colourMode: string;
@@ -357,7 +420,11 @@ export interface RepresentationBackup {
     m2tParams: m2tParameters | null;
     residueEnvironmentOptions: residueEnvironmentOptions | null;
     gaussianSurfaceSettings: gaussianSurfSettings | null;
+    /** A "Worm"'s own; null for a worm with the general ones, and for other styles */
+    wormOptions: wormOptions | null;
     nonCustomOpacity: number | null;
+    /** Whether the surface thickens where it is seen edge-on. */
+    viewDependentTransparency: boolean;
     uniqueId: string;
     isCustom: boolean;
     visible: boolean;
@@ -428,6 +495,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         excludeNeighbours: representation.excludeNeighbours,
         neighboursCid: representation.neighboursCid,
         neighboursDistance: representation.neighboursDistance,
+        neighboursMoleculeUid: representation.neighboursMoleculeUid ?? "",
         hbondedTo: representation.hbondedTo,
         useDefaultColours: representation.useDefaultColourRules,
         colourMode: snapshot.colourMode,
@@ -439,7 +507,9 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         m2tParams: representation.useDefaultM2tParams ? null : copy(representation.m2tParams),
         residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : copy(representation.residueEnvironmentOptions),
         gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
+        wormOptions: representation.style === "Worm" && !representation.useDefaultWormOptions ? copy(representation.wormOptions) : null,
         nonCustomOpacity: representation.nonCustomOpacity,
+        viewDependentTransparency: representation.viewDependentTransparency,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,
         visible: representation.visible,
@@ -484,6 +554,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         excludeNeighbours = existingParams?.excludeNeighbours ?? false,
         neighboursCid = existingParams?.neighboursCid ?? "",
         neighboursDistance = existingParams?.neighboursDistance ?? 6.0,
+        neighboursMoleculeUid = existingParams?.neighboursMoleculeUid ?? "",
         sequenceResidueRange = existingParams?.sequenceResidueRange ?? null,
         cid = existingParams?.cid ?? "/*/*/*/*:*",
         colourMode = existingParams?.colourMode ?? "custom",
@@ -495,7 +566,9 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         bondOptions = existingParams?.bondOptions ?? undefined,
         m2tParams = existingParams?.m2tParams ?? undefined,
         residueEnvironmentOptions = existingParams?.residueEnvironmentOptions ?? undefined,
+        wormOptions = existingParams?.wormOptions ?? undefined,
         nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
+        viewDependentTransparency = existingParams?.viewDependentTransparency ?? false,
         hbondedTo = existingParams?.hbondedTo ?? false,
         existingRepresentation,
     } = params;
@@ -540,6 +613,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         neighboursDistance,
         sequenceResidueRange,
         cid,
+        neighboursMoleculeUid,
     });
     if (!cidSelection) {
         console.warn("Invalid CID selection to create a custom representation");
@@ -590,6 +664,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.neighboursDistance = neighboursDistance;
     representation.excludeNeighbours = excludeNeighbours;
     representation.neighboursCid = neighboursCid;
+    representation.neighboursMoleculeUid = neighboursMoleculeUid;
     representation.hbondedTo = hbondedTo;
     representation.hbondedToCid = neighboursCid;
     representation.colourRules =
@@ -604,7 +679,9 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.setBondOptions(bondOptions);
     representation.setM2tParams(m2tParams);
     representation.setResidueEnvOptions(residueEnvironmentOptions);
+    representation.setWormOptions(wormOptions);
     representation.setNonCustomOpacity(nonCustomOpacity);
+    representation.setViewDependentTransparency(!!viewDependentTransparency);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = params.interfaceVisible ?? true;
     // Snapshot the params that would be lossy to reconstruct later, so edit mode

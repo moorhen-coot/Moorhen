@@ -163,12 +163,21 @@ const METALLIC_ROUGHNESS_TEXTURE_UNIT = 11;
  *
  * @param program must already be the current program; these are uniform writes.
  */
-function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplier: number): void {
+function setTriangleFragmentUniforms(
+    self: MGWebGL, program: any, alphaMultiplier: number, viewDependentTransparency = false,
+): void {
     if (program.ShadowMap != null) {
         self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
     }
     if (program.alphaMultiplier != null) {
         self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
+    }
+    // Alongside the fade and for the same reason: every program built from the triangle fragment
+    // shader declares it, so every one of them has to be told. Defaulted here as well as in the
+    // shader, so a caller that has no opinion writes the identity rather than leaving whatever the
+    // last draw set.
+    if (program.viewDependentTransparency != null) {
+        self.gl.uniform1i(program.viewDependentTransparency, viewDependentTransparency ? 1 : 0);
     }
     // Their own units whether or not anything is bound there, so that an unassigned sampler
     // never lands on unit 0 alongside whatever that holds. The flags that say whether to sample
@@ -602,6 +611,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // Faded at all: it stops casting a shadow. An object that has half vanished while its
             // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
             const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            const bufferViewDependent = !!displayBuffers[idx].viewDependentTransparency;
             if (isInvisible(bufferFade)) {
                 continue;
             }
@@ -707,7 +717,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
-                setTriangleFragmentUniforms(self, theShader, bufferFade);
+                setTriangleFragmentUniforms(self, theShader, bufferFade, bufferViewDependent);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
                 // Always set alongside the hovered point, never left to default: an unset
@@ -995,7 +1005,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
-                setTriangleFragmentUniforms(self, program, bufferFade);
+                setTriangleFragmentUniforms(self, program, bufferFade, bufferViewDependent);
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -1204,7 +1214,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             // Lit lines are drawn with the triangle fragment shader, so they need everything a
             // triangle needs. This line has now had to be restored twice; see the helper.
-            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade);
+            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade, bufferViewDependent);
 
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
@@ -2257,9 +2267,9 @@ export function drawScene(self: MGWebGL) : void {
                         // ones GLrender has drawn already). With the view's matrices and viewport, as
                         // GLrender left them; after a peel, back on the screen in the view's part. Not
                         // into a peeled screenshot, whose viewport there is the composite's.
-                        if(!self.atomLabelDepthMode && !(self.doPeel && self.renderToTexture)){
+                        if(!(self.doPeel && self.renderToTexture)){
                             if(self.doPeel) self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
-                            self.drawDistancesAndLabels();
+                            self.drawDistancesAndLabels("onTop");
                         }
                         if(invMat&&i==0) self.drawTextOverlays(invMat,ratioMult, Math.sqrt(self.gl.viewportHeight /self.currentViewport[3]));
                         if (self.showFPS&&i==0) {
@@ -2334,7 +2344,7 @@ export function drawScene(self: MGWebGL) : void {
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebuffer);
                     }
                 }
-                if(!self.atomLabelDepthMode) self.drawDistancesAndLabels();
+                self.drawDistancesAndLabels("onTop");
                 self.drawLineMeasures(invMat);
                 self.drawTextOverlays(invMat);
             }
@@ -3005,7 +3015,7 @@ export function depthBlur(self: MGWebGL, invMat) {
             self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
         }
 
-        if(!self.atomLabelDepthMode) self.drawDistancesAndLabels();
+        self.drawDistancesAndLabels("onTop");
         self.drawLineMeasures(invMat);
         self.drawTextOverlays(invMat);
 
@@ -3413,7 +3423,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         if(!calculatingShadowMap){
             self.drawImagesAndText(invMat);
-            if(self.atomLabelDepthMode) self.drawDistancesAndLabels();
+            self.drawDistancesAndLabels("inScene");
             self.drawTextLabels(up, right);
             if(self.WEBGL2){
                 self.drawTexturedShapes(theMatrix);

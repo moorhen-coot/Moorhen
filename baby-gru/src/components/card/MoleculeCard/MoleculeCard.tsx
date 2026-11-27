@@ -1,4 +1,4 @@
-import { useDispatch, useSelector, useStore } from "react-redux";
+import { shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { matchesTags, SOURCE_XPID, TAG_MOLECULE, TAG_SOURCE } from "../../../utils/tags";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
@@ -8,9 +8,7 @@ import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import {
     addGeneralRepresentation,
     addMolecule,
-    hideMolecule,
     removeGeneralRepresentation,
-    showMolecule,
 } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
@@ -35,6 +33,8 @@ import { MoorhenLigandList } from "./list/MoorhenLigandList";
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
 import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
 
+import { selectCustomRepresentations, selectGeneralRepresentations, selectIsMoleculeVisible } from "./moleculeCardSelectors";
+import { setMoleculeVisible } from "../../../utils/moleculeVisibility";
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -63,27 +63,21 @@ export type clickedResidueType = {
 export const MoleculeCard = (props: MoleculeCardProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     // Default colour rules belong to the scene: the colour rules card starts again whenever one is shown
     const shownRevision = useSelector((state: RootState) => state.userScenes.shownRevision);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
-    const isVisible = useSelector((state: moorhen.State) => state.molecules.visibleMolecules.includes(props.molecule.molNo));
-    const drawInteractions = useSelector((state: moorhen.State) =>
-        state.molecules.generalRepresentations.some(
-            item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === "environment" && !item.isCustom
-        )
+    // Shared indexes rather than scans of the whole lists: see moleculeCardSelectors
+    const isVisible = useSelector((state: RootState) => selectIsMoleculeVisible(state, props.molecule.molNo));
+    const generalRepresentations = useSelector(
+        (state: RootState) => selectGeneralRepresentations(state, props.molecule.molNo),
+        shallowEqual
     );
-
-    const generalRepresentationString = useSelector((state: moorhen.State) => {
-        return JSON.stringify(
-            state.molecules.generalRepresentations
-                .filter(item => item.parentMolecule?.molNo === props.molecule.molNo)
-                .map(item => item.style)
-        );
-    });
+    const hasGeneralRepresentation = (style: string) => generalRepresentations.some(rep => rep.style === style);
+    const drawInteractions = generalRepresentations.some(item => item.style === "environment" && !item.isCustom);
+    const generalRepresentationString = JSON.stringify(generalRepresentations.map(item => item.style));
 
     const dispatch = useDispatch();
     const store = useStore<RootState>();
@@ -107,43 +101,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const [symmetryRadius, setSymmetryRadius] = useState<number>(props.molecule.symmetryRadius);
 
-    const customRepresentationList = useSelector((state: RootState) =>
-        state.molecules.customRepresentations.filter(rep => rep.parentMolecule.molNo === props.molecule.molNo)
+    const customRepresentationList = useSelector(
+        (state: RootState) => selectCustomRepresentations(state, props.molecule.molNo),
+        shallowEqual
     );
 
-    const displayEnvironment = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "environment";
-        });
-    });
-
-    const displayRamaBalls = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "rama";
-        });
-    });
-
-    const displayRotaDodec = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "rotamer";
-        });
-    });
-    const displayRestraints = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "restraints";
-        });
-    });
-
-    const displayContactDots = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "CDs";
-        });
-    });
-    const displayNEFRestraints = useSelector((state: RootState) => {
-        return state.molecules.generalRepresentations.some(rep => {
-            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "NEFRestraints";
-        });
-    });
+    const displayEnvironment = hasGeneralRepresentation("environment");
+    const displayRamaBalls = hasGeneralRepresentation("rama");
+    const displayRotaDodec = hasGeneralRepresentation("rotamer");
+    const displayRestraints = hasGeneralRepresentation("restraints");
+    const displayContactDots = hasGeneralRepresentation("CDs");
+    const displayNEFRestraints = hasGeneralRepresentation("NEFRestraints");
 
     const symmetrySettingsProps = {
         symmetryRadius,
@@ -261,23 +229,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     };
 
     const handleVisibility = useCallback(() => {
-        props.molecule.representations.forEach(rep => (isVisible ? rep.hide() : rep.interfaceOption.visible ? rep.show() : null));
-        dispatch(isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule));
-        if (isVisible) {
-            props.molecule.environmentRepresentation?.hide();
-            props.molecule.NEFRestraintRepresentation?.hide();
-
-        } else {
-            if (displayEnvironment) {
-                props.molecule.environmentRepresentation?.show();
-                props.molecule.environmentRepresentation?.redraw();
-            }
-            
-            if (displayNEFRestraints) {
-                props.molecule.NEFRestraintRepresentation?.show();
-                props.molecule.NEFRestraintRepresentation?.redraw();
-            }
-        }
+        setMoleculeVisible(props.molecule, !isVisible);
     }, [isVisible]);
 
     const [currentName, setCurrentName] = useState<string>(props.molecule.name);
