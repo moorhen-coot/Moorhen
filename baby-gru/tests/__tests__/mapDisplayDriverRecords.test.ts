@@ -11,11 +11,15 @@ import { MapDisplayDriver } from "../../src/InstanceManager/MapDisplayDriver";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
 import { addMap, removeMap } from "../../src/store/mapsSlice";
 import {
+    addMapRepresentation,
     removeMapRepresentation,
     replaceMapRepresentationsOfMaps,
     selectMapRepresentationsOfMap,
     setMapRepresentation,
 } from "../../src/store/mapRepresentationsSlice";
+
+/** What happens to each map's 2D slice, in order */
+const sliceEvents: string[] = [];
 
 const fakeMap = (molNo: number) => ({
     molNo,
@@ -33,8 +37,12 @@ const fakeMap = (molNo: number) => ({
     defaultMapColour: { r: 0.3, g: 0.3, b: 0.7 },
     defaultPositiveMapColour: { r: 0.4, g: 0.8, b: 0.4 },
     defaultNegativeMapColour: { r: 0.8, g: 0.4, b: 0.4 },
-    drawMapSlice: async () => {},
-    hideMapSlice: () => {},
+    drawMapSlice: async () => {
+        sliceEvents.push(`draw ${molNo}`);
+    },
+    hideMapSlice: () => {
+        sliceEvents.push(`hide ${molNo}`);
+    },
 });
 
 const setUp = () => {
@@ -46,6 +54,12 @@ const setUp = () => {
         getMapList: () => store.getState().maps,
         workerCommand: { get_map_contours_mesh: async () => null, get_map_contours_mesh_coloured_by_other_map: async () => null },
     };
+    // As MoorhenMap.sliceRepresentation: the map's representation drawn as a slice
+    maps.forEach(map =>
+        Object.defineProperty(map, "sliceRepresentation", {
+            get: () => selectMapRepresentationsOfMap(store.getState(), map.uniqueId).find(record => record.style === "slice"),
+        })
+    );
     const driver = new MapDisplayDriver(instance as never);
     driver.start();
     maps.forEach(map => store.dispatch(addMap(map as never)));
@@ -87,6 +101,32 @@ describe("a loaded map's representations", () => {
         store.dispatch(removeMap({ molNo: 2 } as never));
         expect(records("map-2")).toHaveLength(0);
         expect(records("map-1")[0].colourByMap).toBeNull();
+        driver.stop();
+    });
+
+    it("drawn when their record was there before the map (a host setting a map's display first)", () => {
+        const { store, driver } = setUp();
+        const late = fakeMap(3);
+        Object.defineProperty(late, "sliceRepresentation", { get: () => undefined });
+        store.dispatch(addMapRepresentation({ ...selectMapRepresentationsOfMap(store.getState(), "map-1")[0], id: "early", mapUid: "map-3" }));
+        expect(driver.getRepresentations("map-3")).toHaveLength(0);
+        store.dispatch(addMap(late as never));
+        expect(driver.getRepresentations("map-3").map(representation => representation.id)).toEqual(["early"]);
+        driver.stop();
+    });
+
+    it("2D slice moved from one representation to another in one change: the new one is left drawn", () => {
+        const { store, records, driver } = setUp();
+        const [first] = records("map-1");
+        const a = { ...first, id: "a", style: "lines" as const };
+        const b = { ...first, id: "b", style: "slice" as const };
+        store.dispatch(replaceMapRepresentationsOfMaps({ mapUids: ["map-1"], records: [a, b] }));
+        expect(sliceEvents.at(-1)).toBe("draw 1");
+        sliceEvents.length = 0;
+        // A scene where "a" is the slice and "b" a mesh: "a" comes first
+        store.dispatch(replaceMapRepresentationsOfMaps({ mapUids: ["map-1"], records: [{ ...a, style: "slice" }, { ...b, style: "lines" }] }));
+        expect(sliceEvents.at(-1)).toBe("draw 1");
+        expect(sliceEvents.indexOf("hide 1")).toBeLessThan(sliceEvents.lastIndexOf("draw 1"));
         driver.stop();
     });
 });

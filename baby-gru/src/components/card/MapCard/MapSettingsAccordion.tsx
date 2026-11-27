@@ -76,6 +76,10 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
      */
     const setOriginLocked = (locked: boolean) => {
         if (!record || locked === isOriginLocked) return;
+        if (!locked && record.originLock) {
+            // Kept for locking again: the centre the record had (a scene's or a session's, not only one set here)
+            props.map.drawOrigin = record.originLock.centre.map(coord => -coord) as [number, number, number];
+        }
         const sceneOrigin = props.map.drawOrigin ?? store.getState().sceneSettings.origin;
         change({ originLock: locked ? { centre: sceneOrigin.map(coord => -coord) as [number, number, number] } : null });
     };

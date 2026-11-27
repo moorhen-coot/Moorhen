@@ -50,30 +50,30 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * @property {string} style - Indicates whether the rendered map is drawn as lines, lit lines or a solid surphace
  * @property {boolean} isDifference - Indicates whether this is a difference map instance
  * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
- * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {CommandCentre} commandCentre - The instance's command centre (Coot)
  * @constructor
- * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
- * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
+ * @param {MoorhenInstance} moorhenInstance - The Moorhen instance the map belongs to
+ *
+ * A map is drawn from its representations (map-display.md): records in the store, given to it by the instance's map
+ * display driver once the map is in the store (`addMap`), and taken down when it leaves it (`removeMap`).
+ * `drawMapContour()` does nothing for a map not in the store.
  * @example
- * import { MoorhenMap } from "moorhen";
- *import { MoorhenInstance } from '.';
-
- * // Create a new map
- * const map = new MoorhenMap(commandCentre, glRef);
+ * import { MoorhenMap, addMap, removeMap } from "moorhen";
  *
- * // Load file from a URL
+ * // Create a new map and load it from a URL
+ * const map = new MoorhenMap(moorhenInstance);
  * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP",
-                            FreeR: "FREE", isDifference: false, useWeight: false,
-                            calcStructFact: true }
- * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
+ *     FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true };
+ * await map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  *
- * // Draw map and set view on map centre
- * map.drawMapContour();
- * map.centreOnMap();
+ * // Show it: in the store, the map gets its first representation and is drawn
+ * moorhenInstance.dispatch(addMap(map));
+ * await map.centreOnMap();
  *
- * // Delete map
- * map.delete();
-*/
+ * // Close it: off the screen, then out of Coot
+ * moorhenInstance.dispatch(removeMap(map));
+ * await map.delete();
+ */
 
 // CCP4 numbers non-standard settings as base + 1000*n (e.g. 3018 = P 2 21 21), which spaceGroupList
 // doesn't cover; fall back to the base group so these aren't mistaken for P1 (and hence EM).
@@ -704,7 +704,10 @@ export class MoorhenMap {
         if (!record || locked === (record.originLock !== null)) {
             return;
         }
-        if (locked && !this.ownDrawOrigin) {
+        if (!locked) {
+            // Kept for locking again: the centre the record had (a scene's or a session's, not only one set here)
+            this.ownDrawOrigin = record.originLock.centre.map(coord => -coord) as [number, number, number];
+        } else if (!this.ownDrawOrigin) {
             this.ownDrawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
         }
         this.changePrimaryRepresentation(record, { originLock: locked ? { centre: this.ownDrawOrigin.map(coord => -coord) as Vec3 } : null });

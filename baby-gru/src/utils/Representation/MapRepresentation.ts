@@ -181,6 +181,9 @@ export class MapRepresentation {
     private hideSlice(): void {
         if (this.showingSlice) {
             this.showingSlice = false;
+            // The map's slice buffers are another representation's now (the slice moved to it): leave them
+            const owner = this.map.sliceRepresentation;
+            if (owner && owner.id !== this.id && owner.visible) return;
             this.map.hideMapSlice();
         }
     }

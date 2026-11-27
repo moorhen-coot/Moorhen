@@ -1,5 +1,5 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { selectMapRepresentation, selectMapRepresentationsOfMap, selectPrimaryMapRepresentation, setMapRepresentation } from "../../../store/mapRepresentationsSlice";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../../utils/MoorhenMap";
@@ -35,7 +35,10 @@ export const ColourByMapControls = (props: ColourByMapProps) => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const record = useTargetRecord(props);
-    const otherMaps = useSelector((state: RootState) => state.maps.filter(item => item.uniqueId !== map.uniqueId));
+    // The map list from the store (a stable reference), filtered here: a filter in the selector made a new array on
+    // every store change, re-rendering the open panel at each view move
+    const maps = useSelector((state: RootState) => state.maps);
+    const otherMaps = useMemo(() => maps.filter(item => item.uniqueId !== map.uniqueId), [maps, map.uniqueId]);
     const current = record?.colourByMap ?? null;
 
     // Coloured already: as it is; else by a local resolution map if there is one, from a guess

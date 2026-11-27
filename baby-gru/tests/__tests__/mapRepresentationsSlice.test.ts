@@ -360,15 +360,32 @@ describe("the map's eye, after representations were shown or hidden on their own
         ]);
     });
 
-    test("a representation shown on its own while the map was hidden is not marked any more", () => {
+    test("a representation shown on its own while the map was hidden: nothing is marked any more", () => {
         const store = makeStore();
         [record("a", "map-1"), record("b", "map-1")].forEach(item => store.dispatch(addMapRepresentation(item)));
         store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
         store.dispatch(setMapRepresentation({ id: "a", changes: { visible: true } }));
-        expect(selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.hiddenWithMap)).toEqual([undefined, true]);
+        // The map is shown again: "b" is not one the eye hid any more
+        expect(selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.hiddenWithMap)).toEqual([undefined, undefined]);
         // The eye then shows the map, which is shown already: nothing is left marked
         store.dispatch(setMapVisible({ mapUid: "map-1", visible: true }));
         expect(selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => item.hiddenWithMap)).toEqual([undefined, undefined]);
+    });
+
+    test("a representation shown on its own shows the map: none of the others is brought back later", () => {
+        const store = makeStore();
+        [record("a", "map-1"), record("b", "map-1")].forEach(item => store.dispatch(addMapRepresentation(item)));
+        const visible = () => selectMapRepresentationsOfMap(store.getState(), "map-1").map(item => [item.id, item.visible]);
+        // Both hidden by the eye, then only "a" shown from its chip
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
+        store.dispatch(setMapRepresentation({ id: "a", changes: { visible: true } }));
+        // Hidden and shown by the eye: "a" was the one shown, "b" stays hidden
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: false }));
+        store.dispatch(setMapVisible({ mapUid: "map-1", visible: true }));
+        expect(visible()).toEqual([
+            ["a", true],
+            ["b", false],
+        ]);
     });
 });
 

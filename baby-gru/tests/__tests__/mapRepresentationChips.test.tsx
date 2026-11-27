@@ -235,6 +235,9 @@ describe("a map's representations in its card", () => {
         });
         expect(mapChipTint(map, { ...coloured, visible: false }).backgroundImage).toContain("rgba(0,0,255,0.1)");
         expect(mapChipTint(map, record("mesh"))).toEqual({ backgroundColor: "rgba(76.5, 76.5, 178.5, 0.5)", borderColor: "rgb(76.5, 76.5, 178.5)" });
+        // A difference map without colours of its own: its default positive colour, as its contour is drawn
+        const difference = { ...map, isDifference: true } as unknown as moorhen.Map;
+        expect(mapChipTint(difference, record("mesh")).borderColor).toBe("rgb(102, 204, 102)");
 
         const store = createMoorhenStore();
         store.dispatch(addMap(map));

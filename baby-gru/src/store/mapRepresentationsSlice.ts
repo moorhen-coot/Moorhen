@@ -23,11 +23,18 @@ export type MapRepresentationsState = {
 export type { MapRepresentationChanges };
 
 /** Apply changes to a record (draft); `radius` and `alpha` only for the draw modes / styles given */
-const applyChanges = (representation: MapRepresentationData, changes: MapRepresentationChanges): void => {
+const applyChanges = (state: MapRepresentationsState, representation: MapRepresentationData, changes: MapRepresentationChanges): void => {
     const { radius, alpha, ...rest } = changes;
     Object.assign(representation, rest);
-    // Shown or hidden on its own: no longer one the map's eye hid (setMapVisible would bring it back)
-    if (changes.visible !== undefined) {
+    // Shown on its own, the map is shown again: what the map's eye hid is forgotten, as when the eye shows the map
+    // (setMapVisible would otherwise bring them back next time). Hidden on its own: no longer one the eye hid.
+    if (changes.visible === true) {
+        Object.values(state.representations)
+            .filter(other => other.mapUid === representation.mapUid)
+            .forEach(other => {
+                delete other.hiddenWithMap;
+            });
+    } else if (changes.visible === false) {
         delete representation.hiddenWithMap;
     }
     if (radius) {
@@ -77,7 +84,7 @@ const mapRepresentationsSlice = createSlice({
         setMapRepresentation: (state, action: PayloadAction<{ id: string; changes: MapRepresentationChanges }>) => {
             const representation = state.representations[action.payload.id];
             if (representation) {
-                applyChanges(representation, action.payload.changes);
+                applyChanges(state, representation, action.payload.changes);
             }
         },
         // API
@@ -88,7 +95,7 @@ const mapRepresentationsSlice = createSlice({
         setPrimaryMapRepresentation: (state, action: PayloadAction<{ mapUid: string; changes: MapRepresentationChanges }>) => {
             const representation = primaryOf(state, action.payload.mapUid);
             if (representation) {
-                applyChanges(representation, action.payload.changes);
+                applyChanges(state, representation, action.payload.changes);
             }
         },
         // API

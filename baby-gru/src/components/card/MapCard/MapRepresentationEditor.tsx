@@ -1,8 +1,8 @@
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
-import { moorhen } from "../../../types/moorhen";
 import { MoorhenStack } from "../../interface-base";
 import { MapColourSelector } from "./MapColourSelector";
 import { MapSettingsAccordion } from "./MapSettingsAccordion";
+import type { MoorhenMap } from "../../../utils/MoorhenMap";
 
 /**
  * A map representation's colour, level and draw settings, in its chip's edit popover (multi-representation mode),
@@ -11,7 +11,7 @@ import { MapSettingsAccordion } from "./MapSettingsAccordion";
  * @param level - The card's level controls (MapLevelControls, OrbitalLevelControls) for that representation.
  */
 export const MapRepresentationEditor = (props: {
-    map: moorhen.Map;
+    map: MoorhenMap;
     recordId: string;
     level: React.ReactNode;
     hideRadiusControls?: boolean;

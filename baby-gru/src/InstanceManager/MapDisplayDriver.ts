@@ -148,7 +148,8 @@ export class MapDisplayDriver {
         const viewMoved = origin !== this.lastOrigin;
 
         // Records too: a map left without any (its last removed, a scene's dropped) gets a new one
-        if (state.maps !== this.lastMaps || state.mapRepresentations.representations !== this.lastRecordsSeen) {
+        const mapsChanged = state.maps !== this.lastMaps;
+        if (mapsChanged || state.mapRepresentations.representations !== this.lastRecordsSeen) {
             this.syncMaps(state.maps);
             this.lastMaps = state.maps;
             state = store.getState();
@@ -161,7 +162,7 @@ export class MapDisplayDriver {
             state = store.getState();
         }
 
-        this.syncRepresentations(state.mapRepresentations.representations);
+        this.syncRepresentations(state.mapRepresentations.representations, mapsChanged);
         this.syncFastRadii(state);
 
         if (state.mapContourSettings.mapLineWidth !== this.lastLineWidth) {
@@ -214,8 +215,12 @@ export class MapDisplayDriver {
     }
 
     /** One `MapRepresentation` per record: create, update or dispose */
-    private syncRepresentations(records: Record<string, MapRepresentationData>): void {
-        if (records === this.lastRecords) {
+    /**
+     * @param mapsChanged - The map list changed: records already there for a map just added (a host may set a map's
+     * display before adding it) get their representation now, though the records did not change.
+     */
+    private syncRepresentations(records: Record<string, MapRepresentationData>, mapsChanged = false): void {
+        if (records === this.lastRecords && !mapsChanged) {
             return;
         }
         // Removed ones first: a record replaced by another for the same map (a scene shown) must not take down what
@@ -226,7 +231,10 @@ export class MapDisplayDriver {
                 this.representations.delete(id);
             }
         });
-        Object.values(records).forEach(record => {
+        // Those not drawn as a 2D slice first: one leaving the slice style hides the map's slice before one taking it
+        // draws it (the slice buffers are the map's: hidden after, the new slice would be cancelled)
+        const ordered = Object.values(records).sort((a, b) => Number(a.style === "slice") - Number(b.style === "slice"));
+        ordered.forEach(record => {
             const existing = this.representations.get(record.id);
             if (existing) {
                 if (record !== this.lastRecords[record.id]) {

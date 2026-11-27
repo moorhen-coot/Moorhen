@@ -13,7 +13,8 @@ export const mapChipTint = (map: MoorhenMap, record: MapRepresentationData): Rea
         const [r, g, b] = gradient[Math.floor(gradient.length / 2)][1];
         return { backgroundImage: colourTableToCssGradient(gradient, alpha), borderColor: `rgb(${r}, ${g}, ${b})` };
     }
-    const colour = (map.isDifference ? record.positiveColour : record.colour) ?? map.defaultMapColour;
+    // As the contour is drawn (MapRepresentation): a difference map by its positive colour
+    const colour = map.isDifference ? (record.positiveColour ?? map.defaultPositiveMapColour) : (record.colour ?? map.defaultMapColour);
     return {
         backgroundColor: `rgba(${colour.r * 255}, ${colour.g * 255}, ${colour.b * 255}, ${alpha})`,
         borderColor: `rgb(${colour.r * 255}, ${colour.g * 255}, ${colour.b * 255})`,
