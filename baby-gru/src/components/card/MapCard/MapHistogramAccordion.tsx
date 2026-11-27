@@ -1,8 +1,8 @@
 import { Chart, registerables } from "chart.js";
+import { mapLevelChange, selectMapRepresentationsOfMap } from "@/store/mapRepresentationsSlice";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useRef, useState } from "react";
-import { setContourLevel } from "../../../store/mapContourSettingsSlice";
 import { libcootApi } from "../../../types/libcoot";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
@@ -26,6 +26,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [zoomFactor, setZoomFactor] = useState<number>(1);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
+    const store = useStore<moorhen.State>();
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [exponential, setExponential] = useState<boolean>(props.map.isEM); // set Y axis to logarithmic if EM map
@@ -44,12 +45,15 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 }
                 const peakIndex = points[0].index;
 
-                dispatch(
-                    setContourLevel({
-                        molNo: props.map.molNo,
-                        contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1),
-                    })
-                );
+                const level = histogramData.base + histogramData.bin_width * (peakIndex + 1);
+                // The card's level: in multi-representation mode all shown representations move by the same amount,
+                // else the map's one representation. Read now, not when the chart was made: the chart (and this
+                // handler) outlives the levels and the representations it was made with.
+                const state = store.getState();
+                const uid = props.map.uniqueId;
+                const multi = state.generalStates.multiRepresentationMaps.includes(uid) || selectMapRepresentationsOfMap(state, uid).length > 1;
+                const change = mapLevelChange(state, uid, level, multi);
+                if (change) dispatch(change);
             }
         };
 

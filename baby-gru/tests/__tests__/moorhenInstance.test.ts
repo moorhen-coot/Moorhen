@@ -1,11 +1,14 @@
 import fetch from 'node-fetch';
 import { MoorhenInstance } from '@/InstanceManager';
+import { selectPrimaryMapRepresentation } from "../../src/store/mapRepresentationsSlice";
 import { _MoorhenReduxStore as MoorhenReduxStore } from '@/store/MoorhenReduxStore';
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre';
 import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
 import { setOrigin } from '@/store/sceneSettingsSlice';
 import { setActiveMap, setDevMode, setDisableFileUpload } from '@/store/generalStatesSlice';
 import { setEnableTimeCapsule } from '@/store/backupSettingsSlice';
+import { emptyMaps } from '@/store/mapsSlice';
+import { emptyMapRepresentations } from '@/store/mapRepresentationsSlice';
 import { setBackgroundColor } from '@/store/sceneSettingsSlice';
 import { setMouseSensitivity } from '@/store/mouseSettings';
 import { createCallbackBackupStorage } from '@/WebComponent/ccp4cloud/backupStorage';
@@ -185,6 +188,14 @@ beforeEach(async () => {
     );
 });
 
+afterEach(() => {
+    // Every test starts its own instance on the shared store, with a new coot container: stop this one drawing
+    // maps, and forget its maps, so the next instance does not draw maps of a deleted container
+    moorhenInstance.mapDisplay?.stop();
+    MoorhenReduxStore.dispatch(emptyMaps());
+    MoorhenReduxStore.dispatch(emptyMapRepresentations());
+});
+
 // ==============================
 // Category A: Construction & Readiness
 // ==============================
@@ -200,7 +211,9 @@ describe('Construction & Readiness', () => {
         const externalCC = commandCentre;
         const instance = new MoorhenInstance(React.createRef<HTMLDivElement>(), null, externalCC);
         expect(instance.commandCentre).toBe(externalCC);
-        expect(instance.cootCommand).toBeDefined();
+        expect(instance.workerCommand).toBeDefined();
+        // Deprecated name, same wrapper
+        expect(instance.cootCommand).toBe(instance.workerCommand);
     });
 
     test('isReady after startInstance', () => {
@@ -279,9 +292,9 @@ describe('Command Centre', () => {
         expect(moorhenInstance.getCommandCentreRef().current).toBe(newCC);
     });
 
-    test('cootCommand wrapper delegates to commandCentre', async () => {
+    test('workerCommand wrapper delegates to commandCentre', async () => {
         // Spy on commandCentre.cootCommand BEFORE creating the instance,
-        // because CootCommandWrapper captures a bound reference in the constructor.
+        // because WorkerWrapper captures a bound reference in the constructor.
         // Note: startInstance internally calls set_max_number_of_simple_mesh_vertices(10000000),
         // so our test call will be the *second* invocation.
         const freshCC = new MockMoorhenCommandCentre(molecules_container, cootModule);
@@ -293,7 +306,7 @@ describe('Command Centre', () => {
             React.createRef(),
             MoorhenReduxStore,
         );
-        await instance.cootCommand.set_max_number_of_simple_mesh_vertices(5000000);
+        await instance.workerCommand.set_max_number_of_simple_mesh_vertices(5000000);
         expect(spy).toHaveBeenCalledTimes(2);
         // Last call should be our test call with 5000000
         const lastCallArg = spy.mock.calls[1][0];
@@ -808,8 +821,9 @@ describe('files.loadMtz', () => {
 
         const state = MoorhenReduxStore.getState();
         expect(state.generalStates.activeMap.uniqueId).toBe(map.uniqueId);
-        expect(state.mapContourSettings.positiveMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 0, g: 1, b: 0 });
-        expect(state.mapContourSettings.negativeMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 1, g: 0, b: 0 });
+        // The requested colours (0-1) are the difference map's display record's (map-display.md)
+        expect(selectPrimaryMapRepresentation(state, diffMap.uniqueId)?.positiveColour).toEqual({ r: 0, g: 1, b: 0 });
+        expect(selectPrimaryMapRepresentation(state, diffMap.uniqueId)?.negativeColour).toEqual({ r: 1, g: 0, b: 0 });
     });
 
     test('applies defaults: name, isDifference, calcStructFact', async () => {

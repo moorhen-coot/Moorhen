@@ -23,6 +23,7 @@ import {
     setZoom,
 } from "../store";
 import { setMoleculesVisible } from "../store/moleculesSlice";
+import { replaceMapRepresentationsOfMaps } from "../store/mapRepresentationsSlice";
 import type { RootState } from "../store";
 import {
     type SceneSettingsSnapshot,
@@ -85,14 +86,19 @@ const replaceContent = (
         molecules: SceneContent["objects"]["molecules"];
         /** The molecules' default colour rules go with the representations that use them */
         moleculeDefaults: MoleculeDefaults | undefined;
+        /** The maps' representations, when they are copied too (a reset leaves them as they are) */
+        maps?: { records: SceneSections["maps"]; names: SceneContent["objects"]["maps"] };
     }
 ): SceneContent => ({
     ...content,
-    objects: representations ? { ...content.objects, molecules: representations.molecules } : content.objects,
+    objects: representations
+        ? { ...content.objects, molecules: representations.molecules, ...(representations.maps && { maps: representations.maps.names }) }
+        : content.objects,
     sections: {
         ...content.sections,
         sceneSettings,
         ...(representations && { representations: representations.representations, moleculeDefaults: representations.moleculeDefaults }),
+        ...(representations?.maps && { maps: representations.maps.records }),
     },
 });
 
@@ -458,6 +464,8 @@ export class MoorhenUserSceneManager {
                   representations: source.sections.representations,
                   molecules: source.objects.molecules,
                   moleculeDefaults: source.sections.moleculeDefaults,
+                  // Map representations are representations too (a source saved before maps were in scenes has none)
+                  maps: source.sections.maps ? { records: source.sections.maps, names: source.objects.maps ?? {} } : undefined,
               }
             : undefined;
         const content = replaceContent(this.workingContent(targetId), source.sections.sceneSettings, representations);
@@ -649,6 +657,14 @@ export class MoorhenUserSceneManager {
         content.sections.vectors = structuredClone(vectors.vectorsList);
         content.sections.annotations = structuredClone(annotations.annotationsList);
         content.sections.threeDObjects = structuredClone(threeDObjects.objects);
+        // The map representation records (map-display.md), of the maps loaded now
+        const maps = this.instance.getMapList();
+        content.objects.maps = Object.fromEntries(maps.map(map => [map.uniqueId, map.name]));
+        content.sections.maps = structuredClone(
+            Object.values(this.instance.store.getState().mapRepresentations.representations).filter(record =>
+                Object.hasOwn(content.objects.maps, record.mapUid)
+            )
+        );
         content.sections.moleculeDefaults = {};
         for (const molecule of this.instance.getMoleculeList()) {
             content.objects.molecules[molecule.uniqueId] = molecule.name;
@@ -716,6 +732,7 @@ export class MoorhenUserSceneManager {
         }
         this.applySceneSettings(content);
         this.showAnnotations(content);
+        this.showMaps(content);
         for (const { moleculeUniqueId, params, kept } of wanted) {
             if (kept) {
                 // As a rebuilt one: unfaded (a movie fade is not part of the scene), shown or hidden
@@ -740,7 +757,7 @@ export class MoorhenUserSceneManager {
             }
         }
         this.syncMoleculeVisibility();
-        this.reportMissingMolecules(sceneId, content);
+        this.reportMissingObjects(sceneId, content);
         this.instance.dispatch(sceneShown());
     }
 
@@ -795,6 +812,29 @@ export class MoorhenUserSceneManager {
     }
 
     /**
+     * Show the scene's maps as it does (its map representation records, map-display.md), if it has them: an older
+     * scene keeps the shown ones. Maps loaded after the scene was saved keep theirs; maps it shows as they already
+     * are are left alone (not redrawn). One dispatch.
+     */
+    private showMaps(content: SceneContent) {
+        const sceneRecords = content.sections.maps;
+        if (!sceneRecords) return;
+        const sceneMaps = content.objects.maps ?? {};
+        const mapUids = this.instance
+            .getMapList()
+            .map(map => map.uniqueId)
+            .filter(uniqueId => Object.hasOwn(sceneMaps, uniqueId));
+        if (mapUids.length === 0) return;
+        const shown = Object.values(this.instance.store.getState().mapRepresentations.representations).filter(record =>
+            mapUids.includes(record.mapUid)
+        );
+        const wanted = sceneRecords.filter(record => mapUids.includes(record.mapUid));
+        if (JSON.stringify(shown) === JSON.stringify(wanted)) return;
+        // Copies: the scene's are frozen in the store, the shown ones change
+        this.instance.dispatch(replaceMapRepresentationsOfMaps({ mapUids, records: structuredClone(wanted) }));
+    }
+
+    /**
      * Order the custom representations (in the store and in each molecule's own list) as the scene
      * lists them, as if they were all rebuilt: kept ones would otherwise stay where they were.
      * @param uniqueIds - The scene's representations, in its order.
@@ -834,14 +874,22 @@ export class MoorhenUserSceneManager {
     }
 
     /** Warn about molecules the scene was saved with that are not loaded any more */
-    private reportMissingMolecules(sceneId: string, content: SceneContent) {
-        const missing = Object.entries(content.objects.molecules)
+    private reportMissingObjects(sceneId: string, content: SceneContent) {
+        const missingMolecules = Object.entries(content.objects.molecules)
             .filter(([uniqueId]) => !this.instance.getMolecule(uniqueId))
             .map(([, name]) => name);
+        const loadedMaps = new Set(this.instance.getMapList().map(map => map.uniqueId));
+        const missingMaps = Object.entries(content.objects.maps ?? {})
+            .filter(([uniqueId]) => !loadedMaps.has(uniqueId))
+            .map(([, name]) => name);
+        const missing = [
+            missingMolecules.length > 0 && `molecules that are not loaded: ${missingMolecules.join(", ")}`,
+            missingMaps.length > 0 && `maps that are not loaded: ${missingMaps.join(", ")}`,
+        ].filter(Boolean);
         if (missing.length === 0) return;
         this.instance.dispatch(
             enqueueSnackbar({
-                message: `"${this.nameOf(sceneId)}" uses molecules that are not loaded: ${missing.join(", ")}`,
+                message: `"${this.nameOf(sceneId)}" uses ${missing.join("; and ")}`,
                 variant: "warning",
             })
         );

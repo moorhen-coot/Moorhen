@@ -3,7 +3,6 @@ import { useStore } from "react-redux";
 import { useMoorhenInstance } from "../../InstanceManager";
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MGWebGL } from "../../WebGLgComponents/mgWebGL";
-import type { MoorhenMap } from "../../utils/MoorhenMap";
 import { deferWebGLUploads } from "../../WebGLgComponents/webGLUploads";
 import { type ExternalRenderer, webGLOnlyReason } from "../../WebGLgComponents/externalRenderer";
 import { type PreviewFrameReport, WebGPUPreviewRenderer } from "../../WebGPUComponents/previewRenderer";
@@ -137,8 +136,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
         const setGpuMaps = (active: boolean) => {
             if (gpuMapContourSetting.active === active) return;
             gpuMapContourSetting.active = active;
-            const state = store.getState();
-            applyGpuMapContours(state.maps as unknown as MoorhenMap[], state.mapContourSettings.visibleMaps);
+            applyGpuMapContours();
         };
         const dropRenderer = () => {
             releaseSecondViews();
@@ -301,10 +299,12 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                         // Changes that ask for no frame of their own, redrawn for here, once a frame
                         // at most:
                         //   - a new set of buffers in the store: a map contoured again by Coot;
-                        //   - the map contour settings and the maps: maps contoured on the GPU read
-                        //     their level, radius and style when a frame is drawn, and a level or
-                        //     radius change asks for none - opacity worked only because it does.
-                        const watched = (state: RootState) => [state.glRef.displayBuffers, state.mapContourSettings, state.maps];
+                        //   - the map representation records and the maps: maps contoured on the GPU
+                        //     read their level, radius, style and colours when a frame is drawn, and
+                        //     a level or radius change asks for none - opacity worked only because
+                        //     it does (map-display.md);
+                        //   - the map contour settings: the line width.
+                        const watched = (state: RootState) => [state.glRef.displayBuffers, state.mapRepresentations, state.mapContourSettings, state.maps];
                         let last = watched(store.getState());
                         unsubscribe = store.subscribe(() => {
                             const now = watched(store.getState());

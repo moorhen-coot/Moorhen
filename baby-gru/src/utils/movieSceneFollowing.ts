@@ -6,7 +6,8 @@
  * are visible, which molecules exist, and how far the camera may travel before any of it matters.
  */
 
-import type { OriginFollowingScene } from "./originFollowing";
+import type { OriginFollowingScene, SceneOrigin } from "./originFollowing";
+import { currentRadius } from "./Representation/mapRepresentationData";
 import type { MoorhenMap } from "./MoorhenMap";
 import type { MoorhenMolecule } from "./MoorhenMolecule";
 import type { webGL } from "../types/mgWebGL";
@@ -37,13 +38,10 @@ const SMALLEST_DISTANCE = 0.25;
  */
 export const echoDistanceFor = (gl: webGL.MGWebGL): number => {
     const state = gl.store.getState();
-    const visible = state.mapContourSettings.visibleMaps;
-    const radii = (state.maps as unknown as MoorhenMap[])
-        .filter(map => visible.includes(map.molNo) && !map.isOriginLocked)
-        .map(map =>
-            state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius
-            ?? map.suggestedRadius
-            ?? 15);
+    // The maps' display records (map-display.md): those shown as a 3D contour that follows the view
+    const radii = Object.values(state.mapRepresentations.representations)
+        .filter(record => record.visible && !record.originLock && record.style !== "slice")
+        .map(record => currentRadius(record));
     if (radii.length === 0) return NO_MAPS_DISTANCE;
     return Math.max(SMALLEST_DISTANCE, Math.min(...radii) * TRAVEL_FRACTION);
 };
@@ -55,7 +53,10 @@ export const echoDistanceFor = (gl: webGL.MGWebGL): number => {
  * underneath it - a map hidden, a molecule deleted - and a stale list would contour a map that is
  * no longer drawn, or miss one that now is.
  */
-export const sceneFollowingOrigin = (gl: webGL.MGWebGL): (() => OriginFollowingScene | null) => () => {
+export const sceneFollowingOrigin = (
+    gl: webGL.MGWebGL,
+    mapDisplay?: { contourMapsAt(origin: SceneOrigin): Promise<void> } | null,
+): (() => OriginFollowingScene | null) => () => {
     const state = gl.store.getState();
     const molecules = state.molecules.moleculeList as unknown as MoorhenMolecule[];
     const maps = state.maps as unknown as MoorhenMap[];
@@ -65,8 +66,7 @@ export const sceneFollowingOrigin = (gl: webGL.MGWebGL): (() => OriginFollowingS
     if (!commandCentre) return null;
     return {
         molecules,
-        maps,
-        visibleMapNumbers: state.mapContourSettings.visibleMaps,
+        contourMaps: mapDisplay ? origin => mapDisplay.contourMapsAt(origin) : null,
         commandCentre,
         store: gl.store,
     };

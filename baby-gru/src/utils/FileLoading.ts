@@ -1061,7 +1061,8 @@ export const autoOpenFiles = async (
         
     }
     if (isRelionLocresFolder) {
-        dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));
+        // Set up there: the density coloured by the local resolution (MoorhenColourMapByOtherMapModal)
+        dispatch(showModal({ key: "colour-map-by-map", openDocked: "right", modalProps: { localResolutionFolder: true } }));
     }
     return returnValues;
 };

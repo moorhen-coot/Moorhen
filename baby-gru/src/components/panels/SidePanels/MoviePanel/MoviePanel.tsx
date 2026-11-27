@@ -407,6 +407,7 @@ export const MoviePanel = () => {
         try {
             const result = await recordMovieToMp4(glRef, document.path, {
                 onSample: playbackApplier(),
+                mapDisplay: moorhenInstance.mapDisplay,
                 width: document.output.width,
                 height: document.output.height,
                 fps: document.output.fps,

@@ -1,8 +1,173 @@
 // Auto-generated file. Do not edit directly.
 //Use scripts/CreateStoreExport.py to regenerate.
 
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
+export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
+export { setValidationJson }  from "./jsonValidation";
+export {
+    emptyAvailableFonts,
+    addAvailableFontList,
+    setAtomLabelDepthMode,
+    setGLLabelsFontFamily,
+    setGLLabelsFontSize,
+    resetLabelSettings,
+}  from "./labelSettingsSlice";
+export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
+export {
+    setConnectedMolecule,
+    enableUpdatingMaps,
+    disableUpdatingMaps,
+    setReflectionMap,
+    setFoFcMap,
+    setTwoFoFcMap,
+    setReflectionMapMolNo,
+    overwriteMapUpdatingScores,
+    setCurrentScores,
+    setConnectedMoleculeMolNo,
+    setFoFcMapMolNo,
+    setTwoFoFcMapMolNo,
+    removeMapUpdatingScore,
+    setShowScoresToast,
+    addMapUpdatingScore,
+    triggerUpdate,
+    resetMoleculeMapUpdates,
+}  from "./moleculeMapUpdateSlice";
+export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
+export {
+    setMrParseModels,
+    setTargetSequence,
+    setAfJson,
+    setEsmJson,
+    setHomologsJson,
+    setAfSortField,
+    setHomologsSortField,
+    setAfSortReversed,
+    setHomologsSortReversed,
+    setAFDisplaySettings,
+    setHomologsDisplaySettings,
+}  from "./mrParseSlice";
+export {
+    setAnimateRefine,
+    setEnableRefineAfterMod,
+    setUseRamaRefinementRestraints,
+    setuseTorsionRefinementRestraints,
+    setRefinementSelection,
+    resetRefinementSettings,
+}  from "./refinementSettingsSlice";
+export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
+export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
+export {
+    resetSliceNDiceSlice,
+    setPaeFileIsUploaded,
+    setThresholdType,
+    setMoleculeBfactors,
+    setSlicingResults,
+    setMoleculeMaxBfactor,
+    setMoleculeMinBfactor,
+    setBFactorThreshold,
+    setNClusters,
+    setClusteringType,
+    setPAEFileContents,
+}  from "./sliceNDiceSlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
+export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
+export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setSceneSelectorOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setBottomPanelHeight,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export {
+    setMovieDocument, setMovieName, setMovieFileName, newMovie,
+    setMoviePlaying, selectKeyframe,
+    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
+    duplicateKeyframe,
+    updateSegment, updateMotion, clearTrailingMotion,
+    spreadSceneFromKeyframe, updateMovieOutput,
+    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
+}  from "./movieSlice";
+export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
+export {
+    addMolecule,
+    removeMolecule,
+    emptyMolecules,
+    addMoleculeList,
+    setMoleculeRecords,
+    removeMoleculeRecord,
+    addGeneralRepresentation,
+    setMoleculesVisible,
+    showMolecule,
+    hideMolecule,
+    addCustomRepresentation,
+    addCustomRepresentationList,
+    removeCustomRepresentation,
+    removeGeneralRepresentation,
+}  from "./moleculesSlice";
+export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
 export { addAnnotation, addAnnotations, updateAnnotation, removeAnnotationById, removeAnnotationsByTag, emptyAnnotations }  from "./annotationsSlice";
+export {
+    setRequestDrawScene,
+    setCameraSnap,
+    setDrawsThrottled,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export {
+    addImageOverlay,
+    addTextOverlay,
+    addSvgPathOverlay,
+    addFracPathOverlay,
+    emptyOverlays,
+    addCallback,
+    addLatexOverlay,
+    removeImageOverlay,
+    removeLatexOverlay,
+    removeTextOverlay,
+    removeSvgPathOverlay,
+    removeFracPathOverlay,
+    addShapeOverlay,
+    removeShapeOverlay,
+    updateOverlay,
+}  from "./overlaysSlice";
 export {
     addObject,
     removeObject,
@@ -12,11 +177,13 @@ export {
     emptyObjects,
 
 }  from "./threeDObjectsSlice";
+export { setSeqViewerOption, setValidationOption, setValidationGradient, setShownBottomPanel }  from "./bottomPanelsSlice";
 export {
     setSelectedThreeDObject,
     setSelected2DObject,
     setMovingMapSlice,
     setActiveMap,
+    setMapMultiRepresentation,
     setViewOnly,
     setTheme,
     setIsDraggingAtoms,
@@ -49,133 +216,6 @@ export {
     setAllowMergeFittedLigand,
     setDisableFileUpload,
 }  from "./generalStatesSlice";
-export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
-export {
-    emptyAvailableFonts,
-    addAvailableFontList,
-    setAtomLabelDepthMode,
-    setGLLabelsFontFamily,
-    setGLLabelsFontSize,
-    resetLabelSettings,
-}  from "./labelSettingsSlice";
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setSceneSelectorOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setBottomPanelHeight,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    pauseClickAwayListener,
-    resumeClickAwayListener,
-}  from "./globalUISlice";
-export { setValidationJson }  from "./jsonValidation";
-export {
-    setRequestDrawScene,
-    setCameraSnap,
-    setDrawsThrottled,
-    setIsWebGL2,
-    setActiveMolecule,
-    setQuat,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
-export {
-    setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    setMoviePlaying, selectKeyframe,
-    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
-    duplicateKeyframe,
-    updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieOutput,
-    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
-}  from "./movieSlice";
-export {
-    setMrParseModels,
-    setTargetSequence,
-    setAfJson,
-    setEsmJson,
-    setHomologsJson,
-    setAfSortField,
-    setHomologsSortField,
-    setAfSortReversed,
-    setHomologsSortReversed,
-    setAFDisplaySettings,
-    setHomologsDisplaySettings,
-}  from "./mrParseSlice";
-export { setSeqViewerOption, setValidationOption, setValidationGradient, setShownBottomPanel }  from "./bottomPanelsSlice";
-export {
-    setAnimateRefine,
-    setEnableRefineAfterMod,
-    setUseRamaRefinementRestraints,
-    setuseTorsionRefinementRestraints,
-    setRefinementSelection,
-    resetRefinementSettings,
-}  from "./refinementSettingsSlice";
-export {
-    addImageOverlay,
-    addTextOverlay,
-    addSvgPathOverlay,
-    addFracPathOverlay,
-    emptyOverlays,
-    addCallback,
-    addLatexOverlay,
-    removeImageOverlay,
-    removeLatexOverlay,
-    removeTextOverlay,
-    removeSvgPathOverlay,
-    removeFracPathOverlay,
-    addShapeOverlay,
-    removeShapeOverlay,
-    updateOverlay,
-}  from "./overlaysSlice";
-export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    sceneShown,
-    setSceneContent,
-    setUserSceneState,
-    setSavedSceneSetting,
-    saveSceneSettings,
-}  from "./userScenesSlice";
-export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
-export {
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    setMoleculeRecords,
-    removeMoleculeRecord,
-    addGeneralRepresentation,
-    setMoleculesVisible,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    addCustomRepresentationList,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-}  from "./moleculesSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -243,25 +283,32 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
-export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export {
-    resetSliceNDiceSlice,
-    setPaeFileIsUploaded,
-    setThresholdType,
-    setMoleculeBfactors,
-    setSlicingResults,
-    setMoleculeMaxBfactor,
-    setMoleculeMinBfactor,
-    setBFactorThreshold,
-    setNClusters,
-    setClusteringType,
-    setPAEFileContents,
-}  from "./sliceNDiceSlice";
-export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
-export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
-export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
-export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
-export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
+    addMapRepresentation,
+    removeMapRepresentation,
+    removeMapRepresentationsOfMap,
+    emptyMapRepresentations,
+    replaceMapRepresentationsOfMaps,
+    setMapRepresentation,
+    setMapRepresentationAlpha,
+    setMapRepresentationRadius,
+    setMapRepresentationSlice,
+    setMapVisible,
+    shiftMapRepresentationLevels,
+    changeMapRepresentationRadii,
+    setPrimaryMapRepresentation,
+    setPrimaryMapRepresentationAlpha,
+    setPrimaryMapRepresentationRadius,
+}  from "./mapRepresentationsSlice";
+export {
+    setDefaultMapSamplingRate,
+    setDefaultMapLitLines,
+    setMapLineWidth,
+    setDefaultMapSurface,
+    setReContourMapOnlyOnMouseUp,
+    resetMapContourSettings,
+}  from "./mapContourSettingsSlice";
 export {
     addVector,
     removeVector,
@@ -273,51 +320,6 @@ export {
     removeVectorById,
     removeVectorsByIds
 }  from "./vectorsSlice";
-export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
-export {
-    showMap,
-    hideMap,
-    setContourLevel,
-    setMapRadius,
-    setMapFastRadius,
-    setMapAlpha,
-    setMapViewDependentTransparency,
-    setMapStyle,
-    setMapSlice,
-    setMapSliceNodalLines,
-    setMapSliceContourSpacing,
-    changeMapRadius,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setMapColours,
-    setNegativeMapColours,
-    setPositiveMapColours,
-    changeContourLevel,
-    setReContourMapOnlyOnMouseUp,
-    resetMapContourSettings,
-}  from "./mapContourSettingsSlice";
-export {
-    setConnectedMolecule,
-    enableUpdatingMaps,
-    disableUpdatingMaps,
-    setReflectionMap,
-    setFoFcMap,
-    setTwoFoFcMap,
-    setReflectionMapMolNo,
-    overwriteMapUpdatingScores,
-    setCurrentScores,
-    setConnectedMoleculeMolNo,
-    setFoFcMapMolNo,
-    setTwoFoFcMapMolNo,
-    removeMapUpdatingScore,
-    setShowScoresToast,
-    addMapUpdatingScore,
-    triggerUpdate,
-    resetMoleculeMapUpdates,
-}  from "./moleculeMapUpdateSlice";
-export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

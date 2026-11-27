@@ -6,7 +6,8 @@ import { ThreeDObject, centreOfObject, extentOfObject, hasOrientation } from '..
 import { MOORHEN_GIZMO_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
-import { mapStyleOf } from '../WebGPUComponents/mapContour/setting'
+import { selectMapRepresentation } from '../store/mapRepresentationsSlice'
+import { currentRadius } from '../utils/Representation/mapRepresentationData'
 import { MapSlicePlacement, sliceHalfSize } from '../utils/mapSlice/mapSlice'
 
 /**
@@ -193,24 +194,25 @@ const ringSpan = (orientation: number[], scale: number) => {
  */
 export type HandleTarget =
     | { kind: 'object'; object: ThreeDObject; centre: [number, number, number]; extent: number; turnable: boolean }
-    | { kind: 'mapSlice'; molNo: number; slice: MapSlicePlacement; centre: [number, number, number]; extent: number; turnable: true }
+    | { kind: 'mapSlice'; representationId: string; slice: MapSlicePlacement; centre: [number, number, number]; extent: number; turnable: true }
 
 export const handleTargetOf = (state: RootState): HandleTarget | null => {
-    const molNo = state.generalStates.movingMapSlice
-    if (molNo !== null && molNo !== undefined) {
-        const settings = state.mapContourSettings
-        const slice = settings.mapSlices.find(item => item.molNo === molNo)
+    const representationId = state.generalStates.movingMapSlice
+    if (representationId !== null && representationId !== undefined) {
+        // The slice of a map's display record (map-display.md)
+        const record = selectMapRepresentation(state, representationId)
+        const slice = record?.slice
         // A slice offers handles only while it is on the screen.
-        if (!slice || !settings.visibleMaps.includes(molNo) || mapStyleOf(settings, molNo) !== 'slice') {
+        if (!slice || !record.visible || record.style !== 'slice') {
             return null
         }
-        const map = state.maps.find(item => item.molNo === molNo)
+        const map = state.maps.find(item => item.uniqueId === record.mapUid)
         return {
             kind: 'mapSlice',
-            molNo,
+            representationId,
             slice: { origin: slice.origin, orientation: slice.orientation },
             centre: [...slice.origin] as [number, number, number],
-            extent: sliceHalfSize(settings, molNo, map?.suggestedRadius),
+            extent: sliceHalfSize(currentRadius(record), map?.suggestedRadius),
             turnable: true,
         }
     }

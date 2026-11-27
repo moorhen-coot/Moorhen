@@ -30,14 +30,19 @@ const snackbarSlice = createSlice({
         @param uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
         enqueueSnackbar: (state, action: PayloadAction<SnackbarPayload>
         ) => {
-            const existingTag = state.findIndex(snackbar => (snackbar.tag === action.payload.tag));
-            if (existingTag !== -1) {
-                state.splice(existingTag, 1);
+            // A tagged snackbar replaces the one with its tag. Untagged ones all have `tag` undefined, so they must not
+            // be matched by it: each untagged snackbar used to replace the one before (a scene's "uses maps that are not
+            // loaded" warning was gone at once, replaced by the switch's "Loaded")
+            if (action.payload.tag !== undefined) {
+                const existingTag = state.findIndex(snackbar => snackbar.tag === action.payload.tag);
+                if (existingTag !== -1) {
+                    state.splice(existingTag, 1);
+                }
             }
 
             const existingMessage = state.findIndex(snackbar => (snackbar.message === action.payload.message));
             if (existingMessage !== -1) {
-                state.splice(existingMessage, 1);2
+                state.splice(existingMessage, 1);
             }
                  
             state.push({

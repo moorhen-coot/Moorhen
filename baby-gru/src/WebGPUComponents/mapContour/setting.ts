@@ -13,39 +13,24 @@
  */
 export const gpuMapContourSetting = { enabled: false, active: false, wanted: true };
 
-/** The map contour settings that decide a map's style (state.mapContourSettings). */
-export interface MapStyleSettings {
-    mapStyles?: readonly { molNo: number; style: string }[];
-    defaultMapLitLines?: boolean;
-    defaultMapSurface?: boolean;
-}
-
-/** How a map is drawn: its own style if it has one, else the default, as MoorhenMapManager decides. */
-export function mapStyleOf(settings: MapStyleSettings | undefined, molNo: number): string {
-    return settings?.mapStyles?.find(item => item.molNo === molNo)?.style
-        ?? (settings?.defaultMapLitLines ? "lit-lines" : settings?.defaultMapSurface ? "solid" : "lines");
-}
-
-/** What applyGpuMapContours needs of a map. */
-interface ContouredMap {
-    molNo: number;
-    hideMapContour(): void;
-    drawMapContour(): unknown;
-}
+const modeListeners = new Set<() => void>();
 
 /**
- * Bring the maps in line with gpuMapContourSetting after `active` or `wanted` changed: when maps
- * move to the GPU, Coot's contours are taken off; when they move back, Coot contours the visible
- * maps again. Nothing happens if the outcome is unchanged.
+ * Bring `enabled` in line with `active` and `wanted` after either changed, and tell the listeners
+ * (onGpuMapContoursChanged) if it changed: the map display driver then takes Coot's contours off
+ * when maps move to the GPU, and has Coot contour the visible maps again when they move back.
  */
-export function applyGpuMapContours(maps: readonly ContouredMap[], visibleMaps: readonly number[]): void {
+export function applyGpuMapContours(): void {
     const enabled = gpuMapContourSetting.active && gpuMapContourSetting.wanted;
     if (enabled === gpuMapContourSetting.enabled) return;
     gpuMapContourSetting.enabled = enabled;
-    maps.forEach(map => {
-        if (enabled) map.hideMapContour();
-        else if (visibleMaps.includes(map.molNo)) map.drawMapContour();
-    });
+    modeListeners.forEach(listener => listener());
+}
+
+/** Be told when `gpuMapContourSetting.enabled` changes. Returns the unsubscribe. */
+export function onGpuMapContoursChanged(listener: () => void): () => void {
+    modeListeners.add(listener);
+    return () => { modeListeners.delete(listener); };
 }
 
 const dataListeners = new Set<() => void>();

@@ -57,9 +57,10 @@ import type { CreateRepresentationParams, PublicRepresentationStyles } from "@/u
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
-import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
+import { WorkerWrapper } from "./CommandCentre/WorkerWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
+import { MapDisplayDriver } from "./MapDisplayDriver";
 import { MoorhenUserSceneManager } from "./UserSceneManager";
 import { type DefaultRepresentationStyle, setDefaultRepresentationStyle } from "../store/sceneSettingsSlice";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
@@ -129,7 +130,7 @@ export class MoorhenInstance extends StoreExtension {
     private _preferencesChangeCallbacks = new Set<(stored: StoredPreferences) => void>();
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    private _cootCommand: CootCommandWrapper;
+    private _workerCommand: WorkerWrapper;
     private _menuSystem: MoorhenMenuSystem;
     private _uiExtensions = new MoorhenUiExtensions();
     private ready: boolean = false;
@@ -137,6 +138,7 @@ export class MoorhenInstance extends StoreExtension {
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
     private storeSyncsUnsubscribe: (() => void) | null = null;
+    private _mapDisplay: MapDisplayDriver | null = null;
     private _userScene: MoorhenUserSceneManager;
 
     /**
@@ -229,13 +231,27 @@ export class MoorhenInstance extends StoreExtension {
     public setCommandCentre(commandCentre: CommandCentre): void {
         this._commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
-        this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+        this._workerCommand = new WorkerWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
     /**
-     * The low-level wrapper used to send commands to the Coot worker.
+     * The typed API to send commands to the worker, queued and sent one at a time (see {@link WorkerWrapper}).
      */
-    public get cootCommand(): CootCommandWrapper {
-        return this._cootCommand;
+    public get workerCommand(): WorkerWrapper {
+        return this._workerCommand;
+    }
+
+    /**
+     * Draws the maps from their representation records (see {@link MapDisplayDriver}); null before `startInstance`.
+     */
+    public get mapDisplay(): MapDisplayDriver | null {
+        return this._mapDisplay;
+    }
+
+    /**
+     * @deprecated Renamed {@link MoorhenInstance.workerCommand}.
+     */
+    public get cootCommand(): WorkerWrapper {
+        return this._workerCommand;
     }
 
     /**
@@ -1927,9 +1943,12 @@ export class MoorhenInstance extends StoreExtension {
             await newCommandCentre.init();
         }
 
-        this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
+        this.workerCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.storeSyncsUnsubscribe?.();
         this.storeSyncsUnsubscribe = startStoreSyncs(this);
+        this._mapDisplay?.stop();
+        this._mapDisplay = new MapDisplayDriver(this);
+        this._mapDisplay.start();
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
         await Promise.all(this.readyCallbacks.map(callback => callback()));
@@ -1951,6 +1970,8 @@ export class MoorhenInstance extends StoreExtension {
         }
         this.storeSyncsUnsubscribe?.();
         this.storeSyncsUnsubscribe = null;
+        this._mapDisplay?.stop();
+        this._mapDisplay = null;
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;

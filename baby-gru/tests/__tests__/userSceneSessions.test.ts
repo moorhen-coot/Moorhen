@@ -10,7 +10,15 @@ import { ColourRule } from "@/utils/MoorhenColourRule";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
 import { readSceneList } from "@/store/userSceneFormat";
+import {
+    selectPrimaryMapRepresentation,
+    setPrimaryMapRepresentation,
+    setPrimaryMapRepresentationAlpha,
+} from "@/store/mapRepresentationsSlice";
+import { currentAlpha } from "@/utils/Representation/mapRepresentationData";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { moorhensession } from "@/protobuf/MoorhenSession";
+import { removeMap } from "@/store/mapsSlice";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
@@ -536,6 +544,93 @@ describe("vectors and 3D shapes", () => {
     });
 });
 
+describe("maps", () => {
+    // The map representation records (.roadmaps/map-display.md): the scene's `maps` section
+    const loadMaps = async () =>
+        (
+            await cloud.instance.files.loadMtz(jobUrl("5a3h_sigmaa.mtz"), [
+                { name: "map", columns: { F: "FWT", PHI: "PHWT" } },
+                { name: "diff-map", columns: { F: "DELFWT", PHI: "PHDELWT" }, isDifference: true },
+            ])
+        ).map(result => result.uniqueID);
+    const recordOf = (mapUid: string) => selectPrimaryMapRepresentation(state(), mapUid);
+    const change = (mapUid: string, changes: Parameters<typeof setPrimaryMapRepresentation>[0]["changes"]) =>
+        cloud.store.dispatch(setPrimaryMapRepresentation({ mapUid, changes }));
+
+    test("belong to the scene: each scene shows them its own way", async () => {
+        const { userScene } = cloud.instance;
+        const [mapUid] = await loadMaps();
+        const shownInGeneral = recordOf(mapUid);
+
+        // Model Building, never shown: starts with what is shown, then lives on its own
+        await userScene.select("Model Building");
+        expect(recordOf(mapUid)).toEqual(shownInGeneral);
+        change(mapUid, { style: "solid", contourLevel: shownInGeneral.contourLevel * 2 });
+        cloud.store.dispatch(setPrimaryMapRepresentationAlpha({ mapUid, alpha: 0.4 }));
+
+        await userScene.select("General");
+        expect(recordOf(mapUid)).toEqual(shownInGeneral);
+        await userScene.select("Model Building");
+        expect(recordOf(mapUid)).toMatchObject({ style: "solid", contourLevel: shownInGeneral.contourLevel * 2 });
+        expect(currentAlpha(recordOf(mapUid))).toBe(0.4);
+    });
+
+    test("a map shown as the scene shows it is not redrawn", async () => {
+        const { userScene } = cloud.instance;
+        await loadMaps();
+        const snapshotId = userScene.takeSnapshot();
+        const shown = state().mapRepresentations.representations;
+        await userScene.select(snapshotId);
+        expect(state().mapRepresentations.representations).toBe(shown);
+    });
+
+    test("a map loaded after the scene was saved keeps its own display there", async () => {
+        const { userScene } = cloud.instance;
+        const before = userScene.takeSnapshot("Before the maps");
+        const [mapUid] = await loadMaps();
+        change(mapUid, { contourLevel: 0.123 });
+        await userScene.select(before);
+        expect(recordOf(mapUid).contourLevel).toBe(0.123);
+    });
+
+    test("are saved with the scenes in a session: opacity per style, radius per draw mode, colouring map, slice", async () => {
+        const { userScene } = cloud.instance;
+        const [mapUid, diffUid] = await loadMaps();
+        const gradient: [number, [number, number, number]][] = [[0, [255, 0, 0]], [1, [0, 0, 255]]];
+        change(mapUid, {
+            alpha: { lines: 0.3, solid: 0.6, "lit-lines": 0.9 },
+            radius: { local: 17, full: 33 },
+            colourByMap: { mapUid: diffUid, min: -0.4, max: 0.4, gradient },
+            slice: { origin: [1, 2, 3], orientation: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], nodalLines: true, contourSpacing: "geometric" },
+        });
+        await userScene.select("Model Building");
+        change(diffUid, { visible: false });
+        const saved = { map: recordOf(mapUid), diff: recordOf(diffUid) };
+        // With the map data (the default session leaves it out), as a protobuf file: JSON cannot carry it
+        const session = await cloud.instance.getTimeCapsuleRef().current.fetchSession(true);
+        const bytes = moorhensession.Session.encode(moorhensession.Session.fromObject(session)).finish();
+
+        expect(await MoorhenTimeCapsule.loadSessionFromArrayBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, cloud.instance)).toBe(0);
+        // The shown scene's maps as they were, ids and all; the other scene's when it is shown
+        expect(recordOf(mapUid)).toEqual(saved.map);
+        expect(recordOf(diffUid)).toEqual(saved.diff);
+        await userScene.select("General");
+        expect(recordOf(diffUid).visible).toBe(true);
+    });
+
+    test("a scene showing a map that is not loaded says so", async () => {
+        const { userScene } = cloud.instance;
+        const [mapUid] = await loadMaps();
+        const snapshotId = userScene.takeSnapshot("With the maps");
+        // As the map card's delete does
+        const map = cloud.instance.getMap(mapUid);
+        await map.delete();
+        cloud.store.dispatch(removeMap(map));
+        await userScene.select(snapshotId);
+        expect(state().snackBars.some(snackbar => /maps that are not loaded: map\b/.test(snackbar.message))).toBe(true);
+    });
+});
+
 describe("a session with a molecule without default colour rules", () => {
     // A session file (protobuf) does not write an empty list, so the field comes back absent. Loading
     // used to stop at that molecule (a docked ligand, LTR_model2.pb), leaving no molecule loaded.
@@ -552,7 +647,7 @@ describe("a session with a molecule without default colour rules", () => {
 });
 
 describe("a session saved by Moorhen 1.0.1, before scenes", () => {
-    // tests/test_data/session/1.0.1.pb, as 1.0.1 wrote it but without its two maps
+    // tests/test_data/session/1.0.1-no-maps.pb, as 1.0.1 wrote it but without its two maps
     const SESSION_MOLECULE_UID = "d2216c9c-ef0d-48f7-9b71-e38b92349348";
 
     test("becomes the General scene, replacing the scenes there were", async () => {
@@ -561,7 +656,7 @@ describe("a session saved by Moorhen 1.0.1, before scenes", () => {
         userScene.takeSnapshot();
         await userScene.select("Model Building");
 
-        const file = readTestData("session/1.0.1.pb", null) as Buffer;
+        const file = readTestData("session/1.0.1-no-maps.pb", null) as Buffer;
         const buffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
         expect(await MoorhenTimeCapsule.loadSessionFromArrayBuffer(buffer, cloud.instance)).toBe(0);
 

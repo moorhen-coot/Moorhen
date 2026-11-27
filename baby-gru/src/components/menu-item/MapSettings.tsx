@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux";
-import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectPrimaryMapRepresentation, setMapRepresentation, setMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -12,6 +12,8 @@ export const MapSettings = (props: {
     disabled: boolean;
 }) => {
     const dispatch = useDispatch();
+    // The map's first representation
+    const selectedId = useSelector((state: moorhen.State) => selectPrimaryMapRepresentation(state, props.map.uniqueId)?.id);
 
     const menuItemText = "Draw settings";
 
@@ -22,7 +24,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "solid"}
                     onChange={() => {
-                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "solid" ? "lines" : "solid" }));
+                        if (selectedId) dispatch(setMapRepresentation({ id: selectedId, changes: { style: props.mapStyle === "solid" ? "lines" : "solid" } }));
                     }}
                     label="Draw as a surface"
                 />
@@ -32,7 +34,7 @@ export const MapSettings = (props: {
                     type="switch"
                     checked={props.mapStyle === "lit-lines"}
                     onChange={() => {
-                        dispatch(setMapStyle({ molNo: props.map.molNo, style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" }));
+                        if (selectedId) dispatch(setMapRepresentation({ id: selectedId, changes: { style: props.mapStyle === "lit-lines" ? "lines" : "lit-lines" } }));
                     }}
                     label="Activate lit lines"
                 />
@@ -44,7 +46,8 @@ export const MapSettings = (props: {
                 scale="linear"
                 sliderTitle="Opacity"
                 value={props.mapOpacity}
-                setValue={(newVal: number) => dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newVal }))}
+                // The opacity of the style in use (each style keeps its own)
+                setValue={(newVal: number) => selectedId && dispatch(setMapRepresentationAlpha({ id: selectedId, alpha: newVal }))}
             />
         </>
     );

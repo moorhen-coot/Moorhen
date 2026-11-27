@@ -1,0 +1,2 @@
+# Session files (protobuf) are binary: no line diffs or line counts for them
+*.pb binary

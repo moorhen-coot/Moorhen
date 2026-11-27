@@ -1,9 +1,28 @@
 import { Store } from "@reduxjs/toolkit";
-import { gpuMapContourSetting, notifyMapDataChanged } from "../WebGPUComponents/mapContour/setting";
+import { notifyMapDataChanged } from "../WebGPUComponents/mapContour/setting";
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setMapSlice, setOrigin, setRequestDrawScene, setZoom } from "../store";
+import { setDisplayBuffers, setOrigin, setZoom } from "../store";
+import {
+    selectMapRepresentation,
+    selectMapRepresentationsOfMap,
+    selectPrimaryMapRepresentation,
+    setMapRepresentation,
+    setMapRepresentationSlice,
+    setMapVisible,
+} from "../store/mapRepresentationsSlice";
+import {
+    type MapInitialDisplay,
+    type MapRepresentationData,
+    type Vec3,
+    createDefaultMapRepresentationData,
+    currentAlpha,
+    currentRadius,
+    defaultColourByMapGradient,
+    withChanges,
+} from "./Representation/mapRepresentationData";
+import type { GradientColourTable } from "../components/inputs/MoorhenGradientPicker/gradientPresets";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
 import type { MapUnitCellGrid } from "../WebGPUComponents/mapContour/mapContourBox";
 import { makeMapGridSampler, type MapGridSampler } from "./mapSlice/mapGridSampler";
@@ -13,14 +32,14 @@ import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 import { guid, hsvToRgb, rgbToHsv } from "./utils";
 import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./mapHeaders";
+import { maskedStatistics } from "./maskedMap";
 import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
 
-const _DEFAULT_CONTOUR_LEVEL = 0.8;
-const _DEFAULT_RADIUS = 13;
-const _DEFAULT_STYLE = "lines";
-const _DEFAULT_ALPHA = 1.0;
+/** The map whose values colour another map's contour, from `min` to `max` along `gradient` */
+export type ColouringMap = { molNo: number; min: number; max: number; gradient?: GradientColourTable };
+
 const _DEFAULT_MAP_COLOUR = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071 };
 const _DEFAULT_POSITIVE_MAP_COLOUR = { r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645 };
 const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645 };
@@ -32,30 +51,30 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * @property {string} style - Indicates whether the rendered map is drawn as lines, lit lines or a solid surphace
  * @property {boolean} isDifference - Indicates whether this is a difference map instance
  * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
- * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {CommandCentre} commandCentre - The instance's command centre (Coot)
  * @constructor
- * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
- * @param {Store} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
+ * @param {MoorhenInstance} moorhenInstance - The Moorhen instance the map belongs to
+ *
+ * A map is drawn from its representations (map-display.md): records in the store, given to it by the instance's map
+ * display driver once the map is in the store (`addMap`), and taken down when it leaves it (`removeMap`).
+ * `drawMapContour()` does nothing for a map not in the store.
  * @example
- * import { MoorhenMap } from "moorhen";
- *import { MoorhenInstance } from '.';
-
- * // Create a new map
- * const map = new MoorhenMap(commandCentre, glRef);
+ * import { MoorhenMap, addMap, removeMap } from "moorhen";
  *
- * // Load file from a URL
+ * // Create a new map and load it from a URL
+ * const map = new MoorhenMap(moorhenInstance);
  * const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP",
-                            FreeR: "FREE", isDifference: false, useWeight: false,
-                            calcStructFact: true }
- * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
+ *     FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true };
+ * await map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
  *
- * // Draw map and set view on map centre
- * map.drawMapContour();
- * map.centreOnMap();
+ * // Show it: in the store, the map gets its first representation and is drawn
+ * moorhenInstance.dispatch(addMap(map));
+ * await map.centreOnMap();
  *
- * // Delete map
- * map.delete();
-*/
+ * // Close it: off the screen, then out of Coot
+ * moorhenInstance.dispatch(removeMap(map));
+ * await map.delete();
+ */
 
 // CCP4 numbers non-standard settings as base + 1000*n (e.g. 3018 = P 2 21 21), which spaceGroupList
 // doesn't cover; fall back to the base group so these aren't mistaken for P1 (and hence EM).
@@ -79,15 +98,22 @@ export class MoorhenMap {
     molNo: number;
     store: Store;
     commandCentre: CommandCentre | null;
-    isOriginLocked: boolean;
-    drawOrigin: [number, number, number];
+    /**
+     * The display this map gets when it reaches the store (its first record, map-display.md), over the defaults: set
+     * it before adding the map. After that, change the map's record (`setPrimaryMapRepresentation`).
+     */
+    initialDisplay: MapInitialDisplay | null = null;
+    /** Before the map has a display record (map-display.md): the origin lock, draw origin and colouring map */
+    private ownOriginLocked = false;
+    private ownDrawOrigin: [number, number, number] | null = null;
+    private ownOtherMapForColouring: ColouringMap | null = null;
     mapCentre: [number, number, number];
     suggestedContourLevel: number;
     suggestedRadius: number;
     levelRange: [number, number];
-    webMGContour: boolean;
     showOnLoad: boolean;
-    displayObjects: any;
+    /** The 2D slice's buffers (drawMapSlice). 3D contours are their representations' (MapRepresentation) */
+    displayObjects: { Slice: any[] };
     cellCentre: [number, number, number];
     isDifference: boolean;
     /**
@@ -104,11 +130,12 @@ export class MoorhenMap {
     associatedReflectionFileName: string;
     uniqueId: string;
     mapRmsd: number;
+    /** A masked map (useMaskedRmsd): `mapRmsd` is its rms inside the mask, Coot's over the whole box is here */
+    isMasked: boolean = false;
+    wholeMapRmsd: number | null = null;
     mapMean: number;
     suggestedMapWeight: number;
     mapWeight: number;
-    otherMapForColouring: { molNo: number; min: number; max: number };
-    diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
     defaultPositiveMapColour: { r: number; g: number; b: number };
     defaultNegativeMapColour: { r: number; g: number; b: number };
@@ -137,10 +164,8 @@ export class MoorhenMap {
         this.molNo = null;
         this.commandCentre = moorhenInstance.commandCentre;
         this.levelRange = null;
-        this.webMGContour = false;
         this.showOnLoad = true;
-        // Coot: the 3D contours. Slice: the 2D contour slice (drawMapSlice).
-        this.displayObjects = { Coot: [], Slice: [] };
+        this.displayObjects = { Slice: [] };
         this.isDifference = false;
         this.isCube = false;
         this.hasReflectionData = false;
@@ -154,11 +179,7 @@ export class MoorhenMap {
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
-        this.isOriginLocked = false;
-        this.drawOrigin = null;
         this.cellCentre = null;
-        this.otherMapForColouring = null;
-        this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
         this.defaultMapColour = _DEFAULT_MAP_COLOUR;
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR;
         this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR;
@@ -213,12 +234,8 @@ export class MoorhenMap {
      */
     async delete(): Promise<void> {
         const displayBuffers = this.store.getState().glRef.displayBuffers;
-        let newBuffers = displayBuffers;
-        Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-            if (this.displayObjects[displayObject].length > 0) {
-                newBuffers = this.clearBuffersOfStyle(displayObject, newBuffers);
-            }
-        });
+        // The slice's; its contours' are taken down with its representations (MapDisplayDriver, on removeMap)
+        const newBuffers = this.displayObjects.Slice.length > 0 ? this.clearBuffersOfStyle("Slice", displayBuffers) : displayBuffers;
         const promises = [
             this.commandCentre.cootCommand(
                 {
@@ -658,8 +675,101 @@ export class MoorhenMap {
     }
 
     /**
-     * Get map contour parameters from the redux store
-     * @returns {object} A description of map contour parameters as described in the redux store
+     * The map's primary display record (map-display.md): what it is drawn from. Undefined until the map display
+     * driver has given the map its records (once the map is in the store).
+     */
+    get primaryRepresentation(): MapRepresentationData | undefined {
+        const state = this.store?.getState?.();
+        return state?.mapRepresentations ? selectPrimaryMapRepresentation(state, this.uniqueId) : undefined;
+    }
+
+    /**
+     * The representation drawn as the map's 2D slice (style "slice"), whichever it is: one per map for now (the slice
+     * buffers are the map's, `displayObjects.Slice`). Undefined if none is.
+     */
+    get sliceRepresentation(): MapRepresentationData | undefined {
+        const state = this.store?.getState?.();
+        return state?.mapRepresentations ? selectMapRepresentationsOfMap(state, this.uniqueId).find(record => record.style === "slice") : undefined;
+    }
+
+    private changePrimaryRepresentation(record: MapRepresentationData, changes: Parameters<typeof setMapRepresentation>[0]["changes"]): void {
+        this.store.dispatch(setMapRepresentation({ id: record.id, changes }));
+    }
+
+    /** Whether the map is drawn around a fixed centre ("Draw full map", EM maps) rather than following the view */
+    get isOriginLocked(): boolean {
+        const record = this.primaryRepresentation;
+        return record ? record.originLock !== null : this.ownOriginLocked;
+    }
+
+    set isOriginLocked(locked: boolean) {
+        this.ownOriginLocked = locked;
+        const record = this.primaryRepresentation;
+        if (!record || locked === (record.originLock !== null)) {
+            return;
+        }
+        if (!locked) {
+            // Kept for locking again: the centre the record had (a scene's or a session's, not only one set here)
+            this.ownDrawOrigin = record.originLock.centre.map(coord => -coord) as [number, number, number];
+        } else if (!this.ownDrawOrigin) {
+            this.ownDrawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
+        }
+        this.changePrimaryRepresentation(record, { originLock: locked ? { centre: this.ownDrawOrigin.map(coord => -coord) as Vec3 } : null });
+    }
+
+    /** Where a locked map is drawn around, as a scene origin (negated world coordinates); kept while unlocked */
+    get drawOrigin(): [number, number, number] | null {
+        const centre = this.primaryRepresentation?.originLock?.centre;
+        return centre ? (centre.map(coord => -coord) as [number, number, number]) : this.ownDrawOrigin;
+    }
+
+    set drawOrigin(origin: [number, number, number] | null) {
+        this.ownDrawOrigin = origin ? ([...origin] as [number, number, number]) : null;
+        const record = this.primaryRepresentation;
+        if (origin && record?.originLock) {
+            const centre = origin.map(coord => -coord) as Vec3;
+            if (centre.some((coord, i) => coord !== record.originLock.centre[i])) {
+                this.changePrimaryRepresentation(record, { originLock: { centre } });
+            }
+        }
+    }
+
+    /** The map whose values colour this one's contour, or null */
+    get otherMapForColouring(): ColouringMap | null {
+        const record = this.primaryRepresentation;
+        if (!record) {
+            return this.ownOtherMapForColouring;
+        }
+        if (!record.colourByMap) {
+            return null;
+        }
+        const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.uniqueId === record.colourByMap.mapUid);
+        const { min, max, gradient } = record.colourByMap;
+        return otherMap ? { molNo: otherMap.molNo, min, max, gradient } : null;
+    }
+
+    set otherMapForColouring(other: ColouringMap | null) {
+        this.ownOtherMapForColouring = other ? { ...other } : null;
+        const record = this.primaryRepresentation;
+        if (!record) {
+            return;
+        }
+        let colourByMap: MapRepresentationData["colourByMap"] = null;
+        if (other) {
+            const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.molNo === other.molNo);
+            // Without a gradient of its own, the one it has, else the default
+            const gradient = other.gradient ?? record.colourByMap?.gradient ?? defaultColourByMapGradient();
+            colourByMap = otherMap ? { mapUid: otherMap.uniqueId, min: other.min, max: other.max, gradient } : null;
+        }
+        if (JSON.stringify(colourByMap) !== JSON.stringify(record.colourByMap)) {
+            this.changePrimaryRepresentation(record, { colourByMap });
+        }
+    }
+
+    /**
+     * Get map contour parameters: from the map's primary display record (colours 0-1, the opacity of the style in
+     * use, the radius of the draw mode in use)
+     * @returns {object} A description of map contour parameters
      */
     getMapContourParams(): {
         mapRadius: number;
@@ -672,48 +782,40 @@ export class MoorhenMap {
         /** Whether the surface thickens where it is seen edge-on. */
         viewDependentTransparency: boolean;
     } {
-        const state = this.store.getState();
-        const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius;
-        const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel;
-        const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha;
-        const style = state.mapContourSettings.mapStyles.find(item => item.molNo === this.molNo)?.style;
-        const mapColour = state.mapContourSettings.mapColours.find(item => item.molNo === this.molNo)?.rgb;
-        const negativeMapColour = state.mapContourSettings.negativeMapColours.find(item => item.molNo === this.molNo)?.rgb;
-        const positiveMapColour = state.mapContourSettings.positiveMapColours.find(item => item.molNo === this.molNo)?.rgb;
+        // Not in the store yet: what its first record will be (MapDisplayDriver)
+        return this.getMapContourParamsOf(this.primaryRepresentation ?? this.prospectiveRepresentation());
+    }
+
+    private getMapContourParamsOf(record: MapRepresentationData): ReturnType<MoorhenMap["getMapContourParams"]> {
         return {
-            mapRadius: radius ? radius : _DEFAULT_RADIUS,
-            contourLevel: level ? level : _DEFAULT_CONTOUR_LEVEL,
-            mapAlpha: alpha ? alpha : _DEFAULT_ALPHA,
-            mapStyle: style ? style : _DEFAULT_STYLE,
-            mapColour: mapColour ? { r: mapColour.r / 255, g: mapColour.g / 255, b: mapColour.b / 255 } : this.defaultMapColour,
-            negativeMapColour: negativeMapColour
-                ? { r: negativeMapColour.r / 255, g: negativeMapColour.g / 255, b: negativeMapColour.b / 255 }
-                : this.defaultNegativeMapColour,
-            positiveMapColour: positiveMapColour
-                ? { r: positiveMapColour.r / 255, g: positiveMapColour.g / 255, b: positiveMapColour.b / 255 }
-                : this.defaultPositiveMapColour,
-            viewDependentTransparency:
-                state.mapContourSettings.mapViewDependentTransparency?.includes(this.molNo) ?? false,
+            mapRadius: currentRadius(record),
+            contourLevel: record.contourLevel,
+            mapAlpha: currentAlpha(record),
+            mapStyle: record.style,
+            mapColour: record.colour ?? this.defaultMapColour,
+            positiveMapColour: record.positiveColour ?? this.defaultPositiveMapColour,
+            negativeMapColour: record.negativeColour ?? this.defaultNegativeMapColour,
+            viewDependentTransparency: record.viewDependentTransparency ?? false,
         };
     }
 
+    /** The record the map display driver will make for this map when it reaches the store (mapDisplayRecords.ts) */
+    private prospectiveRepresentation(): MapRepresentationData {
+        const settings = this.store?.getState?.()?.mapContourSettings;
+        const preferences = { defaultMapLitLines: !!settings?.defaultMapLitLines, defaultMapSurface: !!settings?.defaultMapSurface };
+        return withChanges(createDefaultMapRepresentationData(this, preferences), this.initialDisplay ?? {});
+    }
+
     /**
-     * Contour the map with parameters from the redux store.
+     * Contour the map again, e.g. after a display change made outside the store. The map is drawn by its
+     * representations (see MapDisplayDriver); resolves once they are drawn.
      *
      * The map's data is taken to be as it was: the GPU contours keep their copy of it. After a
      * command that changes the data, call redrawWithNewData instead, or markDataChanged where the
-     * map is not to be contoured now (a hidden map). Moving the origin or changing the level does
-     * not come here.
+     * map is not to be contoured now (a hidden map).
      */
-    async drawMapContour(): Promise<void> {
-        const originState = this.store.getState().sceneSettings.origin;
-        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
-        if (mapStyle === "slice") {
-            if (this.displayObjects["Coot"].length > 0) this.hideMapContour();
-            return this.drawMapSlice();
-        }
-        const [x, y, z] = originState.map(coord => -coord) as [number, number, number];
-        return this.doCootContour(x, y, z, mapRadius, contourLevel, mapStyle);
+    drawMapContour(): Promise<void> {
+        return this.moorhenInstance?.mapDisplay?.redrawMap(this.uniqueId) ?? Promise.resolve();
     }
 
     /**
@@ -722,10 +824,10 @@ export class MoorhenMap {
      * again (markDataChanged), and Coot contours it as drawMapContour does.
      */
     async redrawWithNewData(): Promise<void> {
-        if (gpuMapContourSetting.enabled) {
-            const [x, y, z] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
-            await this.bringUpdatingMapsUpToDate(x, y, z, this.getMapContourParams().contourLevel);
-        }
+        // Always, not only with GPU contours: the representations' own contours do not ask Coot when the map is
+        // hidden or shown as a 2D slice, and a contour squashed by a newer one has not asked yet when this resolves.
+        const [x, y, z] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
+        await this.bringUpdatingMapsUpToDate(x, y, z, this.getMapContourParams().contourLevel);
         // Only now: a frame in between would fetch the map before Coot had brought it up to date,
         // and keep that.
         this.markDataChanged();
@@ -738,10 +840,11 @@ export class MoorhenMap {
      *
      * Coot does that lazily: a model change only notes that the maps need it, and the maps are
      * recalculated when a contour mesh is next asked for (molecules_container_t::
-     * get_map_contours_mesh), the flag and update_updating_maps being private. Contouring through
-     * Coot always asks; with the maps contoured on the GPU nothing does, so the map fetched would
-     * be the old one, and the R-factors read after this (UpdatingMapsManager) the old ones too.
-     * So ask for a token mesh, half an ångström across. Nothing to do if the maps are up to date.
+     * get_map_contours_mesh), the flag and update_updating_maps being private. Nothing else is sure
+     * to ask: with the maps contoured on the GPU, hidden, or shown as a 2D slice, no contour goes to
+     * Coot, so the map fetched would be the old one, and the R-factors read after this
+     * (UpdatingMapsManager) the old ones too. So ask for a token mesh, half an ångström across.
+     * Nothing to do if the maps are up to date.
      */
     private async bringUpdatingMapsUpToDate(x: number, y: number, z: number, contourLevel: number): Promise<void> {
         await this.commandCentre.cootCommand(
@@ -758,9 +861,12 @@ export class MoorhenMap {
      * Hide the map contour
      */
     hideMapContour(): void {
-        const displayBuffers = this.store.getState().glRef.displayBuffers;
-        const oldBuffers = this.clearBuffersOfStyle("Coot", displayBuffers);
-        this.store.dispatch(setDisplayBuffers([...oldBuffers]));
+        if (this.primaryRepresentation) {
+            // The map as a whole: all its representations (shown again together by setMapVisible)
+            this.store.dispatch(setMapVisible({ mapUid: this.uniqueId, visible: false }));
+        } else {
+            this.showOnLoad = false;
+        }
     }
 
     /** The map sampled anywhere, for its 2D slice: from its whole unit cell, fetched once per dataRevision. */
@@ -787,8 +893,8 @@ export class MoorhenMap {
 
     /**
      * Draw the map as a 2D slice: contour lines across a square in a plane (mapSlice.ts), as
-     * placed in the store (mapSlices). The first time, there is no slice yet: one is made through
-     * the centre of the view, facing down z, and kept there for next time.
+     * placed in its display record (`slice`, map-display.md). The first time, there is no slice
+     * yet: one is made through the centre of the view, facing down z, and kept there for next time.
      *
      * The square is twice the map's radius across. Contoured at the map's level - the outermost
      * contour - and in equal steps from there up to the slice's largest value, or doubling up to
@@ -799,17 +905,20 @@ export class MoorhenMap {
     async drawMapSlice(): Promise<void> {
         const call = ++this.sliceDrawCount;
         const state = this.store.getState();
-        let slice = state.mapContourSettings.mapSlices.find(item => item.molNo === this.molNo);
+        // The slice representation's own level, colours and opacity: not necessarily the map's first one
+        const owner = this.sliceRepresentation;
+        if (!owner) return;
+        let slice = owner.slice;
         if (!slice) {
             const origin = state.sceneSettings.origin.map(coord => -coord) as [number, number, number];
-            slice = { molNo: this.molNo, ...newMapSlice(origin) };
-            this.store.dispatch(setMapSlice(slice));
+            this.store.dispatch(setMapRepresentationSlice({ id: owner.id, changes: newMapSlice(origin) }));
+            slice = selectMapRepresentation(this.store.getState(), owner.id).slice;
         }
-        const { contourLevel, mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
-        const halfSize = sliceHalfSize(state.mapContourSettings, this.molNo, this.suggestedRadius);
-        const nodalLines = this.isDifference && state.mapContourSettings.mapSliceNodalLines.includes(this.molNo);
-        const spacing = state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === this.molNo)?.spacing
-            ?? DEFAULT_SLICE_CONTOUR_SPACING;
+        const params = this.getMapContourParamsOf(owner);
+        const { contourLevel, mapAlpha, mapColour, positiveMapColour, negativeMapColour } = params;
+        const halfSize = sliceHalfSize(params.mapRadius, this.suggestedRadius);
+        const nodalLines = this.isDifference && slice.nodalLines;
+        const spacing = slice.contourSpacing ?? DEFAULT_SLICE_CONTOUR_SPACING;
         const colours = this.isDifference
             ? { positive: positiveMapColour, negative: negativeMapColour }
             : { positive: mapColour, negative: mapColour };
@@ -819,8 +928,8 @@ export class MoorhenMap {
         const sampler = await this.getSliceSampler();
         if (call !== this.sliceDrawCount || !sampler) return;
         // Asked to stop being a slice, or hidden, while the grid was on its way.
-        const now = this.store.getState().mapContourSettings;
-        if (!now.visibleMaps.includes(this.molNo) || this.getMapContourParams().mapStyle !== "slice") return;
+        const record = selectMapRepresentation(this.store.getState(), owner.id);
+        if (!record?.visible || record.style !== "slice") return;
 
         // Up to the largest value in the slice, or the map: known only once the grid is here.
         const levels = spacing === "linear"
@@ -854,7 +963,7 @@ export class MoorhenMap {
      * Clear MGWebGL buffers of a given style for this map
      * @param {string} style - The map style that will be cleared
      */
-    clearBuffersOfStyle(style: string, displayBuffers: any[]): any[] {
+    clearBuffersOfStyle(style: "Slice", displayBuffers: any[]): any[] {
         //Empty existing buffers of this type
         let newBuffers = displayBuffers;
         this.displayObjects[style].forEach(buffer => {
@@ -865,387 +974,20 @@ export class MoorhenMap {
         return newBuffers;
     }
 
-    setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
-        const displayBuffers = this.store.getState().glRef.displayBuffers;
-        const {
-            mapAlpha, mapColour, positiveMapColour, negativeMapColour, viewDependentTransparency,
-        } = this.getMapContourParams();
-        const print_timing = false;
-        const t1 = performance.now();
-        const oldBuffers = this.clearBuffersOfStyle("Coot", displayBuffers);
-        let newBuffers = [];
-
-        try {
-            const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
-            objects
-                .filter(object => typeof object !== "undefined" && object !== null)
-                .forEach(object => {
-                    let object_positive;
-                    let object_negative;
-                    if (this.isDifference) {
-                        object_positive = structuredClone(object);
-                        object_negative = structuredClone(object);
-                        object_positive.idx_tri = [];
-                        object_negative.idx_tri = [];
-                        const tc = performance.now();
-                        if (print_timing) console.log("End clone", tc - t1);
-                        let i = 0;
-                        object.idx_tri.forEach((idxss: number[][]) => {
-                            let j = 0;
-                            const pos_idx = [];
-                            const neg_idx = [];
-                            idxss.forEach((idxs: number[]) => {
-                                const this_pos_idx = [];
-                                const this_neg_idx = [];
-                                for (let idx = 0; idx < idxs.length; idx++) {
-                                    const col = object.col_tri[i][j][idxs[idx] * 4];
-                                    if (col < 0.5) {
-                                        this_pos_idx.push(idxs[idx]);
-                                        diffMapColourBuffers.positiveDiffColour.push(idxs[idx] * 4);
-                                        object_positive.col_tri[i][j][idxs[idx] * 4] = positiveMapColour.r;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 1] = positiveMapColour.g;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 2] = positiveMapColour.b;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 3] = mapAlpha;
-                                    } else {
-                                        this_neg_idx.push(idxs[idx]);
-                                        diffMapColourBuffers.negativeDiffColour.push(idxs[idx] * 4);
-                                        object_negative.col_tri[i][j][idxs[idx] * 4] = negativeMapColour.r;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 1] = negativeMapColour.g;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 2] = negativeMapColour.b;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 3] = mapAlpha;
-                                    }
-                                }
-                                pos_idx.push(this_pos_idx);
-                                neg_idx.push(this_neg_idx);
-                                j++;
-                            });
-                            object_positive.idx_tri.push(pos_idx);
-                            object_negative.idx_tri.push(neg_idx);
-                            i++;
-                        });
-                        const tl = performance.now();
-                        if (print_timing) console.log("End loop", tl - t1);
-                    } else if (!keepCootColours) {
-                        if (mapAlpha < 0.98) {
-                            object.col_tri.forEach((cols: number[][]) => {
-                                cols.forEach((col: number[]) => {
-                                    for (let idx = 0; idx < col.length; idx += 4) {
-                                        col[idx] = mapColour.r;
-                                        col[idx + 1] = mapColour.g;
-                                        col[idx + 2] = mapColour.b;
-                                        col[idx + 3] = mapAlpha;
-                                    }
-                                });
-                            });
-                        }
-                        const tl = performance.now();
-                        if (print_timing) console.log("End loop", tl - t1);
-                    }
-                    if (this.isDifference) {
-                        const a = appendOtherData(object_positive, this.store, true);
-                        const b = appendOtherData(object_negative, this.store, true);
-                        if (mapAlpha < 0.99) {
-                            a[0].transparent = true;
-                            b[0].transparent = true;
-                        }
-                        buildBuffers(a, this.store);
-                        buildBuffers(b, this.store);
-                        newBuffers = [...newBuffers, ...a, ...b];
-                        const ta = performance.now();
-                        if (print_timing) console.log("End _appendOtherData", ta - t1);
-                        this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(
-                            diffMapColourBuffers.positiveDiffColour
-                        );
-                        this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(
-                            diffMapColourBuffers.negativeDiffColour
-                        );
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(b);
-                    } else if (!keepCootColours) {
-                        //console.log("DEBUG: Old buffers?", object.vert_tri[0][0],object.norm_tri[0][0])
-                        if (
-                            this.displayObjects["Coot"].length > 0 &&
-                            object.prim_types[0][0] === this.displayObjects["Coot"][0].bufferTypes[0]
-                        ) {
-                            //This may be broken!!!
-                            this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0];
-                            this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0];
-                            if (mapAlpha > 0.98) {
-                                //console.log("DEBUG: Old buffers setCustomColour")
-                                this.displayObjects["Coot"][0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                            } else {
-                                this.displayObjects["Coot"][0].triangleColours[0] = object.col_tri[0][0];
-                            }
-                            this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0];
-                            this.displayObjects["Coot"][0].isDirty = true;
-                            buildBuffers(this.displayObjects["Coot"], this.store);
-                            newBuffers = [...newBuffers, ...this.displayObjects["Coot"]];
-                        } else {
-                            const a = appendOtherData(object, this.store, true);
-                            if (mapAlpha > 0.98) {
-                                a[0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                            }
-                            this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                            buildBuffers(a, this.store);
-                            newBuffers = [...newBuffers, ...a];
-                        }
-
-                        const ta = performance.now();
-                        if (print_timing) console.log("End _appendOtherData", ta - t1);
-                        this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(
-                            diffMapColourBuffers.positiveDiffColour
-                        );
-                        this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(
-                            diffMapColourBuffers.negativeDiffColour
-                        );
-                    } else {
-                        //console.log("MOORHEN MAP do what keepCootColours wants")
-                        const a = appendOtherData(object, this.store, true);
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                        buildBuffers(a, this.store);
-                        newBuffers = [...newBuffers, ...a];
-                    }
-                });
-            const ts = performance.now();
-            if (print_timing) console.log("After _drawScene", ts - t1);
-        } catch (err) {
-            console.log(err);
-        }
-        const t2 = performance.now();
-        if (print_timing) console.log("Finished setupContourBuffers", t2 - t1);
-        // Labelled here rather than in each of the three branches above, which is the one point
-        // they all converge on. Descriptive only - see DisplayBuffer.statsLabel.
-        newBuffers.forEach(buf => { buf.statsLabel = this.isDifference ? "map (difference)" : "map"; });
-        // Here for the same reason as the label above: the one point the three branches converge
-        // on, so a buffer cannot be built down one of them and miss it. The shader ignores it
-        // unless the surface is actually transparent.
-        newBuffers.forEach(buf => { buf.viewDependentTransparency = viewDependentTransparency; });
-        this.store.dispatch(setDisplayBuffers([...oldBuffers, ...newBuffers]));
-    }
-
-    /**
-     * Draw the map contour around a given origin
-     * @param {number} x - Origin coord. X
-     * @param {number} y - Origin coord. Y
-     * @param {number} z - Origin coord. Z
-     * @param {number} radius - Radius around the origin that will be drawn
-     * @param {number} contourLevel - The map contour level
-     */
-    async doCootContour(
-        x: number,
-        y: number,
-        z: number,
-        radius: number,
-        contourLevel: number,
-        style: MapStyle
-    ): Promise<void> {
-        // Drawn as a 2D slice now (drawMapSlice), whatever this was asked for when it was queued.
-        if (style === "slice" || this.getMapContourParams().mapStyle === "slice") {
-            if (this.displayObjects["Coot"].length > 0) this.hideMapContour();
-            return;
-        }
-        if (gpuMapContourSetting.enabled) {
-            // Contoured on the GPU and drawn by the WebGPU main view instead (mapContour/setting.ts):
-            // nothing to ask Coot for, and nothing for the WebGL view.
-            if (this.displayObjects["Coot"].length > 0) this.hideMapContour();
-            return;
-        }
-        if (this.isOriginLocked) {
-            if (this.drawOrigin === null) {
-                this.drawOrigin = [-x, -y, -z];
-            } else {
-                x = -this.drawOrigin[0];
-                y = -this.drawOrigin[1];
-                z = -this.drawOrigin[2];
-            }
-        }
-
-        let returnType: string;
-        if (style === "solid") {
-            returnType = "mesh_perm";
-        } else if (style === "lit-lines") {
-            returnType = "lit_lines_mesh";
-        } else {
-            returnType = "lines_mesh";
-        }
-
-        let response: moorhen.WorkerResponse<any>;
-        if (this.otherMapForColouring !== null) {
-            response = await this.commandCentre.cootCommand(
-                {
-                    returnType: returnType,
-                    command: "get_map_contours_mesh_using_other_map_for_colours",
-                    commandArgs: [
-                        this.molNo,
-                        this.otherMapForColouring.molNo,
-                        x,
-                        y,
-                        z,
-                        radius,
-                        contourLevel,
-                        this.otherMapForColouring.min,
-                        this.otherMapForColouring.max,
-                        false,
-                    ],
-                },
-                false
-            );
-        } else {
-            response = await this.commandCentre.cootCommand(
-                {
-                    returnType: returnType,
-                    command: "get_map_contours_mesh",
-                    commandArgs: [this.molNo, x, y, z, radius, contourLevel],
-                },
-                false
-            );
-        }
-
-        const objects = [response.data.result.result];
-        this.setupContourBuffers(objects, this.otherMapForColouring !== null);
-    }
-
     /**
      * Set colouring for this map instance based on another map
      * @param {number} molNo - The imol for the other map
      * @param {number} min - The min value
      * @param {number} max - The max value
+     * @param gradient - The colours from min to max, as the gradient picker gives them (stops 0-1, colours 0-255);
+     * by default the one the map already has, else "Pool Party"
      */
-    setOtherMapForColouring(molNo: number, min: number = -0.9, max: number = 0.9) {
+    setOtherMapForColouring(molNo: number, min: number = -0.9, max: number = 0.9, gradient?: GradientColourTable) {
         if (molNo === null) {
             this.otherMapForColouring = null;
         } else {
-            this.otherMapForColouring = { molNo, min, max };
+            this.otherMapForColouring = { molNo, min, max, gradient };
         }
-    }
-
-    /**
-     * Fetch the colours for a difference map using values from redux store and redraw the map
-     * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @returns {Promise<void>}
-     */
-    async fetchDiffMapColourAndRedraw(type: "positiveDiffColour" | "negativeDiffColour"): Promise<void> {
-        if (!this.isDifference) {
-            console.error(
-                "Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.fetchColourAndRedraw instead..."
-            );
-            return;
-        }
-
-        const { mapAlpha, positiveMapColour, negativeMapColour } = this.getMapContourParams();
-        const mapColour = type === "positiveDiffColour" ? positiveMapColour : negativeMapColour;
-
-        if (mapAlpha < 0.99) {
-            this.displayObjects["Coot"].forEach((buffer, bufferIdx) => {
-                buffer.customColour = null;
-                buffer.transparent = true;
-                buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
-                    for (const idx of this.diffMapColourBuffers[type]) {
-                        colbuffer[idx] = mapColour.r;
-                        colbuffer[idx + 1] = mapColour.g;
-                        colbuffer[idx + 2] = mapColour.b;
-                    }
-                });
-                buffer.isDirty = true;
-                buffer.alphaChanged = true;
-            });
-        } else {
-            if (this.displayObjects["Coot"].length === 2) {
-                if (type === "positiveDiffColour") {
-                    this.displayObjects["Coot"][0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                    this.displayObjects["Coot"][0].transparent = false;
-                } else {
-                    this.displayObjects["Coot"][1].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                    this.displayObjects["Coot"][1].transparent = false;
-                }
-            }
-        }
-    }
-
-    /**
-     * Set the colours for a non-difference map using values from redux store
-     */
-    async fetchColourAndRedraw(): Promise<void> {
-        if (this.isDifference) {
-            console.error(
-                "Cannot use moorhen.Map.fetchColourAndRedraw to change difference map colour. Use moorhen.Map.fetchDiffMapColourAndRedraw instead..."
-            );
-            return;
-        }
-
-        if (this.otherMapForColouring !== null) {
-            this.otherMapForColouring = null;
-        }
-
-        const { mapAlpha, mapColour } = this.getMapContourParams();
-
-        this.displayObjects["Coot"].forEach(buffer => {
-            if (mapAlpha < 0.99) {
-                buffer.transparent = true;
-                buffer.alphaChanged = true;
-                buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, mapAlpha]);
-            } else {
-                buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                buffer.transparent = false;
-            }
-        });
-    }
-
-    /**
-     * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
-     */
-    /**
-     * Apply the view-dependent transparency setting to the buffers that are already drawn.
-     *
-     * A uniform, so there is nothing to rebuild: the contours stay exactly as they are and the
-     * next frame reads the new value. Recontouring to turn a switch on would be a round trip to
-     * Coot for a picture that is not changing shape.
-     */
-    applyViewDependentTransparency(): void {
-        const { viewDependentTransparency } = this.getMapContourParams();
-        this.displayObjects["Coot"].forEach(buffer => {
-            buffer.viewDependentTransparency = viewDependentTransparency;
-        });
-        this.store.dispatch(setRequestDrawScene(true));
-    }
-
-    async fetchMapAlphaAndRedraw(): Promise<void> {
-        const { mapAlpha, mapColour } = this.getMapContourParams();
-        this.displayObjects["Coot"].forEach(buffer => {
-            buffer.triangleColours.forEach(colbuffer => {
-                if (this.isDifference) {
-                    console.log("Setting alpha", mapAlpha);
-                }
-                for (let idx = 3; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = mapAlpha;
-                }
-            });
-            buffer.isDirty = true;
-            buffer.alphaChanged = true;
-            if (mapAlpha < 0.99) {
-                buffer.transparent = true;
-                if (buffer.customColour && buffer.customColour.length === 4) {
-                    buffer.customColour = null;
-                    if (this.isDifference) {
-                        console.log("Setting colours to", mapColour);
-                    }
-                    buffer.triangleColours.forEach(colbuffer => {
-                        for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                            colbuffer[idx] = mapColour.r;
-                            colbuffer[idx + 1] = mapColour.g;
-                            colbuffer[idx + 2] = mapColour.b;
-                        }
-                    });
-                }
-            } else {
-                buffer.transparent = false;
-                if (buffer.customColour && buffer.customColour.length === 4) {
-                    buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                }
-            }
-        });
-        buildBuffers(this.displayObjects["Coot"], this.store);
-        this.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -1329,6 +1071,8 @@ export class MoorhenMap {
         "suggestedRadius",
         "suggestedMapWeight",
         "mapRmsd",
+        "isMasked",
+        "wholeMapRmsd",
         "selectedColumns",
         "hasReflectionData",
         "associatedReflectionFileName",
@@ -1409,6 +1153,26 @@ export class MoorhenMap {
         }
 
         return result.data.result.result;
+    }
+
+    /**
+     * A masked map (most of its box exactly zero: maskedMap.ts) is measured by its rms inside the mask, not over the
+     * whole box: `mapRmsd` becomes that, so its load level (1σ), the map wizard, the σ shown and difference-map levels
+     * are in useful units. Coot's whole-map figure is kept in `wholeMapRmsd`. The refinement map weight, estimated
+     * before, is unchanged.
+     */
+    async useMaskedRmsd(): Promise<void> {
+        try {
+            const histogram = await this.getHistogram(2000, 1);
+            const masked = maskedStatistics(histogram);
+            if (masked) {
+                this.wholeMapRmsd = this.mapRmsd;
+                this.mapRmsd = masked.rmsd;
+                this.isMasked = true;
+            }
+        } catch (err) {
+            console.warn(`Map ${this.molNo}: could not tell whether it is masked`, err);
+        }
     }
 
     async guessMapRangeAndLevel(): Promise<[number, number, number]> {
@@ -1525,7 +1289,6 @@ export class MoorhenMap {
     }
 
 
-
     /**
      * Get suggested contour level, radius and map centre for this map instance
      */
@@ -1563,6 +1326,8 @@ export class MoorhenMap {
         ]);
 
         await this.estimateMapWeight()
+        // After the weight, which stays Coot's (refinement): from here on σ is the rms inside the mask
+        await this.useMaskedRmsd();
 
         if (this.isEM) {
 
@@ -1637,8 +1402,7 @@ export class MoorhenMap {
     async centreOnMap(): Promise<void> {
         if (this.isOriginLocked) {
             this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
-            const currentRadius = this.store.getState().mapContourSettings.mapRadii.find(map => map.molNo === this.molNo)?.radius ?? this.suggestedRadius ?? 20 /22
-            this.store.dispatch(setZoom(currentRadius /22))
+            this.store.dispatch(setZoom(this.getMapContourParams().mapRadius / 22));
             return;
         }
         if (this.mapCentre === null) {
@@ -1665,11 +1429,25 @@ export class MoorhenMap {
             false
         )) as moorhen.WorkerResponse<any>;
         return response.data.result.result;
-    }0
+    }
 
-    async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
+    /**
+     * The histogram of another map's values at the vertices of this map's contour, around the view (or its locked
+     * origin): what colouring this map by the other one spans.
+     * @param map2 - The other map's molNo.
+     * @param nBins - The number of bins.
+     * @param at - A representation's level, radius and locked centre (world coordinates; none: around the view) to
+     * contour at, else the first representation's.
+     */
+    async getVerticesHistogram(
+        map2: number,
+        nBins: number = 200,
+        at?: { contourLevel: number; radius: number; centre: [number, number, number] | null }
+    ): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;
-        if (this.isOriginLocked) {
+        if (at) {
+            [posX, posY, posZ] = at.centre ?? (this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number]);
+        } else if (this.isOriginLocked) {
             // Negated, not made positive. Both drawOrigin and mapCentre are stored the same way
             // round as the scene origin - the negative of the point they refer to - so the way
             // back is a sign change. Math.abs happens to agree whenever that point lies in the
@@ -1683,7 +1461,9 @@ export class MoorhenMap {
             [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
         }
 
-        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
+        const params = this.getMapContourParams();
+        const mapRadius = at?.radius ?? params.mapRadius;
+        const contourLevel = at?.contourLevel ?? params.contourLevel;
         const response = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_vertices_histogram",
@@ -1794,14 +1574,9 @@ export class MoorhenMap {
         return fileType === "gltf" ? correctExportedGltf(exported) : exported;
     }
 
-
+    /** Lock (draw the whole map around a fixed centre: the last one, else the view) or unlock the map's origin */
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;
-        // Coot sets drawOrigin on its first locked contour, but GPU contours never go through
-        // doCootContour, so fix it here. Same convention: the view origin as stored in the scene.
-        if (val && this.drawOrigin === null) {
-            this.drawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
-        }
     }
 
 }

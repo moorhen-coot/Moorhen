@@ -3,6 +3,7 @@
  * IDs refer to MoorhenWrapper's CLOUD_HOST_TEST_SPEC.md.
  */
 import type { MtzMapRequest } from "@/utils/MtzLoading";
+import { selectPrimaryMapRepresentation } from "../../../src/store/mapRepresentationsSlice";
 import { createCloudInstance, fetchCount, fetchedUrls, jobUrl, loadCootModules, resetFetch, type CloudInstance } from "./cloudHostHarness";
 
 jest.setTimeout(60000);
@@ -36,8 +37,12 @@ const BLUE = { r: 0.3, g: 0.4, b: 0.9 };
 const GREEN = { r: 0.1, g: 0.8, b: 0.2 };
 const RED = { r: 0.9, g: 0.1, b: 0.1 };
 
-const colourOf = (list: "mapColours" | "positiveMapColours" | "negativeMapColours", molNo: number) =>
-    cloud.store.getState().mapContourSettings[list].find(item => item.molNo === molNo)?.rgb;
+/** A colour of a map's display record (map-display.md), by map molNo */
+const colourOf = (field: "colour" | "positiveColour" | "negativeColour", molNo: number) => {
+    const state = cloud.store.getState();
+    const map = state.maps.find(item => item.molNo === molNo);
+    return map ? selectPrimaryMapRepresentation(state, map.uniqueId)?.[field] : undefined;
+};
 
 const activeMap = () => cloud.store.getState().generalStates.activeMap;
 const storeMaps = () => cloud.store.getState().maps;
@@ -71,9 +76,9 @@ describe("MTZ: maps", () => {
             { name: "map", columns: { F: "FWT", PHI: "PHWT" }, style: { colour: BLUE } },
             { name: "diff-map", columns: { F: "DELFWT", PHI: "PHDELWT" }, isDifference: true, style: { positiveColour: GREEN, negativeColour: RED } },
         ]);
-        expect(colourOf("mapColours", result[0].molNo)).toEqual(BLUE);
-        expect(colourOf("positiveMapColours", result[1].molNo)).toEqual(GREEN);
-        expect(colourOf("negativeMapColours", result[1].molNo)).toEqual(RED);
+        expect(colourOf("colour", result[0].molNo)).toEqual(BLUE);
+        expect(colourOf("positiveColour", result[1].molNo)).toEqual(GREEN);
+        expect(colourOf("negativeColour", result[1].molNo)).toEqual(RED);
     });
 
     test("MTZ-05 the four jsCoFE map types load from one URL with their flags and colours", async () => {
@@ -97,12 +102,12 @@ describe("MTZ: maps", () => {
         const maps = result.map(item => cloud.instance.getMap(item.uniqueID));
         expect(maps.map(map => map.name)).toEqual(["map", "diff-map", "anom-map", "anom-diff-map"]);
         expect(maps.map(map => map.isDifference)).toEqual([false, true, false, true]);
-        expect(colourOf("mapColours", maps[0].molNo)).toEqual(BLUE);
-        expect(colourOf("positiveMapColours", maps[1].molNo)).toEqual(GREEN);
-        expect(colourOf("negativeMapColours", maps[1].molNo)).toEqual(RED);
-        expect(colourOf("mapColours", maps[2].molNo)).toEqual(PURPLE);
-        expect(colourOf("positiveMapColours", maps[3].molNo)).toEqual(ANOM_POSITIVE);
-        expect(colourOf("negativeMapColours", maps[3].molNo)).toEqual(ANOM_NEGATIVE);
+        expect(colourOf("colour", maps[0].molNo)).toEqual(BLUE);
+        expect(colourOf("positiveColour", maps[1].molNo)).toEqual(GREEN);
+        expect(colourOf("negativeColour", maps[1].molNo)).toEqual(RED);
+        expect(colourOf("colour", maps[2].molNo)).toEqual(PURPLE);
+        expect(colourOf("positiveColour", maps[3].molNo)).toEqual(ANOM_POSITIVE);
+        expect(colourOf("negativeColour", maps[3].molNo)).toEqual(ANOM_NEGATIVE);
     });
 
     test("MTZ-06 calcStructFact with all reflection columns associates reflection data", async () => {
@@ -212,8 +217,8 @@ describe("MTZ: maps", () => {
         const map = cloud.instance.getMap(result[0].uniqueID);
         expect(map.showOnLoad).toBe(false);
         expect(cloud.instance.getMap(result[1].uniqueID).showOnLoad).toBe(true);
-        // Nothing (no React map manager) shows maps here; the hidden one must at least not be in visibleMaps
-        expect(cloud.store.getState().mapContourSettings.visibleMaps).not.toContain(map.molNo);
+        // Its display record says it is hidden (map-display.md)
+        expect(selectPrimaryMapRepresentation(cloud.store.getState(), map.uniqueId)?.visible).toBe(false);
     });
 
     test("MTZ-16 a map flagged active (not the first) becomes active", async () => {

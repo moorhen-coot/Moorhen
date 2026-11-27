@@ -17,13 +17,17 @@
  * visibility toggle, somewhere to put the view, a level, and the draw settings.
  */
 
-import { useDispatch, useSelector } from "react-redux";
-import { useMemo, useState } from "react";
-import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useDispatch } from "react-redux";
+import { setMapVisible } from "@/store/mapRepresentationsSlice";
+import { MapRepresentationsToolbar, MapRepresentationsCard } from "./MapRepresentationChips";
+import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
+import { OrbitalLevelControls } from "./MapLevelControls";
+import { MapRepresentationEditor } from "./MapRepresentationEditor";
+import { useMemo } from "react";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
-import { hideMap, setContourLevel, showMap } from "../../../store/mapContourSettingsSlice";
 import { moorhen } from "../../../types/moorhen";
-import { MoorhenButton, MoorhenNumberInput, MoorhenPopoverButton, MoorhenSlider } from "../../inputs";
+import { MoorhenButton, MoorhenPopoverButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject } from "../../menu-item";
 import { ItemName } from "../utils/ItemName";
@@ -42,85 +46,37 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
     const { initialContour = 0.02 } = props;
     const dispatch = useDispatch();
 
-    const mapContourLevel = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.contourLevels.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.contourLevel : initialContour;
-    });
+    // From the map's display record (map-display.md): the radius of the draw mode and the opacity of the style in use
+    const display = useMapDisplay(props.map);
+    const mapRadius = display.radius;
+    const mapStyle = display.style;
+    const mapOpacity = display.alpha;
+    // Draw Settings act on the first representation: usable while it is shown. The map's own actions while any is
+    const mapIsVisible = display.visible;
+    const mapShown = display.mapVisible;
 
-    const mapRadius = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.radius : (props.map.suggestedRadius ?? 15);
-    });
-
-    const mapStyle = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapStyles.find(item => item.molNo === props.map.molNo);
-        if (entry) return entry.style;
-        return state.mapContourSettings.defaultMapSurface
-            ? "solid"
-            : state.mapContourSettings.defaultMapLitLines
-              ? "lit-lines"
-              : "lines";
-    });
-
-    const mapOpacity = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapAlpha.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.alpha : 1.0;
-    });
-
-    const mapIsVisible = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.visibleMaps.includes(props.map.molNo));
-
-    const [lastCall, setLastCall] = useState<number>(0);
-
-    const { fastMapContourLevel } = useFastContourMode({
-        map: props.map,
-        mapRadius,
-        radiusThreshold: 25,
-        fastRadius: "auto",
-        timeoutDelay: 1000,
-    });
-
-    const handleContourLevelChange = (newContourLevel: number) => {
-        if (!props.map) return;
-        if (Date.now() - lastCall < 500) {
-            fastMapContourLevel(newContourLevel);
-        } else {
-            dispatch(setContourLevel({ molNo: props.map.molNo, contourLevel: newContourLevel }));
-        }
-        setLastCall(Date.now());
-    };
+    // Multi-representation mode: each representation's level and draw settings are in its chip's edit popover
+    const isMultiRepresentation = useIsMultiRepresentation(props.map);
 
     const handleVisibility = () => {
-        dispatch(mapIsVisible ? hideMap(props.map) : showMap(props.map));
+        // The map as a whole (each representation keeps its own visibility)
+        dispatch(setMapVisible({ mapUid: props.map.uniqueId, visible: !display.mapVisible }));
         dispatch(setRequestDrawScene());
     };
-
-    /**
-     * How many decimals the level is worth showing.
-     *
-     * Orbital amplitudes are small - a few hundredths - and vary by orders of magnitude between
-     * basis sets, so a fixed two decimals would show 0.00 for most of them. Taken from the level
-     * itself, with enough digits to see a change.
-     */
-    const levelDecimals = useMemo(() => {
-        const magnitude = Math.abs(mapContourLevel || props.map.suggestedContourLevel || 0.02);
-        if (!Number.isFinite(magnitude) || magnitude <= 0) return 4;
-        return Math.min(8, Math.max(2, 2 - Math.floor(Math.log10(magnitude))));
-    }, [mapContourLevel, props.map.suggestedContourLevel]);
 
     const cardTitle = useMemo(() => (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
             <span style={{ flexShrink: 0 }}>#{props.map.molNo}</span>
-            <MapColourSelector map={props.map} mapIsVisible={mapIsVisible} />
+            <MapColourSelector map={props.map} mapIsVisible={mapShown} />
             <div style={{ minWidth: 0, flex: "1 1 0" }}>
                 <ItemName item={props.map} />
             </div>
         </div>
-    ), [props.map, mapIsVisible]);
+    ), [props.map, mapShown]);
 
     const dropDownMenu: React.JSX.Element = (
         <div style={{ display: "flex", flexDirection: "column", width: "150px" }}>
-            <MoorhenMapInfoCard key="info-map" disabled={!mapIsVisible} map={props.map} />
+            <MoorhenMapInfoCard key="info-map" disabled={!mapShown} map={props.map} />
             <MoorhenMenuItemPopover menuItemText="Delete Orbital">
                 <DeleteDisplayObject key="delete-map" item={props.map} />
             </MoorhenMenuItemPopover>
@@ -130,7 +86,7 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
     const extraControls: React.JSX.Element[] = [
         <MoorhenButton
             key="visibility"
-            icon={mapIsVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+            icon={display.mapVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
             onClick={handleVisibility}
             type="icon-only"
             size="accordion"
@@ -159,44 +115,34 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
-                <MoorhenStack direction="vertical" gap={"0.5rem"} style={{ justifyContent: "center" }}>
-                    <MoorhenStack direction="row" justify="center" align="center">
-                        <MoorhenNumberInput
-                            style={{ justifyContent: "center" }}
-                            value={mapContourLevel}
-                            setValue={newVal => handleContourLevelChange(+newVal)}
-                            label={"Level: ±"}
-                            decimalDigits={levelDecimals}
-                            allowNegativeValues={false}
-                            disabled={!mapIsVisible}
-                            waitReturn={true}
-                        />
-                    </MoorhenStack>
-                    <MoorhenSlider
-                        minVal={props.map.levelRange ? props.map.levelRange[0] : 0.001}
-                        maxVal={props.map.levelRange ? props.map.levelRange[1] : 1}
-                        decimalPlaces={levelDecimals}
-                        showButtons={true}
-                        scale="log"
-                        isDisabled={!mapIsVisible}
-                        value={mapContourLevel}
-                        setValue={newVal => handleContourLevelChange(newVal)}
-                        piWaitReturn={true}
-                        showTicks
-                        logMajorTickBase={1}
-                        autoLabelMajorTicks
-                        logMinorTickStep={1}
-                    />
-                </MoorhenStack>
-                <MapSettingsAccordion
+                <MapRepresentationsToolbar map={props.map} />
+                <MapRepresentationsCard
                     map={props.map}
-                    mapIsVisible={mapIsVisible}
-                    mapStyle={mapStyle}
-                    mapRadius={mapRadius}
-                    mapOpacity={mapOpacity}
-                    hideRadiusControls={true}
-                    offerSlice={true}
+                    editor={recordId => (
+                        <MapRepresentationEditor
+                            map={props.map}
+                            recordId={recordId}
+                            level={<OrbitalLevelControls map={props.map} initialContour={initialContour} recordId={recordId} />}
+                            hideRadiusControls={true}
+                            offerSlice={true}
+                        />
+                    )}
                 />
+                {/* In multi-representation mode: all shown representations together, by the same amount */}
+                <OrbitalLevelControls map={props.map} initialContour={initialContour} allShown={isMultiRepresentation} />
+                {!isMultiRepresentation && (
+                    <>
+                        <MapSettingsAccordion
+                            map={props.map}
+                            mapIsVisible={mapIsVisible}
+                            mapStyle={mapStyle}
+                            mapRadius={mapRadius}
+                            mapOpacity={mapOpacity}
+                            hideRadiusControls={true}
+                            offerSlice={true}
+                        />
+                    </>
+                )}
             </MoorhenStack>
         </MoorhenAccordion>
     );

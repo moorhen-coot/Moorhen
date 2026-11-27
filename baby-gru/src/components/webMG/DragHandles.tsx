@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import type { UnknownAction } from "@reduxjs/toolkit";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { ThreeDObject, updateObject } from "../../store/threeDObjectsSlice";
-import { setMapSlice } from "../../store/mapContourSettingsSlice";
+import { setMapRepresentationSlice } from "../../store/mapRepresentationsSlice";
 import { handleTargetOf } from "../../WebGLgComponents/gizmoDraw";
 import {
     actionOfTag,
@@ -37,7 +37,7 @@ export const DragHandles = () => {
     const dragRef = useRef<{
         tag: string;
         /** Which object, or which map's slice, the handles were on when the drag began. */
-        target: { kind: "object"; objectId: string } | { kind: "mapSlice"; molNo: number };
+        target: { kind: "object"; objectId: string } | { kind: "mapSlice"; representationId: string };
         centre: number[];
         origin: number[];
         // A cylinder and a cone are pinned by two points, and both have to travel together.
@@ -101,7 +101,7 @@ export const DragHandles = () => {
             const target = handleTargetOf(store.getState());
             if (!drag || !target) return null;
             if (drag.target.kind === "object" && target.kind === "object" && target.object.uniqueId === drag.target.objectId) return target;
-            if (drag.target.kind === "mapSlice" && target.kind === "mapSlice" && target.molNo === drag.target.molNo) return target;
+            if (drag.target.kind === "mapSlice" && target.kind === "mapSlice" && target.representationId === drag.target.representationId) return target;
             return null;
         };
 
@@ -127,7 +127,7 @@ export const DragHandles = () => {
             const object = target.kind === "object" ? target.object : null;
             dragRef.current = {
                 tag,
-                target: object ? { kind: "object", objectId: object.uniqueId } : { kind: "mapSlice", molNo: (target as { molNo: number }).molNo },
+                target: object ? { kind: "object", objectId: object.uniqueId } : { kind: "mapSlice", representationId: (target as { representationId: string }).representationId },
                 centre,
                 origin: object ? [...object.origin] : [...(target.kind === "mapSlice" ? target.slice.origin : [])],
                 farPoint:
@@ -169,7 +169,7 @@ export const DragHandles = () => {
             // in how the vector is arrived at, and both have to carry a cylinder's far end.
             const moveBy = (shift: number[]) => {
                 if (target.kind === "mapSlice") {
-                    publish(setMapSlice({ molNo: target.molNo, origin: moveFrom(drag.origin, shift), orientation: target.slice.orientation }));
+                    publish(setMapRepresentationSlice({ id: target.representationId, changes: { origin: moveFrom(drag.origin, shift) } }));
                     return;
                 }
                 const object = target.object;
@@ -206,7 +206,7 @@ export const DragHandles = () => {
                 const orientation = rotatedOrientation(drag.orientation, axis, shortestAngleBetween(drag.startAngle, now));
                 // A slice turns about its centre, which is its origin, so only its orientation changes.
                 if (target.kind === "mapSlice") {
-                    publish(setMapSlice({ molNo: target.molNo, origin: target.slice.origin, orientation }));
+                    publish(setMapRepresentationSlice({ id: target.representationId, changes: { orientation } }));
                 } else {
                     publish(updateObject({ ...target.object, orientation } as ThreeDObject));
                 }

@@ -30,7 +30,6 @@ import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettings
 import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
-import type { MoorhenMap } from "../../utils/MoorhenMap";
 import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
 import { modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
@@ -598,16 +597,21 @@ export const MoorhenDevMenu = () => {
                             gpuMapContourSetting.wanted = wanted;
                             setGpuMapContours(wanted);
                             // Move the maps to the GPU now, or give them back to Coot.
-                            applyGpuMapContours(
-                                store.getState().maps as unknown as MoorhenMap[],
-                                store.getState().mapContourSettings.visibleMaps
-                            );
+                            applyGpuMapContours();
                         }}
                     />
                 </MoorhenStack>
             </MoorhenAccordion>
             <MoorhenAccordion title="Draw diagnostics">
                 <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            dispatch(showModal({ key: modalKeys.WORKER_QUEUE }));
+                            document.body.click();
+                        }}
+                    >
+                        Worker command queue
+                    </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"
                         checked={countingDraws}

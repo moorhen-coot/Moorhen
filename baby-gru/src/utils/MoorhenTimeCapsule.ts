@@ -17,18 +17,9 @@ import {
     setQuat,
     setSpecular,
     setSpecularPower,
-    setZoom, setContourLevel,
-    setMapAlpha,
-    setMapColours,
-    setMapRadius,
-    setMapStyle,
+    setZoom,
     setCameraSnap,
-    setMapSlice,
-    setMapViewDependentTransparency,
-    setMapSliceNodalLines,
-    setMapSliceContourSpacing,
-    setNegativeMapColours,
-    setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
+    addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
     setReflectionMapMolNo,
@@ -86,6 +77,9 @@ import { MoorhenInstance } from "@/InstanceManager";
 import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
+import { selectIsMapVisible, selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
+import { DEFAULT_SLICE_CONTOUR_SPACING } from "./mapSlice/mapSlice";
+import { currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
 
 export interface backupKey {
     name?: string;
@@ -558,35 +552,41 @@ export class MoorhenTimeCapsule {
         });
 
         const mapData: mapDataSession[] = this.mapsRef.current.map((map, index) => {
+            // The map's display record (map-display.md), in the format sessions have always had: one radius (the draw
+            // mode's in use), one alpha (the style's in use), colours 0-255 and only where set. The whole record is
+            // saved in Phase 5.
+            const record = selectPrimaryMapRepresentation(state, map.uniqueId);
+            const to255 = (colour: { r: number; g: number; b: number } | null) =>
+                colour ? { r: Math.round(colour.r * 255), g: Math.round(colour.g * 255), b: Math.round(colour.b * 255) } : undefined;
             return {
                 name: map.name,
                 molNo: map.molNo,
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
-                contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
-                radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
+                // The map is shown when any of its representations is
+                showOnLoad: selectIsMapVisible(state, map.uniqueId),
+                contourLevel: record?.contourLevel,
+                radius: record ? currentRadius(record) : undefined,
                 rgba: {
-                    a: state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)?.alpha,
-                    mapColour: state.mapContourSettings.mapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    positiveDiffColour: state.mapContourSettings.positiveMapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    negativeDiffColour: state.mapContourSettings.negativeMapColours.find(item => item.molNo === map.molNo)?.rgb,
+                    a: record ? currentAlpha(record) : undefined,
+                    mapColour: to255(record?.colour ?? null),
+                    positiveDiffColour: to255(record?.positiveColour ?? null),
+                    negativeDiffColour: to255(record?.negativeColour ?? null),
                 },
-                style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
+                style: record?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
-                viewDependentTransparency:
-                    state.mapContourSettings.mapViewDependentTransparency.includes(map.molNo),
-                slice: (() => {
-                    const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
-                    return slice ? {
-                        origin: [...slice.origin],
-                        orientation: [...slice.orientation],
-                        nodalLines: state.mapContourSettings.mapSliceNodalLines.includes(map.molNo),
-                        contourSpacing: state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === map.molNo)?.spacing,
-                    } : null;
-                })(),
+                // Thickens where seen edge-on (main's #794): the first record's
+                viewDependentTransparency: record?.viewDependentTransparency ?? false,
+                slice: record?.slice
+                    ? {
+                          origin: [...record.slice.origin],
+                          orientation: [...record.slice.orientation],
+                          nodalLines: record.slice.nodalLines,
+                          contourSpacing: record.slice.contourSpacing,
+                      }
+                    : null,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,
                 associatedReflectionFileName: map.associatedReflectionFileName,
@@ -1035,7 +1035,13 @@ export class MoorhenTimeCapsule {
             sessionData.mapData?.map(async storedMapData => {
                 if (sessionData.includesAdditionalMapData) {
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
-                        return MoorhenMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference, moorhenInstance);
+                        return MoorhenMap.loadToCootFromMapData(
+                            storedMapData.mapData,
+                            storedMapData.name,
+                            storedMapData.isDifference,
+                            moorhenInstance,
+                            storedMapData.uniqueId
+                        );
                     } else {
                         if (fetchExternalUrl) {
 
@@ -1170,7 +1176,9 @@ export class MoorhenTimeCapsule {
         await Promise.all(
             newMaps.map((map, index) => {
                 const storedMapData = sessionData.mapData[index];
-                if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
+                // Only with MTZ columns to read it with, and data: a map saved with an empty reflection data field (an
+                // EM map) used to stop the whole load
+                if (sessionData.includesAdditionalMapData && storedMapData.reflectionData?.length > 0 && storedMapData.selectedColumns) {
                     return map.associateToReflectionData(storedMapData.selectedColumns, storedMapData.reflectionData);
                 } else if (storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
                     return timeCapsuleRef.current
@@ -1197,78 +1205,42 @@ export class MoorhenTimeCapsule {
         newMaps.forEach((map, index) => {
             const storedMapData = sessionData.mapData[index];
             map.showOnLoad = storedMapData.showOnLoad;
-            map.suggestedRadius = storedMapData.radius;
-            map.suggestedContourLevel = storedMapData.contourLevel;
+            // Not into suggestedContourLevel: the map worked that out when it was loaded (initialise), and the map
+            // wizard multiplies it (defaultContourLevel). The saved level goes into the record (initialDisplay below).
             // Absent in sessions written before cubes were readable, which is why it is coerced
             // rather than assigned: those maps are not orbitals and should get the full map card.
             map.isCube = Boolean(storedMapData.isCube);
+            // What the map showed, as its first display record (map-display.md): sessions hold one radius (the draw
+            // mode's in use when saved), one opacity (the style's in use) and colours 0-255 where set. The saved
+            // radius no longer overwrites the map's suggested one, which the other draw mode still starts from.
+            const toUnit = (rgb: { r: number; g: number; b: number } | null | undefined) =>
+                rgb ? { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 } : null;
+            map.initialDisplay = {
+                visible: Boolean(storedMapData.showOnLoad),
+                ...(storedMapData.contourLevel !== undefined && storedMapData.contourLevel !== null && { contourLevel: storedMapData.contourLevel }),
+                ...(storedMapData.style && { style: storedMapData.style as MapStyle }),
+                ...(storedMapData.radius && { currentRadius: storedMapData.radius }),
+                // proto3 has no unset float: a session without alpha reads back 0, which means the default
+                currentAlpha: storedMapData.rgba?.a || 1,
+                // Only colours the file has: without, the map keeps the default it was given (its record holds it)
+                ...(storedMapData.rgba?.mapColour && { colour: toUnit(storedMapData.rgba.mapColour) }),
+                ...(storedMapData.rgba?.positiveDiffColour && { positiveColour: toUnit(storedMapData.rgba.positiveDiffColour) }),
+                ...(storedMapData.rgba?.negativeDiffColour && { negativeColour: toUnit(storedMapData.rgba.negativeDiffColour) }),
+                // Absent in sessions written before it existed, which read as off
+                viewDependentTransparency: Boolean(storedMapData.viewDependentTransparency),
+            };
+            // A map saved as a slice is drawn where it was rather than through the centre of the view
+            const storedSlice = storedMapData.slice;
+            if (storedSlice?.origin?.length === 3 && storedSlice.orientation?.length === 16) {
+                const spacing = storedSlice.contourSpacing;
+                map.initialDisplay.slice = {
+                    origin: storedSlice.origin as [number, number, number],
+                    orientation: [...storedSlice.orientation],
+                    nodalLines: Boolean(storedSlice.nodalLines),
+                    contourSpacing: spacing === "linear" || spacing === "geometric" ? spacing : DEFAULT_SLICE_CONTOUR_SPACING,
+                };
+            }
             batch(() => {
-                dispatch(
-                    setMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.mapColour,
-                    })
-                );
-                dispatch(
-                    setNegativeMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.negativeDiffColour,
-                    })
-                );
-                dispatch(
-                    setPositiveMapColours({
-                        molNo: map.molNo,
-                        rgb: storedMapData.rgba.positiveDiffColour,
-                    })
-                );
-                dispatch(
-                    setMapRadius({
-                        molNo: map.molNo,
-                        radius: storedMapData.radius,
-                    })
-                );
-                dispatch(
-                    setContourLevel({
-                        molNo: map.molNo,
-                        contourLevel: storedMapData.contourLevel,
-                    })
-                );
-                dispatch(
-                    setMapAlpha({
-                        molNo: map.molNo,
-                        alpha: storedMapData.rgba.a,
-                    })
-                );
-                // Coerced rather than assigned: absent in any session written before the switch
-                // existed, and those maps are not edge-dense.
-                dispatch(
-                    setMapViewDependentTransparency({
-                        molNo: map.molNo,
-                        enabled: Boolean(storedMapData.viewDependentTransparency),
-                    })
-                );
-                // Before the style, so that a map saved as a slice is drawn where it was rather than
-                // through the centre of the view.
-                if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
-                    dispatch(
-                        setMapSlice({
-                            molNo: map.molNo,
-                            origin: storedMapData.slice.origin as [number, number, number],
-                            orientation: storedMapData.slice.orientation,
-                        })
-                    );
-                    dispatch(setMapSliceNodalLines({ molNo: map.molNo, show: Boolean(storedMapData.slice.nodalLines) }));
-                    const spacing = storedMapData.slice.contourSpacing;
-                    if (spacing === "linear" || spacing === "geometric") {
-                        dispatch(setMapSliceContourSpacing({ molNo: map.molNo, spacing }));
-                    }
-                }
-                dispatch(
-                    setMapStyle({
-                        molNo: map.molNo,
-                        style: storedMapData.style,
-                    })
-                );
                 dispatch(addMap(map));
             });
         });

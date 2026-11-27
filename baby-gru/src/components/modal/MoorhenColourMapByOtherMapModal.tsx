@@ -1,15 +1,22 @@
 import { Chart, registerables } from "chart.js";
 import { useDispatch, useSelector } from "react-redux";
-import { use, useEffect, useRef } from "react";
-import { setAutoClip, setAutoFog, setClipEnd, setClipStart, setMapStyle } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { use, useEffect, useRef, useState } from "react";
+import { setAutoClip, setAutoFog, setClipEnd, setClipStart } from "@/store";
+import { setPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 import { dispatchPersistentStates, usePersistent, usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton, MoorhenGradientPicker } from "../inputs";
+import { MoorhenButton, MoorhenGradientPicker, MoorhenGradientPickerButton } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
+import {
+    LOCAL_RESOLUTION_DENSITY,
+    LOCAL_RESOLUTION_VALUES,
+    colourByMapChanges,
+    guessColourByMapRange,
+    plainColourChanges,
+} from "../../utils/colourByMap";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
@@ -24,30 +31,24 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
     const histogramCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const commandCentre = useCommandCentre();
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
+    // Docked, the modal is narrow: the gradient picker opens from a button, towards the view
+    const [docked, setDocked] = useState<"left" | "right" | null>(props.openDocked ?? null);
 
     //const [minMaxValue, setMinMaxValue] = useState<number> ([-1, 1])
     // const [minMaxValue, setMinMaxValue] = usePersistentState<[number, number]>(menu, "minMaxValue", [-1, 1], false);
     const defaultMin = 2;
     const defaultMax = 6;
-    const openLocResFolderRef = useRef<boolean>(false);
 
     const [minValue, setMinValue] = usePersistentState<number>(menu, "minValue", defaultMin);
     const [maxValue, setMaxValue] = usePersistentState<number>(menu, "maxValue", defaultMax);
 
-    const map1 = usePersistent<number>(menu, "map1", maps.find(map => map.name.toLowerCase().endsWith("_locres_filtered.mrc"))?.molNo ?? -1);
-    const map2 = usePersistent<number>(menu, "map2", maps.find(map => map.name.toLowerCase().endsWith("_locres.mrc"))?.molNo ?? -1);
-
-    useEffect(() => {
-        const openLocResFolder = async () => {
-            if (minValue === defaultMin && maxValue === defaultMax && map1 !== -1 && map2 !== -1) {
-                await guessValues();
-                openLocResFolderRef.current = true;
-            }
-        };
-        openLocResFolder();
-    }, []);
+    // RELION's local resolution maps: the filtered density, coloured by the local resolution (the newest ones loaded)
+    const findLast = (pattern: RegExp) => [...maps].reverse().find(map => pattern.test(map.name));
+    const locResDensity = () => findLast(LOCAL_RESOLUTION_DENSITY);
+    const locResValues = () => findLast(LOCAL_RESOLUTION_VALUES);
+    const map1 = usePersistent<number>(menu, "map1", locResDensity()?.molNo ?? -1);
+    const map2 = usePersistent<number>(menu, "map2", locResValues()?.molNo ?? -1);
 
     const colourTableRef = useRef<[number, [number, number, number]][]>(
         gradientPresets["Pool Party"] as [number, [number, number, number]][]
@@ -73,14 +74,15 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             return;
         }
 
-        referenceMap.setOtherMapForColouring(null);
-        referenceMap.drawMapContour();
+        // The map's display record changes, which redraws it
+        dispatch(setPrimaryMapRepresentation({ mapUid: referenceMap.uniqueId, changes: plainColourChanges }));
     };
 
-    const handleApply = () => {
+    /** Colour the first map by the second, from `range` (the inputs' unless given: state set just before is not read yet) */
+    const handleApply = (range: { min: number; max: number } = { min: minValue, max: maxValue }) => {
         dispatchPersistentStates(dispatch, menu, [
-            { key: "minValue", value: minValue },
-            { key: "maxValue", value: minValue },
+            { key: "minValue", value: range.min },
+            { key: "maxValue", value: range.max },
             { key: "map1", value: mapSelectRef_1.current.value },
             { key: "map2", value: mapSelectRef_2.current.value },
         ]);
@@ -96,58 +98,74 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             return;
         }
 
-        referenceMap.setOtherMapForColouring(colouringMap.molNo, minValue, maxValue);
-        referenceMap.drawMapContour();
+        // The other map, its range and the gradient are the map's own (its display record, map-display.md): maps
+        // coloured with different gradients each keep theirs. Changing the record redraws the map.
+        dispatch(
+            setPrimaryMapRepresentation({
+                mapUid: referenceMap.uniqueId,
+                changes: colourByMapChanges(colouringMap, range, colourTableRef.current),
+            })
+        );
     };
 
-    const handleApplyColourTable = async () => {
-        await commandCentre.current.cootCommand(
-            {
-                command: "shim_set_colour_map_for_map_coloured_by_other_map",
-                commandArgs: colourTableRef.current,
-                returnType: "status",
-            },
-            false
-        );
+    const handleApplyColourTable = () => {
         if (!mapSelectRef_1.current || !mapSelectRef_1.current.value) {
             return;
         }
         handleApply();
     };
 
-    useEffect(() => {
-        if (openLocResFolderRef.current) {
-            handleApplyColourTable();
-            getHistogram();
-            dispatch(setClipStart(1000));
-            dispatch(setClipEnd(1000));
-            dispatch(setAutoFog(false));
-            dispatch(setAutoClip(false));
-            dispatch(
-                setMapStyle({
-                    molNo: Number(mapSelectRef_1.current.value),
-                    style: "solid",
-                })
-            );
-            openLocResFolderRef.current = false;
-        }
-    }, [minValue, maxValue]);
-
-    const guessValues = async () => {
-        if (!mapSelectRef_2 || !mapSelectRef_1.current) {
+    /**
+     * A RELION local resolution folder was opened (FileLoading: modalProps.localResolutionFolder), or the modal opened
+     * on such maps never set up: pick the two maps, guess the range, colour the density with it, show the histogram, and
+     * draw it as a surface with the clipping wide open. In one go, the range passed on: the gradient used to be left
+     * unapplied, the apply waiting on state the guess had not set yet.
+     */
+    const setUpLocalResolution = async () => {
+        const density = locResDensity();
+        const values = locResValues();
+        if (!density || !values || !mapSelectRef_1.current || !mapSelectRef_2.current) {
             return;
+        }
+        mapSelectRef_1.current.value = String(density.molNo);
+        mapSelectRef_2.current.value = String(values.molNo);
+        const range = await guessValues();
+        if (!range) {
+            return;
+        }
+        handleApply(range);
+        dispatch(setClipStart(1000));
+        dispatch(setClipEnd(1000));
+        dispatch(setAutoFog(false));
+        dispatch(setAutoClip(false));
+        dispatch(setPrimaryMapRepresentation({ mapUid: density.uniqueId, changes: { style: "solid" } }));
+        await getHistogram();
+    };
+
+    useEffect(() => {
+        const fromFolder = props.modalProps?.localResolutionFolder === true;
+        const neverSetUp = minValue === defaultMin && maxValue === defaultMax && map1 !== -1 && map2 !== -1;
+        if (fromFolder || neverSetUp) {
+            void setUpLocalResolution();
+        }
+        // Again for each folder opened while the modal is open: each showModal call brings new modalProps
+    }, [props.modalProps]);
+
+    const guessValues = async (): Promise<{ min: number; max: number } | null> => {
+        if (!mapSelectRef_2.current || !mapSelectRef_1.current) {
+            return null;
         }
         const colouringMap = maps.find(map => map.molNo === parseInt(mapSelectRef_2.current.value));
-        if (!colouringMap) {
-            return;
-        }
         const colouredMap = maps.find(map => map.molNo === parseInt(mapSelectRef_1.current.value));
-        const histogram = await colouredMap.getVerticesHistogram(parseInt(mapSelectRef_2.current.value));
-        const min = Number(histogram.base.toPrecision(3));
-        const max = Number((histogram.base + histogram.bin_width * histogram.counts.length).toPrecision(3));
-        console.log("min", min, "max", max);
-        setMinValue(min);
-        setMaxValue(max);
+        if (!colouringMap || !colouredMap) {
+            return null;
+        }
+        const range = await guessColourByMapRange(colouredMap, colouringMap);
+        if (range) {
+            setMinValue(range.min);
+            setMaxValue(range.max);
+        }
+        return range;
     };
 
     const getHistogram = async () => {
@@ -257,17 +275,42 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
                 Or reset to default colour
             </MoorhenButton>
 
-            <span style={{ marginTop: "0.5rem" }}>Set min and max values for the colour map:</span>
-            <MoorhenGradientPicker
-                colourTable={colourTable}
-                setColourTable={setColourTable}
-                menu={menu}
-                minValue={minValue}
-                setMinValue={setMinValue}
-                setMaxValue={setMaxValue}
-                maxValue={maxValue}
-                // modifyValues
-            />
+            {docked ? (
+                <MoorhenStack gap="0.2rem" style={{ marginTop: "0.5rem" }}>
+                    <span>Colour gradient (click to edit, with its range):</span>
+                    <MoorhenGradientPickerButton
+                        ariaLabel="Colour gradient"
+                        popoverPlacement={docked === "right" ? "left" : "right"}
+                        style={{ boxSizing: "border-box" }}
+                        colourTable={colourTable}
+                        setColourTable={setColourTable}
+                        menu={menu}
+                        minValue={minValue}
+                        setMinValue={setMinValue}
+                        setMaxValue={setMaxValue}
+                        maxValue={maxValue}
+                        modifyValues
+                    />
+                    <MoorhenStack direction="row" justify="space-between" style={{ fontSize: "0.8rem" }}>
+                        <span>{minValue}</span>
+                        <span>{maxValue}</span>
+                    </MoorhenStack>
+                </MoorhenStack>
+            ) : (
+                <>
+                    <span style={{ marginTop: "0.5rem" }}>Set min and max values for the colour map:</span>
+                    <MoorhenGradientPicker
+                        colourTable={colourTable}
+                        setColourTable={setColourTable}
+                        menu={menu}
+                        minValue={minValue}
+                        setMinValue={setMinValue}
+                        setMaxValue={setMaxValue}
+                        maxValue={maxValue}
+                        modifyValues
+                    />
+                </>
+            )}
             {/* <MoorhenStack direction="row" gap={1} align="center" justify="space-between" style={{ marginTop: "-1rem" }}>
                 <MoorhenNumberInput
                     value={minMaxValue[0]}
@@ -297,24 +340,23 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
                 />
             </MoorhenStack> */}
 
-            <MoorhenButton variant="secondary" onClick={handleApplyColourTable} style={{ marginLeft: "0.5rem" }}>
+            <MoorhenButton variant="secondary" onClick={() => handleApplyColourTable()} style={{ marginLeft: "0.5rem" }}>
                 Apply Colour Gradient
             </MoorhenButton>
-            <MoorhenStack direction="row" justify="center" style={{ marginTop: "0.5rem" }}>
+            <MoorhenStack direction="row" justify="center" gap="0.5rem" style={{ marginTop: "0.5rem", flexWrap: "wrap" }}>
                 <MoorhenButton
                     variant="secondary"
                     onClick={() => {
                         setMinValue(2);
                         setMaxValue(6);
                     }}
-                    style={{ marginLeft: "0.5rem" }}
                 >
                     Default values
                 </MoorhenButton>
-                <MoorhenButton variant="secondary" onClick={guessValues} style={{ marginLeft: "0.5rem" }}>
+                <MoorhenButton variant="secondary" onClick={() => void guessValues()}>
                     Guess Values
                 </MoorhenButton>
-                <MoorhenButton variant="secondary" onClick={getHistogram} style={{ marginLeft: "0.5rem" }}>
+                <MoorhenButton variant="secondary" onClick={getHistogram}>
                     Draw Histogram
                 </MoorhenButton>
             </MoorhenStack>
@@ -331,6 +373,7 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             body={panelContent}
             headerTitle="Colour map by other map..."
             openDocked={props.openDocked}
+            onDock={setDocked}
         />
     );
 };

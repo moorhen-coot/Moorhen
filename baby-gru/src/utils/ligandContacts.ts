@@ -1,4 +1,4 @@
-import type { CootContactAtom } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
+import type { CootContactAtom } from "@/InstanceManager/CommandCentre/WorkerWrapper";
 import type { LigandInfo, MoorhenMolecule } from "./MoorhenMolecule";
 
 /**

@@ -1,9 +1,11 @@
 /**
  * The maps in the scene, contoured on the GPU for the WebGPU main view.
  *
- * Each frame it reads the same settings Moorhen contours with (visible maps, radius, level,
- * style, colours, the origin or a map's locked origin) from the store, remakes a map's contour on
- * the GPU only when its centre, radius or level has changed, and returns what to draw. Each map's
+ * Each frame it reads the map representation records Moorhen draws from (map-display.md: visible,
+ * radius, level, style, opacity, colours, locked origin) from the store, one contour set per
+ * record, remakes a contour on the GPU only when its centre, radius or level has changed, and
+ * returns what to draw. Records coloured by another map are left to Coot (MapRepresentation), and
+ * 2D slices to the map (MoorhenMap.drawMapSlice): both are among the ordinary display buffers. Each map's
  * unit-cell grid is fetched from the Coot worker and kept on the GPU while the layer lasts, and
  * fetched again when the map's dataRevision goes up (MoorhenMap.markDataChanged); the old
  * grid is drawn until the new one is in.
@@ -19,12 +21,8 @@ import { formatCount } from "../rendererReport";
 import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
 import { emRangeFromMrcHeader } from "./mapContourBox";
 import type { MapUnitCellGrid, MrcGridHeader } from "./mapContourBox";
-import { gpuMapContourSetting, mapStyleOf, onMapDataChanged } from "./setting";
-
-/** The radius MoorhenMapManager contours a map at. */
-function radiusOf(map: MoorhenMap, settings: RootState["mapContourSettings"]): number {
-    return settings.mapRadii.find(item => item.molNo === map.molNo)?.radius || map.suggestedRadius || 15;
-}
+import { gpuMapContourSetting, onMapDataChanged } from "./setting";
+import { currentAlpha, currentRadius } from "../../utils/Representation/mapRepresentationData";
 
 interface MapEntry {
     grid: GpuMapGrid | null;
@@ -67,6 +65,7 @@ export class GpuMapLayer {
     frame(state: RootState, liveOrigin?: readonly [number, number, number]): PreviewGpuDraw[] {
         const maps = state.maps as unknown as MoorhenMap[];
         const settings = state.mapContourSettings;
+        const records = Object.values(state.mapRepresentations?.representations ?? {});
         if (!gpuMapContourSetting.enabled) {
             this.clear();
             this.status = "";
@@ -82,10 +81,16 @@ export class GpuMapLayer {
         const origin = liveOrigin ?? state.sceneSettings.origin;
         const draws: PreviewGpuDraw[] = [];
         const notes: string[] = [];
+        // Surfaces of records gone or no longer drawn here are let go at the end
+        const surfacesUsed = new Set<string>();
         for (const map of maps) {
-            if (!settings.visibleMaps.includes(map.molNo)) continue;
-            // Drawn as a 2D slice (MoorhenMap.drawMapSlice), among the ordinary display buffers.
-            if (mapStyleOf(settings, map.molNo) === "slice") continue;
+            const drawn = records.filter(record =>
+                record.mapUid === map.uniqueId && record.visible
+                // Drawn as a 2D slice (MoorhenMap.drawMapSlice), among the ordinary display buffers.
+                && record.style !== "slice"
+                // Coloured by another map: Coot contours it (MapRepresentation), drawn among the display buffers.
+                && record.colourByMap === null);
+            if (drawn.length === 0) continue;
             let entry = this.maps.get(map);
             if (!entry) {
                 entry = { grid: null, revision: -1, loading: false, fetches: 0, failed: null, surfaces: new Map() };
@@ -101,63 +106,75 @@ export class GpuMapLayer {
                 continue;
             }
 
-            // As MoorhenMapManager decides them.
-            const radius = radiusOf(map, settings);
-            const level = settings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel || map.suggestedContourLevel || 0.003;
-            const style = mapStyleOf(settings, map.molNo);
-            const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = map.getMapContourParams();
-            const centreFrom = map.isOriginLocked && map.drawOrigin ? map.drawOrigin : origin;
-            const centre = [-centreFrom[0], -centreFrom[1], -centreFrom[2]] as [number, number, number];
-
-            const levels = map.isDifference
-                ? [{ sign: 1, colour: positiveMapColour }, { sign: -1, colour: negativeMapColour }]
-                : [{ sign: 1, colour: mapColour }];
-            for (const { sign, colour } of levels) {
-                const key = `${map.molNo}:${sign}`;
-                let surface = entry.surfaces.get(key);
-                if (!surface) {
-                    surface = new GpuIsosurface(this.kernels, entry.grid, this.requestDraw);
-                    entry.surfaces.set(key, surface);
+            let radius = 0;
+            for (const record of drawn) {
+                radius = Math.max(radius, currentRadius(record));
+                const level = record.contourLevel;
+                const style = record.style;
+                const alpha = currentAlpha(record);
+                // Record centres are world coordinates; the view origin is the negated view centre.
+                const centre = record.originLock
+                    ? ([...record.originLock.centre] as [number, number, number])
+                    : ([-origin[0], -origin[1], -origin[2]] as [number, number, number]);
+                const colour = record.colour ?? map.defaultMapColour;
+                const levels = map.isDifference
+                    ? [{ sign: 1, colour: record.positiveColour ?? map.defaultPositiveMapColour }, { sign: -1, colour: record.negativeColour ?? map.defaultNegativeMapColour }]
+                    : [{ sign: 1, colour }];
+                for (const { sign, colour } of levels) {
+                    const key = `${record.id}:${sign}`;
+                    surfacesUsed.add(key);
+                    let surface = entry.surfaces.get(key);
+                    if (!surface) {
+                        surface = new GpuIsosurface(this.kernels, entry.grid, this.requestDraw);
+                        entry.surfaces.set(key, surface);
+                    }
+                    surface.update({ centre, radius: currentRadius(record), level: sign * level });
+                    if (surface.tooBig) {
+                        // Not even a small contour fits: Coot contours the maps (MoorhenWebGPUMainView).
+                        entry.failed = `too big for this GPU: ${surface.tooBig}`;
+                        console.warn(`GPU map contours: map ${map.molNo} is too big for this GPU: ${surface.tooBig}. Coot contours the maps from now on.`);
+                        continue;
+                    }
+                    this.sayLimit(map, currentRadius(record), surface);
+                    const buffers = surface.buffers;
+                    if (!buffers) continue;
+                    const solid = style === "solid";
+                    draws.push({
+                        key,
+                        position: buffers.position,
+                        normal: buffers.normal,
+                        index: buffers.triangles,
+                        lines: buffers.lines,
+                        drawArgs: buffers.drawArgs,
+                        drawArgsOffset: solid ? 0 : 32,
+                        style: solid ? "triangles" : style === "lit-lines" ? "lit-lines" : "lines",
+                        // Null until the preferences are read; MGWebGL takes 1 then too.
+                        lineWidth: settings.mapLineWidth ?? 1,
+                        colour: [colour.r, colour.g, colour.b, alpha],
+                        transparent: alpha < 0.99,
+                        // From the record: a GPU-contoured map has no Coot buffers to carry it
+                        viewDependentTransparency: record.viewDependentTransparency ?? false,
+                    });
                 }
-                surface.update({ centre, radius, level: sign * level });
-                if (surface.tooBig) {
-                    // Not even a small contour fits: Coot contours the maps (MoorhenWebGPUMainView).
-                    entry.failed = `too big for this GPU: ${surface.tooBig}`;
-                    console.warn(`GPU map contours: map ${map.molNo} is too big for this GPU: ${surface.tooBig}. Coot contours the maps from now on.`);
-                    continue;
-                }
-                this.sayLimit(map, radius, surface);
-                const buffers = surface.buffers;
-                if (!buffers) continue;
-                const solid = style === "solid";
-                draws.push({
-                    key,
-                    position: buffers.position,
-                    normal: buffers.normal,
-                    index: buffers.triangles,
-                    lines: buffers.lines,
-                    drawArgs: buffers.drawArgs,
-                    drawArgsOffset: solid ? 0 : 32,
-                    style: solid ? "triangles" : style === "lit-lines" ? "lit-lines" : "lines",
-                    // Null until the preferences are read; MGWebGL takes 1 then too.
-                    lineWidth: settings.mapLineWidth ?? 1,
-                    colour: [colour.r, colour.g, colour.b, mapAlpha],
-                    transparent: mapAlpha < 0.99,
-                    // Read here rather than from the map, because a GPU-contoured map has no Coot
-                    // buffers to carry it: these draws are built from the store every frame.
-                    viewDependentTransparency:
-                        settings.mapViewDependentTransparency?.includes(map.molNo) ?? false,
-                });
             }
-            const box = entry.surfaces.get(`${map.molNo}:1`)?.lastBox;
+            const first = entry.surfaces.get(`${drawn[0].id}:1`);
+            const box = first?.lastBox;
             const made = [...entry.surfaces.values()].reduce((sum, s) => sum + s.made, 0);
             const triangles = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastTriangles, 0);
             const lines = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastLines, 0);
             const { nu, nv, nw } = entry.grid.grid;
-            const limited = entry.surfaces.get(`${map.molNo}:1`)?.limitedRadius;
+            const limited = first?.limitedRadius;
             notes.push(`map ${map.molNo}: r ${limited != null ? `${+limited.toFixed(1)} Å (of ${radius} Å: too big for the GPU)` : `${radius} Å`}, cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "")
                 + `, ${formatCount(triangles)} triangles, ${formatCount(lines)} lines, contoured ${made}×`
                 + (entry.fetches > 1 ? `, fetched ${entry.fetches}×` : "") + (entry.loading ? ", fetching again…" : ""));
+        }
+        for (const entry of this.maps.values()) {
+            entry.surfaces.forEach((surface, key) => {
+                if (!surfacesUsed.has(key)) {
+                    surface.destroy();
+                    entry.surfaces.delete(key);
+                }
+            });
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
         return draws;

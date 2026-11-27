@@ -1,9 +1,17 @@
 import { useDispatch, useSelector, useStore } from 'react-redux';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
-import { setContourLevel, setMapFastRadius } from '../store/mapContourSettingsSlice';
+import {
+    selectMapRepresentation,
+    selectMapRepresentationsOfMap,
+    selectPrimaryMapRepresentation,
+    selectShownLevelsBase,
+    setMapRepresentation,
+    shiftMapRepresentationLevels,
+} from '../store/mapRepresentationsSlice';
+import { drawnByCoot } from '../utils/Representation/MapRepresentation';
+import { useMoorhenInstance } from '../InstanceManager/useMoorhenInstance';
 import { moorhen } from '../types/moorhen';
-import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
 import { useStateWithRef } from './useStateWithRef';
 
 interface UseFastContourModeProps {
@@ -12,6 +20,13 @@ interface UseFastContourModeProps {
     radiusThreshold?: number;
     fastRadius?: number | 'auto';
     timeoutDelay?: number;
+    /**
+     * Move every shown representation of the map together (multi-representation mode): the level given is then the new
+     * lowest one (selectShownLevelsBase), and all shown ones move by the same amount
+     */
+    allShown?: boolean;
+    /** The representation whose level is set (a chip's), else the map's first */
+    recordId?: string;
 }
 
 interface FastContourModeReturn {
@@ -22,23 +37,21 @@ interface FastContourModeReturn {
 /**
  * Custom React hook to enable a "fast contour mode" for map visualization.
  *
- * This hook temporarily reduces the map radius and unlocks the map origin to speed up contour level updates,
- * then restores the original parameters after a specified timeout. It is useful for improving UI responsiveness
- * when users rapidly adjust contour levels.
+ * While the user changes the contour level quickly, the map is drawn with a smaller radius around the view (even
+ * if its origin is locked), then as its display record says again after a timeout. The smaller radius is a
+ * transient override on the map display driver (`mapDisplay.setFastRadius`): nothing is written to the store but
+ * the level. GPU contours are fast at any radius and never use it, but a map can have representations drawn by Coot
+ * with GPU contours on (coloured by another map, drawn into the GPU frame): fast mode is for those.
  *
- * @param map - The map object to operate on, expected to have `molNo`, `isOriginLocked`, and `toggleOriginLock` properties.
+ * @param map - The map to change the level of.
  * @param mapRadius - The current radius of the map.
- * @param radiusThreshold - The radius threshold above which fast mode is triggered (default: 25).
- * @param fastRadius - The reduced radius to use during fast mode (default: 20).
- * @param timeoutDelay - The delay in milliseconds after which fast mode ends (default: 1000).
+ * @param radiusThreshold - The radius above which fast mode is used (default: 25).
+ * @param fastRadius - The radius to draw at in fast mode, or "auto": what the view shows (default).
+ * @param timeoutDelay - How long after the last change fast mode ends, in ms (default: 1000).
  *
  * @returns An object containing:
- *   - `isInFastMode`: A boolean indicating if fast mode is currently active.
- *   - `fastMapContourLevel`: A function to set the contour level, automatically managing fast mode as needed.
- *
- * @remarks
- * - Automatically cleans up and restores original map parameters if the component unmounts during fast mode.
- * - Designed for use with Redux dispatch and map state management.
+ *   - `isInFastMode`: whether fast mode is on.
+ *   - `fastMapContourLevel`: sets the contour level, in fast mode if needed.
  */
 export const useFastContourMode = ({
     map,
@@ -46,89 +59,80 @@ export const useFastContourMode = ({
     radiusThreshold = 25,
     fastRadius = 'auto',
     timeoutDelay = 1000,
+    allShown = false,
+    recordId,
 }: UseFastContourModeProps): FastContourModeReturn => {
-    const store = useStore<RootState>().getState();
+    const store = useStore<RootState>();
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
+    const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
 
+    let radius: number;
     if (fastRadius === 'auto') {
-        const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
-        const aspectRatio = store.sceneSettings.width / store.sceneSettings.height;
-        const seamlessRadius = Math.min(22 * zoomLevel * aspectRatio, mapRadius);
-        fastRadius = seamlessRadius;
+        const { width, height } = store.getState().sceneSettings;
+        radius = Math.min(22 * zoomLevel * (width / height), mapRadius);
+    } else {
+        radius = fastRadius;
     }
 
-    const [originalParameters, setOriginalParameters, originalParametersRef] = useStateWithRef<{
-        radius: number;
-        originLocked: boolean;
-    } | null>(null);
-    const [isInFastMode, setIsInFastMode] = useState<boolean>(false);
+    const [isInFastMode, setIsInFastMode, isInFastModeRef] = useStateWithRef<boolean>(false);
     const fastModeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const startFastMode = () => {
-        console.log('Starting fast mode for map', map.molNo);
-        setOriginalParameters({ radius: mapRadius, originLocked: map.isOriginLocked });
-        if (map.isOriginLocked) {
-            map.toggleOriginLock(false);
-        }
-        dispatch(setMapFastRadius({ molNo: map.molNo, radius: fastRadius }));
-        setIsInFastMode(true);
-    };
-
     const endFastMode = () => {
-        if (!originalParametersRef.current) return;
-
-        // Clear the timeout first to prevent race conditions
         if (fastModeTimeoutRef.current) {
             clearTimeout(fastModeTimeoutRef.current);
             fastModeTimeoutRef.current = null;
         }
-
-        map.toggleOriginLock(originalParametersRef.current.originLocked);
-        dispatch(setMapFastRadius({ molNo: map.molNo, radius: -1 }));
+        if (!isInFastModeRef.current) return;
+        moorhenInstance?.mapDisplay?.setFastRadius(map.uniqueId, null);
         setIsInFastMode(false);
-        setOriginalParameters(null);
+    };
+
+    /**
+     * The level of `recordId`'s representation (a chip's), else the map's first, or with `allShown` the lowest of the
+     * shown ones, the others moving by as much
+     */
+    const setLevel = (contourLevel: number) => {
+        if (allShown) {
+            if (!Number.isFinite(contourLevel) || contourLevel <= 0) return;
+            const base = selectShownLevelsBase(store.getState(), map.uniqueId);
+            if (base !== undefined && contourLevel !== base) {
+                dispatch(shiftMapRepresentationLevels({ mapUid: map.uniqueId, by: contourLevel - base }));
+            }
+            return;
+        }
+        const state = store.getState();
+        const record = (recordId ? selectMapRepresentation(state, recordId) : undefined) ?? selectPrimaryMapRepresentation(state, map.uniqueId);
+        if (record) dispatch(setMapRepresentation({ id: record.id, changes: { contourLevel } }));
     };
 
     const fastMapContourLevel = (newContourLevel: number) => {
         if (!map) return;
 
-        // GPU contours ignore the fast radius, so fast mode would only unlock the origin.
-        if ((mapRadius <= radiusThreshold || gpuMapContourSetting.enabled) && !isInFastMode) {
-            dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
+        // Only Coot's contours need it: GPU ones are drawn at the full radius anyway
+        const cootDrawn = selectMapRepresentationsOfMap(store.getState(), map.uniqueId).some(
+            record => record.visible && record.style !== 'slice' && drawnByCoot(record)
+        );
+        if ((mapRadius <= radiusThreshold || !cootDrawn) && !isInFastModeRef.current) {
+            setLevel(newContourLevel);
             return;
         }
 
-        if (!isInFastMode) {
-            startFastMode();
+        if (!isInFastModeRef.current) {
+            // Before the level, so that the new level is drawn small at once
+            moorhenInstance?.mapDisplay?.setFastRadius(map.uniqueId, radius);
+            setIsInFastMode(true);
         }
-        dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
+        setLevel(newContourLevel);
 
         if (fastModeTimeoutRef.current) {
             clearTimeout(fastModeTimeoutRef.current);
         }
-
-        fastModeTimeoutRef.current = setTimeout(() => {
-            endFastMode();
-        }, timeoutDelay);
+        fastModeTimeoutRef.current = setTimeout(endFastMode, timeoutDelay);
     };
 
-    // Cleanup effect
-    useEffect(() => {
-        return () => {
-            if (fastModeTimeoutRef.current) {
-                clearTimeout(fastModeTimeoutRef.current);
-                fastModeTimeoutRef.current = null;
-            }
-            // Force exit fast mode if component unmounts during fast mode
-            if (isInFastMode && originalParameters) {
-                map.toggleOriginLock(originalParameters.originLocked);
-                setTimeout(() => {
-                    //timer to be sure that this is the last dispatched action
-                    dispatch(setMapFastRadius({ molNo: map.molNo, radius: -1 }));
-                }, 10);
-            }
-        };
-    }, []);
+    // Leave fast mode if the component unmounts during it
+    useEffect(() => endFastMode, []);
 
     return {
         isInFastMode,

@@ -54,6 +54,11 @@ import type { webGL } from "../types/mgWebGL";
 
 export interface MovieRenderOptions {
     /**
+     * The instance's map display driver (`moorhenInstance.mapDisplay`): contours the maps that follow the view at
+     * each frame's origin before it is captured. Without it maps stay where they were drawn when the export began.
+     */
+    mapDisplay?: { contourMapsAt(origin: readonly number[]): Promise<void> } | null;
+    /**
      * Called with each sampled frame, for everything that is not the camera. The export runs on
      * a fixed cadence rather than the wall clock, so this is called once per encoded frame - which
      * is what makes a fade land on exactly the frames it was authored for.
@@ -225,7 +230,7 @@ export async function recordMovieToMp4(
     // scene is driven here instead, in step and awaited.
     const hold = holdCameraForMovie(gl, true, null);
     hold.play(movie, options.onSample);
-    const scene = sceneFollowingOrigin(gl);
+    const scene = sceneFollowingOrigin(gl, options.mapDisplay);
     let finalised = false;
     const cover = showCover("Rendering movie", options.coverOpacity ?? 1);
 

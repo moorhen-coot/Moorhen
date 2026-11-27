@@ -69,7 +69,7 @@ const contour = (buffer: ArrayBuffer, centre: number[], radius: number, level: n
         molNo, centre[0], centre[1], centre[2], radius, level);
     const vertices = mesh.vertices;
 
-    // Moorhen splits the two lobes by the red channel Coot puts on each vertex: setupContourBuffers
+    // Moorhen splits the two lobes by the red channel Coot puts on each vertex: MapRepresentation.buildContourBuffers
     // treats red < 0.5 as the positive surface. Read the same way here, so this tests what the
     // renderer will actually see rather than what the mesh merely contains.
     let positive = 0, negative = 0, negativeMinX = Infinity, positiveMaxX = -Infinity;

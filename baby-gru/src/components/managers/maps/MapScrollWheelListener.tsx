@@ -3,17 +3,20 @@ import { useCallback, useRef } from "react";
 import { enqueueSnackbar, setShownControl } from "@/store";
 import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { moorhen } from "../../../types/moorhen";
 
-export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map }) => {
+/**
+ * @param allShown - Move all shown representations of the map together, `mapContourLevel` being the lowest of their
+ * levels (multi-representation mode)
+ */
+export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVisible: boolean; map: moorhen.Map; allShown?: boolean }) => {
     const mapContourLevelRef = useRef<number>(1);
     mapContourLevelRef.current = props.mapContourLevel;
 
-    const mapRadius = useSelector((state: RootState) => {
-        const mapRadiusItem = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
-        return mapRadiusItem?.radius || props.map.suggestedRadius || 25;
-    });
+    // The radius of the draw mode in use, from the map's display record
+    const mapRadius = useMapDisplay(props.map).radius;
 
     const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
     const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);
@@ -22,6 +25,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
 
     // Use the fast contour mode hook
     const { fastMapContourLevel } = useFastContourMode({
+        allShown: props.allShown ?? false,
         map: props.map,
         mapRadius,
         radiusThreshold: 25,
@@ -63,7 +67,7 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
             }
             lastWheelTimeRef.current = now;
 
-            let scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
+            const scaling = props.map.isEM ? props.map.levelRange[0] : 0.01;
             let newMapContourLevel: number;
 
             if (evt.detail.factor > 1) {

@@ -11,6 +11,7 @@ import { MoorhenCarbohydrateValidationModal } from "../../modal/MoorhenCarbohydr
 import { MoorhenColourMapByOtherMapModal } from "../../modal/MoorhenColourMapByOtherMapModal";
 import { MoorhenFourierShellCorrelationModal } from "../../modal/MoorhenFourierShellCorrelationModal";
 import { MoorhenConKitModal } from "../../modal/MoorhenConKitModal";
+import { WorkerQueueModal } from "../../modal/WorkerQueueModal";
 import { MoorhenControlsModal } from "../../modal/MoorhenControlsModal";
 import { MoorhenCreateAcedrgLinkModal } from "../../modal/MoorhenCreateAcedrgLinkModal";
 import { MoorhenDiffMapPeaksModal } from "../../modal/MoorhenDiffMapPeaksModal";
@@ -72,6 +73,7 @@ export type BuiltInModalKey =
     | "NOE"
     | "config-shortcuts"
     | "fourier-shell-correlation"
+    | "worker-queue"
     | "check-list-test";
 
 /** A built-in modal, or the id of one added through `instance.uiExtensions`. */
@@ -115,6 +117,7 @@ const modalsMap: Record<BuiltInModalKey, React.FC<ModalComponentProps>> = {
     "config-shortcuts": MoorhenShortcutConfigModal,
     NOE: MoorhenNOERestraints,
     "fourier-shell-correlation": MoorhenFourierShellCorrelationModal,
+    "worker-queue": WorkerQueueModal,
     "check-list-test": MoorhenCheckListTestModal,
 };
 

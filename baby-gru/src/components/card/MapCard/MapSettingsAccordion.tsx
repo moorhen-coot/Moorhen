@@ -1,7 +1,16 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { setMapAlpha, setMapRadius, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle, setMapViewDependentTransparency } from "../../../store/mapContourSettingsSlice";
+import { useMemo } from "react";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
+import {
+    selectMapRepresentationsOfMap,
+    selectMapRepresentation,
+    selectPrimaryMapRepresentation,
+    setMapRepresentation,
+    setMapRepresentationAlpha,
+    setMapRepresentationRadius,
+    setMapRepresentationSlice,
+} from "../../../store/mapRepresentationsSlice";
+import { currentAlpha } from "../../../utils/Representation/mapRepresentationData";
 import { setMovingMapSlice } from "../../../store/generalStatesSlice";
 import { setQuat } from "../../../store/glRefSlice";
 import { setOrigin } from "../../../store/sceneSettingsSlice";
@@ -32,31 +41,47 @@ interface MoorhenMapCardSettings {
      * nothing about the slice itself is particular to them.
      */
     offerSlice?: boolean;
+    /** The settings alone, without the "Draw Settings" accordion (in a representation's edit popover) */
+    bare?: boolean;
+    /** The representation they act on (a chip's), else the map's first */
+    recordId?: string;
 }
 
 export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const dispatch = useDispatch();
-    const isOriginLocked = useSelector((state: moorhen.State) => {
-        const mapItem = state.maps.find(item => item.molNo === props.map.molNo);
-        return mapItem?.isOriginLocked || false;
-    });
+    const store = useStore<moorhen.State>();
+    /**
+     * The representation these settings act on (`recordId`'s: a chip's, else the map's first; map-display.md), which
+     * holds its 2D slice
+     */
+    const recordOf = (state: moorhen.State) => {
+        const own = props.recordId ? selectMapRepresentation(state, props.recordId) : undefined;
+        return own?.mapUid === props.map.uniqueId ? own : selectPrimaryMapRepresentation(state, props.map.uniqueId);
+    };
+    const record = useSelector(recordOf);
+    const isOriginLocked = !!record?.originLock;
+    /** Another representation of this map is a 2D slice: one per map for now (its buffers are the map's) */
+    const otherIsSlice = useSelector((state: moorhen.State) =>
+        selectMapRepresentationsOfMap(state, props.map.uniqueId).some(other => other.id !== record?.id && other.style === "slice")
+    );
+    const change = (changes: Parameters<typeof setMapRepresentation>[0]["changes"]) => {
+        if (record) dispatch(setMapRepresentation({ id: record.id, changes }));
+    };
 
-    const handleOriginLockClick = () => {
-        const isOriginLocked = props.map.isOriginLocked;
-        if (isOriginLocked) {
-            lockedRadius.current = props.mapRadius;
-        } else {
-            unLockedRadius.current = props.mapRadius;
+    /**
+     * Draw the full map (origin locked) or the map around the view. Each draw mode keeps its own radius in the record
+     * (map-display.md), so switching only flips the lock; the record change redraws the map. Locked around the map's
+     * drawing centre (its first representation's, kept while unlocked), else the view.
+     */
+    const setOriginLocked = (locked: boolean) => {
+        if (!record || locked === isOriginLocked) return;
+        if (!locked && record.originLock) {
+            // Kept for locking again: the centre the record had (a scene's or a session's, not only one set here)
+            props.map.drawOrigin = record.originLock.centre.map(coord => -coord) as [number, number, number];
         }
-        dispatch(
-            setMapRadius({
-                molNo: props.map.molNo,
-                radius: isOriginLocked ? unLockedRadius.current : lockedRadius.current,
-            })
-        );
-        props.map.toggleOriginLock(!isOriginLocked);
-        props.map.drawMapContour();
+        const sceneOrigin = props.map.drawOrigin ?? store.getState().sceneSettings.origin;
+        change({ originLock: locked ? { centre: sceneOrigin.map(coord => -coord) as [number, number, number] } : null });
     };
 
     const maxRadius = useMemo(() => {
@@ -72,19 +97,17 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         }
     }, [props.map.headerInfo, props.map.isEM]);
 
-    const [meshAlpha, setMeshAlpha] = useState<number>(props.mapOpacity);
-    const [surfaceAlpha, setSurfaceAlpha] = useState<number>(props.mapOpacity);
-    const [litAlpha, setLitAlpha] = useState<number>(props.mapOpacity);
-    const [sliceAlpha, setSliceAlpha] = useState<number>(props.mapOpacity);
-
+    /** The opacity of the style in use: the record keeps one per style (map-display.md) */
+    const opacity = record ? currentAlpha(record) : props.mapOpacity;
     /** Whether this map's slice is showing its handles. */
-    const isMovingSlice = useSelector((state: moorhen.State) => state.generalStates.movingMapSlice === props.map.molNo);
+    const isMovingSlice = useSelector((state: moorhen.State) => !!record && state.generalStates.movingMapSlice === record.id);
     /** Whether this map's slice shows its nodal lines (only a difference map, with two signs, has any). */
-    const showsNodalLines = useSelector((state: moorhen.State) => state.mapContourSettings.mapSliceNodalLines.includes(props.map.molNo));
-    const sliceContourSpacing = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === props.map.molNo)?.spacing ?? DEFAULT_SLICE_CONTOUR_SPACING);
+    const showsNodalLines = record?.slice?.nodalLines ?? false;
+    const sliceContourSpacing = record?.slice?.contourSpacing ?? DEFAULT_SLICE_CONTOUR_SPACING;
+    const changeSlice = (changes: Parameters<typeof setMapRepresentationSlice>[0]["changes"]) => {
+        if (record) dispatch(setMapRepresentationSlice({ id: record.id, changes }));
+    };
 
-    const store = useStore<moorhen.State>();
     /**
      * Look straight at the slice, centred on it: along its normal from the side the view is on,
      * the side of it nearest the screen's x made the screen's x (sliceView.ts). Read from the store
@@ -92,7 +115,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
      */
     const alignViewToSlice = () => {
         const state = store.getState();
-        const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === props.map.molNo);
+        const slice = recordOf(state)?.slice;
         if (!slice) return;
         dispatch(setQuat(quatFacingSlice(state.glRef.quat, slice.orientation)));
         // Moorhen's origin is the point that puts a centre in view: its negative.
@@ -102,10 +125,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const chooseStyle = (style: MapStyle) => {
         // Handles belong to the slice: none once the map is drawn another way.
         if (style !== "slice" && isMovingSlice) dispatch(setMovingMapSlice(null));
-        dispatch(setMapStyle({ molNo: props.map.molNo, style }));
+        change({ style });
     };
-    const unLockedRadius = useRef<number>(20);
-    const lockedRadius = useRef<number>(20);
 
     const opacitySlider = (
         <MoorhenSlider
@@ -116,36 +137,23 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             isDisabled={!props.mapIsVisible}
             usePreciseInput={true}
             showLabels={false}
-            value={
-                props.mapStyle === "solid" ? surfaceAlpha
-                : props.mapStyle === "lines" ? meshAlpha
-                : props.mapStyle === "slice" ? sliceAlpha
-                : litAlpha
-            }
-            setValue={
-                props.mapStyle === "solid"
-                    ? value => setSurfaceAlpha(value)
-                    : props.mapStyle === "lines"
-                      ? value => setMeshAlpha(value)
-                      : props.mapStyle === "slice"
-                        ? value => setSliceAlpha(value)
-                        : value => setLitAlpha(value)
-            }
+            value={opacity}
+            // Sets the opacity of the style in use
+            setValue={value => record && dispatch(setMapRepresentationAlpha({ id: record.id, alpha: value }))}
             decimalPlaces={2}
         />
     );
 
     /**
-     * Whether the map thickens where it is seen edge-on.
+     * Whether the representation thickens where it is seen edge-on (main's #794, now in its record).
      *
      * Offered beside the opacity because it is the opacity's companion and does nothing without
      * it: the effect is absorption through a shell, so a solid surface has no shell to look
-     * along. Disabled rather than hidden while the map is opaque, so that it is discoverable -
+     * along. Disabled rather than hidden while it is opaque, so that it is discoverable -
      * somebody who has not met the effect can see that it exists and what it waits for.
      */
-    const viewDependentTransparency = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.mapViewDependentTransparency.includes(props.map.molNo));
-    const isTransparent = props.mapOpacity < 0.99;
+    const viewDependentTransparency = record?.viewDependentTransparency ?? false;
+    const isTransparent = opacity < 0.99;
     const viewDependentToggle = (
         <MoorhenToggle
             type="switch"
@@ -155,33 +163,14 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             tooltip={isTransparent
                 ? "Thicken the surface where it is seen edge-on, as looking along a shell would."
                 : "Lower the opacity to use this: a solid surface has no shell to look along."}
-            onChange={() => {
-                // Only the dispatch. MoorhenMapManager listens and reaches the buffers - which is
-                // what makes a session restore and a scripted dispatch work as well as this
-                // switch. Applying it here too would be a second writer saying the same thing.
-                dispatch(setMapViewDependentTransparency({
-                    molNo: props.map.molNo, enabled: !viewDependentTransparency,
-                }));
-            }}
+            // The record change repaints the representation (a uniform: no recontouring)
+            onChange={() => change({ viewDependentTransparency: !viewDependentTransparency })}
         />
     );
 
-    useEffect(() => {
-        let newValue: number;
-        if (props.mapStyle === "lines") {
-            newValue = meshAlpha;
-        } else if (props.mapStyle === "solid") {
-            newValue = surfaceAlpha;
-        } else if (props.mapStyle === "lit-lines") {
-            newValue = litAlpha;
-        } else if (props.mapStyle === "slice") {
-            newValue = sliceAlpha;
-        }
-        dispatch(setMapAlpha({ molNo: props.map.molNo, alpha: newValue }));
-    }, [meshAlpha, surfaceAlpha, litAlpha, sliceAlpha, props.mapStyle]);
-
+    const Wrapper = props.bare ? BareSettings : DrawSettingsAccordion;
     return (
-        <MoorhenAccordion title="Draw Settings">
+        <Wrapper>
             <MoorhenStack direction="line">
                 <MoorhenStack direction="vertical" gap={"0.5rem"}>
                     {props.map.isEM && !props.hideRadiusControls &&
@@ -190,20 +179,16 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         id={`lock-origin-toggle-${props.map.molNo}`}
                         type="radio"
                         checked={isOriginLocked}
-                        onChange={() => {
-                            handleOriginLockClick();
-                        }}
+                        onChange={() => setOriginLocked(true)}
                         disabled={!props.mapIsVisible}
                         // icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
                         label={" Draw Full Map"}
                     />
                     <MoorhenToggle
-                        id={`lock-origin-toggle-${props.map.molNo}`}
+                        id={`unlock-origin-toggle-${props.map.molNo}`}
                         type="radio"
                         checked={!isOriginLocked}
-                        onChange={() => {
-                            handleOriginLockClick();
-                        }}
+                        onChange={() => setOriginLocked(false)}
                         disabled={!props.mapIsVisible}
                         // icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
                         label={" Draw Local Map"}
@@ -232,8 +217,10 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         <MoorhenToggle
                             checked={props.mapStyle === "slice"}
                             type="radio"
+                            disabled={otherIsSlice}
                             onChange={() => chooseStyle("slice")}
                             label="Draw as 2D slice"
+                            tooltip={otherIsSlice ? "Another representation of this map is already a 2D slice" : undefined}
                         />
                     )}
                     </MoorhenStack>
@@ -249,14 +236,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         sliderTitle="Radius:"
                         isDisabled={!props.mapIsVisible}
                         value={props.mapRadius}
-                        setValue={newVal => {
-                            dispatch(
-                                setMapRadius({
-                                    molNo: props.map.molNo,
-                                    radius: newVal,
-                                })
-                            );
-                        }}
+                        // The radius of the draw mode in use (each keeps its own)
+                        setValue={newVal => record && dispatch(setMapRepresentationRadius({ id: record.id, radius: newVal }))}
                         usePreciseInput={true}
                         piWidth={"3rem"}
                     />}
@@ -273,7 +254,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         type="switch"
                         checked={isMovingSlice}
                         disabled={!props.mapIsVisible}
-                        onChange={() => dispatch(setMovingMapSlice(isMovingSlice ? null : props.map.molNo))}
+                        onChange={() => dispatch(setMovingMapSlice(isMovingSlice || !record ? null : record.id))}
                         label="Move & turn"
                     />
                     <MoorhenButton size="small" disabled={!props.mapIsVisible} onClick={alignViewToSlice} tooltip="Look straight at the slice, centred on it; the side nearest the screen's x made horizontal">
@@ -284,7 +265,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         value={sliceContourSpacing}
                         disabled={!props.mapIsVisible}
                         onChange={evt =>
-                            dispatch(setMapSliceContourSpacing({ molNo: props.map.molNo, spacing: evt.target.value as SliceContourSpacing }))
+                            changeSlice({ contourSpacing: evt.target.value as SliceContourSpacing })
                         }
                     >
                         <option value="linear">Equal steps</option>
@@ -296,12 +277,15 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             type="switch"
                             checked={showsNodalLines}
                             disabled={!props.mapIsVisible}
-                            onChange={() => dispatch(setMapSliceNodalLines({ molNo: props.map.molNo, show: !showsNodalLines }))}
+                            onChange={() => changeSlice({ nodalLines: !showsNodalLines })}
                             label="Nodal lines"
                         />
                     )}
                 </MoorhenStack>
             )}
-        </MoorhenAccordion>
+        </Wrapper>
     );
 };
+
+const DrawSettingsAccordion = (props: { children?: React.ReactNode }) => <MoorhenAccordion title="Draw Settings">{props.children}</MoorhenAccordion>;
+const BareSettings = (props: { children?: React.ReactNode }) => <>{props.children}</>;

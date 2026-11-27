@@ -2,7 +2,8 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useRef } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
-import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { setMapVisible } from "../../store/mapRepresentationsSlice";
+import { displayToCopy } from "../../utils/Representation/mapRepresentationData";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMap } from "../../utils/MoorhenMap";
@@ -55,12 +56,10 @@ export const MakeMaskedMapsSplitByChain = () => {
                     newMap.name = `Chain ${listIndex} of ${selectedMap.name}`;
                     
                     await newMap.initialise();
-                    const { mapRadius, contourLevel, mapAlpha, mapStyle } = selectedMap.getMapContourParams();
-                    if (!newMap.isEM) { dispatch(setMapRadius({ molNo: newMap.molNo, radius: mapRadius })); }
-                    dispatch(setContourLevel({ molNo: newMap.molNo, contourLevel: contourLevel }));
-                    dispatch(setMapAlpha({ molNo: newMap.molNo, alpha: mapAlpha }));
-                    dispatch(setMapStyle({ molNo: newMap.molNo, style: mapStyle }));
-                    dispatch(hideMap(selectedMap));
+                    // It shows what the map it was made from showed (an EM map keeps its own radius), which is hidden (display records, map-display.md)
+                    newMap.initialDisplay = displayToCopy(selectedMap.primaryRepresentation);
+                    if (newMap.isEM) delete newMap.initialDisplay.radius;
+                    dispatch(setMapVisible({ mapUid: selectedMap.uniqueId, visible: false }));
                     dispatch(addMap(newMap));
                 })
             );

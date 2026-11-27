@@ -1,4 +1,5 @@
 import type { ColourRuleData } from "../utils/MoorhenColourRule";
+import type { MapRepresentationData } from "../utils/Representation/mapRepresentationData";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
 import type { ThreeDObject } from "./threeDObjectsSlice";
@@ -30,6 +31,11 @@ export type SceneSections = {
     threeDObjects?: ThreeDObject[];
     /** The 3D text annotations the scene shows. Absent (older scene): the shown ones are kept */
     annotations?: MoorhenAnnotation[];
+    /**
+     * How the scene shows each map: the map representation records (map-display.md) of the maps in `objects.maps`.
+     * Absent (older scene): the shown ones are kept. A map loaded after the scene was saved keeps its own.
+     */
+    maps?: MapRepresentationData[];
     /** Sections this version does not know (read from a newer file): saved back unchanged */
     [section: string]: unknown;
 };
@@ -47,7 +53,11 @@ export type SceneContent = {
      * The molecules present when the scene was saved (uid: name), so molecules loaded later can be
      * told apart, and missing ones can be reported by name
      */
-    objects: { molecules: { [uniqueId: string]: string } };
+    objects: {
+        molecules: { [uniqueId: string]: string };
+        /** The maps present when the scene was saved (uid: name). Absent in scenes saved before maps were in scenes */
+        maps?: { [uniqueId: string]: string };
+    };
     sections: SceneSections;
 };
 
@@ -56,7 +66,7 @@ export type UserSceneFileEntry = {
     id: string;
     name: string;
     camera?: SceneCamera;
-    objects?: { molecules?: { [uniqueId: string]: string } };
+    objects?: { molecules?: { [uniqueId: string]: string }; maps?: { [uniqueId: string]: string } };
     /** Absent for a scene that was never shown, which starts as a copy of the current scene */
     sections?: Partial<SceneSections>;
 };
@@ -107,11 +117,69 @@ const readMoleculeDefaults = (value: unknown): MoleculeDefaults =>
           ) as MoleculeDefaults)
         : {};
 
+const isNumberRecord = (value: unknown): value is Record<string, number> =>
+    isObject(value) && Object.values(value).every(item => typeof item === "number");
+
+const isColour = (value: unknown) => value === null || (isObject(value) && ["r", "g", "b"].every(key => typeof value[key] === "number"));
+
+const MAP_STYLES: readonly string[] = ["lines", "lit-lines", "solid", "slice"] satisfies MapRepresentationData["style"][];
+
+/**
+ * Keep the map records that can be drawn: an id, a map uid, a level, a known style, both radii (local and full) as
+ * numbers, opacities as numbers. Fields added after the file was written (or missing, or malformed) get their
+ * defaults: opaque styles where none is given, no colours of their own, no colouring map, unlocked, no slice.
+ */
+const readMapRecords = (value: unknown): MapRepresentationData[] =>
+    Array.isArray(value)
+        ? value
+              .filter(
+                  item =>
+                      isObject(item) &&
+                      typeof item.id === "string" &&
+                      typeof item.mapUid === "string" &&
+                      typeof item.contourLevel === "number" &&
+                      typeof item.style === "string" &&
+                      MAP_STYLES.includes(item.style) &&
+                      isNumberRecord(item.radius) &&
+                      typeof item.radius.local === "number" &&
+                      typeof item.radius.full === "number" &&
+                      isNumberRecord(item.alpha)
+              )
+              .map(item => ({
+                  ...(item as unknown as MapRepresentationData),
+                  visible: item.visible !== false,
+                  alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1, ...(item.alpha as Record<string, number>) },
+                  colour: isColour(item.colour) ? (item.colour as MapRepresentationData["colour"]) : null,
+                  positiveColour: isColour(item.positiveColour) ? (item.positiveColour as MapRepresentationData["colour"]) : null,
+                  negativeColour: isColour(item.negativeColour) ? (item.negativeColour as MapRepresentationData["colour"]) : null,
+                  colourByMap:
+                      isObject(item.colourByMap) &&
+                      typeof item.colourByMap.mapUid === "string" &&
+                      typeof item.colourByMap.min === "number" &&
+                      typeof item.colourByMap.max === "number" &&
+                      Array.isArray(item.colourByMap.gradient)
+                          ? (item.colourByMap as MapRepresentationData["colourByMap"])
+                          : null,
+                  originLock:
+                      isObject(item.originLock) && isNumberArray(item.originLock.centre, 3)
+                          ? (item.originLock as MapRepresentationData["originLock"])
+                          : null,
+                  viewDependentTransparency: item.viewDependentTransparency === true,
+                  slice:
+                      isObject(item.slice) && isNumberArray(item.slice.origin, 3) && isNumberArray(item.slice.orientation, 16)
+                          ? (item.slice as MapRepresentationData["slice"])
+                          : null,
+              }))
+        : [];
+
+const readNames = (value: unknown): { [uniqueId: string]: string } =>
+    isObject(value) ? Object.fromEntries(Object.entries(value).filter(([, name]) => typeof name === "string")) as { [uniqueId: string]: string } : {};
+
 /** Read a saved entry, dropping anything malformed. Its content is undefined when it has none saved */
 export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
     const scene: UserScene = { id: entry.id, name: entry.name };
     if (!isObject(entry.sections)) return scene;
-    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects, annotations } = entry.sections;
+    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects, annotations, maps } = entry.sections;
     const molecules = isObject(entry.objects?.molecules) ? entry.objects.molecules : {};
     const content: SceneContent = {
         objects: {
@@ -126,6 +194,10 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
         },
     };
     if (moleculeDefaults !== undefined) content.sections.moleculeDefaults = readMoleculeDefaults(moleculeDefaults);
+    if (maps !== undefined) {
+        content.sections.maps = readMapRecords(maps);
+        content.objects.maps = readNames(entry.objects?.maps);
+    }
     if (vectors !== undefined) content.sections.vectors = readIdentified(vectors) as unknown as MoorhenVector[];
     if (threeDObjects !== undefined)
         content.sections.threeDObjects = readIdentified(threeDObjects).filter(

@@ -23,8 +23,10 @@ const initialState: {
     selectedThreeDObjectId: string | null;
     /** Which 2D overlay object is showing its handles, or none. Like selectedThreeDObjectId. */
     selected2DObjectId: string | null;
-    /** Which map's 2D slice is showing manipulation handles, or none (by its molNo). */
-    movingMapSlice: number | null;
+    /** The map representation whose 2D slice shows manipulation handles (its id), or none */
+    movingMapSlice: string | null;
+    /** The maps (uids) whose card shows its representations card even with a single one (Draw Settings toggle) */
+    multiRepresentationMaps: string[];
     isShowingTomograms: boolean;
     /** Progress of a long task that reports it (e.g. files.batchLoadLigands), shown by the long job notification */
     jobProgress: { label: string; done: number; total: number } | null;
@@ -62,6 +64,7 @@ const initialState: {
     selectedThreeDObjectId: null,
     selected2DObjectId: null,
     movingMapSlice: null,
+    multiRepresentationMaps: [],
     residueSelection: {
         molecule: null,
         first: null,
@@ -187,12 +190,17 @@ const generalStatesSlice = createSlice({
             if (action.payload !== null) state.movingMapSlice = null;
         },
         /**
-         * Which map's 2D slice is showing manipulation handles, or none: as setSelectedThreeDObject
-         * for a 3D object, and the two take turns.
+         * Which map representation's 2D slice is showing manipulation handles (its id), or none: as
+         * setSelectedThreeDObject for a 3D object, and the two take turns.
          */
-        setMovingMapSlice: (state, action: PayloadAction<number | null>) => {
+        setMovingMapSlice: (state, action: PayloadAction<string | null>) => {
             state.movingMapSlice = action.payload;
             if (action.payload !== null) state.selectedThreeDObjectId = null;
+        },
+        /** Show a map's representations card in its card even with a single representation (or stop) */
+        setMapMultiRepresentation: (state, action: PayloadAction<{ mapUid: string; on: boolean }>) => {
+            const others = state.multiRepresentationMaps.filter(uid => uid !== action.payload.mapUid);
+            state.multiRepresentationMaps = action.payload.on ? [...others, action.payload.mapUid] : others;
         },
         /** Which 2D overlay object is showing its handles, or none. */
         setSelected2DObject: (state, action: PayloadAction<string | null>) => {
@@ -243,6 +251,7 @@ export const {
     setSelected2DObject,
     setMovingMapSlice,
     setActiveMap,
+    setMapMultiRepresentation,
     setViewOnly,
     setTheme,
     setIsDraggingAtoms,

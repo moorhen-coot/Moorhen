@@ -4,12 +4,12 @@ import { startAndGetInstance } from "./helpers";
 /**
  * Scenes in session files (sceneData, see src/.roadmaps/sessions-to-scenes.md).
  *
- * tests/test_data/session/1.0.1.pb was saved by Moorhen 1.0.1, before scenes existed: one molecule
+ * tests/test_data/session/1.0.1-no-maps.pb was saved by Moorhen 1.0.1, before scenes existed: one molecule
  * (custom CBs + CRs), two vectors. Old sessions must keep loading, into the "General" scene. Its two
- * maps were removed (they made it 6.5 MB and are not about scenes); the rest is as 1.0.1 wrote it.
+ * maps were removed (they made it 6.5 MB and are not about scenes; 1.0.1.pb is the whole session); the rest is as 1.0.1 wrote it.
  */
 
-const PRE_SCENE_SESSION = { url: "/tests/test_data/session/1.0.1.pb", filename: "1.0.1.pb" };
+const PRE_SCENE_SESSION = { url: "/tests/test_data/session/1.0.1-no-maps.pb", filename: "1.0.1-no-maps.pb" };
 const SESSION_MOLECULE_UID = "d2216c9c-ef0d-48f7-9b71-e38b92349348";
 
 type SceneSummary = {

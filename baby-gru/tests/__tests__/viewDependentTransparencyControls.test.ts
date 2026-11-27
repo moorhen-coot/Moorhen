@@ -2,144 +2,117 @@
  * The controls that decide which surfaces thicken at their edges.
  *
  * The effect itself is tested in viewDependentTransparency.test.ts. This is about the two switches
- * that drive it: a map's, which lives in the store beside the other map contour settings, and a
- * representation's, which lives on the representation beside its opacity.
+ * that drive it: a map representation's, which lives in its display record beside its opacity
+ * (.roadmaps/map-display.md), and a molecule representation's, which lives on the representation
+ * beside its opacity.
  *
  * The property worth holding onto is that it reaches the *buffers* - the shader reads a uniform
  * per buffer, so a switch that updates some state and never touches a buffer is a switch that
- * does nothing, and nothing about the picture would say so.
+ * does nothing, and nothing about the picture would say so. For maps the record is the one writer:
+ * a record change repaints the representation (MapRepresentation), whoever made it - the map card's
+ * switch, a scene, a session, a script. That it reaches the buffers in a browser is checked in
+ * tests/e2e/map-representations.spec.ts.
  */
 import { describe, expect, it } from "@jest/globals";
 import { readFileSync } from "fs";
 import { join } from "path";
-import mapContourSettingsReducer, {
-    setMapAlpha, setMapViewDependentTransparency,
-} from "../../src/store/mapContourSettingsSlice";
+import { configureStore } from "@reduxjs/toolkit";
+import mapRepresentationsReducer, {
+    addMapRepresentation,
+    selectMapRepresentation,
+    setMapRepresentation,
+    setMapRepresentationAlpha,
+} from "../../src/store/mapRepresentationsSlice";
+import type { MapRepresentationData } from "../../src/utils/Representation/mapRepresentationData";
 
-const initial = () => mapContourSettingsReducer(undefined, { type: "@@INIT" });
+const record = (id: string, changes: Partial<MapRepresentationData> = {}): MapRepresentationData => ({
+    id,
+    mapUid: "map-1",
+    visible: true,
+    contourLevel: 0.3,
+    radius: { local: 15, full: 15 },
+    style: "solid",
+    alpha: { lines: 1, "lit-lines": 1, solid: 0.5, slice: 1 },
+    colour: null,
+    positiveColour: null,
+    negativeColour: null,
+    colourByMap: null,
+    originLock: null,
+    slice: null,
+    viewDependentTransparency: false,
+    ...changes,
+});
 
-describe("the map switch, in the store", () => {
-    it("starts off for every map", () => {
-        expect(initial().mapViewDependentTransparency).toEqual([]);
+const storeWith = (...records: MapRepresentationData[]) => {
+    const store = configureStore({ reducer: { mapRepresentations: mapRepresentationsReducer } });
+    records.forEach(item => store.dispatch(addMapRepresentation(item)));
+    return store;
+};
+
+describe("a map representation's switch, in its record", () => {
+    it("starts off for a new map", async () => {
+        const { createDefaultMapRepresentationData } = await import("../../src/utils/Representation/mapRepresentationData");
+        const map = { uniqueId: "map-1", showOnLoad: true, isEM: false, isDifference: false, mapRmsd: 0.2, suggestedRadius: 10 } as never;
+        expect(createDefaultMapRepresentationData(map, { defaultMapLitLines: false, defaultMapSurface: false }).viewDependentTransparency).toBe(false);
     });
 
-    it("turns on and off again for one map without disturbing another", () => {
-        let state = initial();
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 0, enabled: true }));
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 1, enabled: true }));
-        expect([...state.mapViewDependentTransparency].sort()).toEqual([0, 1]);
-
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 0, enabled: false }));
-        expect(state.mapViewDependentTransparency).toEqual([1]);
-    });
-
-    it("does not list a map twice when switched on again", () => {
-        let state = initial();
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 3, enabled: true }));
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 3, enabled: true }));
-        expect(state.mapViewDependentTransparency).toEqual([3]);
+    it("turns on and off again for one representation without disturbing another", () => {
+        const store = storeWith(record("a"), record("b"));
+        store.dispatch(setMapRepresentation({ id: "a", changes: { viewDependentTransparency: true } }));
+        expect(selectMapRepresentation(store.getState(), "a").viewDependentTransparency).toBe(true);
+        expect(selectMapRepresentation(store.getState(), "b").viewDependentTransparency).toBe(false);
+        store.dispatch(setMapRepresentation({ id: "a", changes: { viewDependentTransparency: false } }));
+        expect(selectMapRepresentation(store.getState(), "a").viewDependentTransparency).toBe(false);
     });
 
     it("is independent of the opacity it accompanies", () => {
-        // Deliberately not coupled in the store: the interface disables the switch while a map is
-        // solid, but turning the opacity back down should find the switch as it was left rather
-        // than silently off.
-        let state = initial();
-        state = mapContourSettingsReducer(state, setMapViewDependentTransparency({ molNo: 0, enabled: true }));
-        state = mapContourSettingsReducer(state, setMapAlpha({ molNo: 0, alpha: 1.0 }));
-        expect(state.mapViewDependentTransparency).toEqual([0]);
+        // Deliberately not coupled: the interface disables the switch while a surface is solid,
+        // but turning the opacity back down should find the switch as it was left rather than
+        // silently off.
+        const store = storeWith(record("a", { viewDependentTransparency: true }));
+        store.dispatch(setMapRepresentationAlpha({ id: "a", alpha: 1 }));
+        expect(selectMapRepresentation(store.getState(), "a").viewDependentTransparency).toBe(true);
     });
 });
 
 describe("a map, reading its own setting", () => {
-    /** Only what getMapContourParams touches. */
-    const mapWith = (enabled: number[]) => {
-        const store = {
-            getState: () => ({
-                mapContourSettings: {
-                    mapRadii: [], contourLevels: [], mapAlpha: [], mapStyles: [],
-                    mapColours: [], negativeMapColours: [], positiveMapColours: [],
-                    mapViewDependentTransparency: enabled,
-                },
-            }),
-        };
-        return { molNo: 7, store };
+    /** Only what getMapContourParams touches: the map's first record */
+    const mapWith = async (primary: Partial<MapRepresentationData>) => {
+        const { MoorhenMap } = await import("../../src/utils/MoorhenMap");
+        const map = Object.assign(Object.create(MoorhenMap.prototype), { uniqueId: "map-1", molNo: 7 });
+        Object.defineProperty(map, "primaryRepresentation", { get: () => primary });
+        return map;
     };
 
-    it("is on only for a map that is listed", async () => {
-        const { MoorhenMap } = await import("../../src/utils/MoorhenMap");
-        const read = MoorhenMap.prototype.getMapContourParams;
-        expect(read.call({ ...mapWith([7]) }).viewDependentTransparency).toBe(true);
-        expect(read.call({ ...mapWith([1, 2]) }).viewDependentTransparency).toBe(false);
-        expect(read.call({ ...mapWith([]) }).viewDependentTransparency).toBe(false);
+    it("is on only for a map whose record says so", async () => {
+        expect((await mapWith(record("a", { viewDependentTransparency: true }))).getMapContourParams().viewDependentTransparency).toBe(true);
+        expect((await mapWith(record("a", { viewDependentTransparency: false }))).getMapContourParams().viewDependentTransparency).toBe(false);
     });
 
-    it("is off for a session saved before the setting existed", async () => {
-        // The list is absent entirely from an older stored state, which must read as "no maps"
-        // rather than throwing on the way to drawing anything at all.
-        const { MoorhenMap } = await import("../../src/utils/MoorhenMap");
-        const store = {
-            getState: () => ({
-                mapContourSettings: {
-                    mapRadii: [], contourLevels: [], mapAlpha: [], mapStyles: [],
-                    mapColours: [], negativeMapColours: [], positiveMapColours: [],
-                },
-            }),
-        };
-        expect(MoorhenMap.prototype.getMapContourParams
-            .call({ molNo: 7, store }).viewDependentTransparency).toBe(false);
+    it("is off for a record saved before the setting existed", async () => {
+        // A scene or session written before it has records without the field, which must read
+        // as off rather than throwing on the way to drawing anything at all.
+        const older = record("a") as Partial<MapRepresentationData>;
+        delete older.viewDependentTransparency;
+        expect((await mapWith(older)).getMapContourParams().viewDependentTransparency).toBe(false);
     });
 });
 
-/**
- * The switch lives in the store, so the store is what has to reach the buffers.
- *
- * Raised in review, and right: the map card's switch applied the change itself, which left every
- * other way of dispatching it - a session restore, a script calling the exported action - changing
- * a number nothing read until the map was next contoured. The fix is the arrangement the opacity
- * already uses: one listener in MoorhenMapManager, and the switch only dispatches.
- */
 describe("the map switch, reaching the buffers", () => {
-    const source = (path: string) =>
-        readFileSync(join(__dirname, "../../src", path), "utf8");
+    const source = (path: string) => readFileSync(join(__dirname, "../../src", path), "utf8");
 
-    it("sets the uniform on every drawn buffer and asks for a frame", async () => {
-        const { MoorhenMap } = await import("../../src/utils/MoorhenMap");
-        const buffers = [{ viewDependentTransparency: false }, { viewDependentTransparency: false }];
-        const dispatched: unknown[] = [];
-        MoorhenMap.prototype.applyViewDependentTransparency.call({
-            molNo: 7,
-            displayObjects: { Coot: buffers },
-            getMapContourParams: MoorhenMap.prototype.getMapContourParams,
-            store: {
-                dispatch: (action: unknown) => dispatched.push(action),
-                getState: () => ({
-                    mapContourSettings: {
-                        mapRadii: [], contourLevels: [], mapAlpha: [], mapStyles: [],
-                        mapColours: [], negativeMapColours: [], positiveMapColours: [],
-                        mapViewDependentTransparency: [7],
-                    },
-                }),
-            },
-        });
-        expect(buffers.every(buffer => buffer.viewDependentTransparency)).toBe(true);
-        // A uniform changed and nothing else did, so something has to ask for the next frame.
-        expect(dispatched).toHaveLength(1);
+    it("is painted by the representation, as its opacity is: no recontouring", () => {
+        const representation = source("utils/Representation/MapRepresentation.ts");
+        // Part of what only needs repainting, and set on each buffer when painted
+        expect(representation).toMatch(/type AppearanceKey = \{[^}]*viewDependentTransparency: boolean/);
+        expect(representation).toContain("buffer.viewDependentTransparency = appearance.viewDependentTransparency");
     });
 
-    it("is applied by a listener on the store, beside the one the opacity uses", () => {
-        const manager = source("components/managers/maps/MoorhenMapManager.tsx");
-        expect(manager).toContain("applyViewDependentTransparency");
-        expect(manager).toContain("mapViewDependentTransparency.includes(map.molNo)");
-        // The boolean, not the array: a dispatch about another map must not redraw this one.
-        expect(manager).not.toMatch(/selector:?\s*\(state: RootState\) =>\s*state\.mapContourSettings\.mapViewDependentTransparency,/);
-    });
-
-    it("is not also applied by the switch itself", () => {
-        // Two writers for one setting is how they drift apart: the one in the card would keep
-        // working while the one everything else depends on quietly stopped.
+    it("is only written to the record by the switch", () => {
+        // Two writers for one setting is how they drift apart: the record is the one everything
+        // else (scenes, sessions, scripts) goes through.
         const accordion = source("components/card/MapCard/MapSettingsAccordion.tsx");
-        expect(accordion).toContain("setMapViewDependentTransparency");
+        expect(accordion).toContain("change({ viewDependentTransparency: !viewDependentTransparency })");
         expect(accordion).not.toContain("applyViewDependentTransparency");
     });
 });
